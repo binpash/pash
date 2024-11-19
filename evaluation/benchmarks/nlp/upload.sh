@@ -26,7 +26,7 @@ INPUTS_DIRS=(
 
 # upload small inputs
 for INPUT_DIR in "${INPUTS_DIRS[@]}"; do
-  for INPUT in $(ls $BENCHMARK_DIR/inputs/$INPUT_DIR); do
+  for INPUT in $(cat $BENCHMARK_DIR/1000-books.txt); do
     INPUT_PATH="$BENCHMARK_DIR/inputs/$INPUT_DIR/$INPUT"
     S3_URI=$S3_BUCKET_PREFIX/$S3_INPUTS_DIR/$INPUT_DIR/$INPUT
     echo "Uploading $INPUT_PATH to $S3_URI"

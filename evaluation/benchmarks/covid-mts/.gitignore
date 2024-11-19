@@ -1,1 +1,3 @@
-*.time
+times/
+inputs/
+outputs/

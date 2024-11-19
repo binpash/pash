@@ -127,7 +127,7 @@ teop210.txt
 wvr1210.txt
 "
 
-for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
+for input in $(cat "$PASH_TOP/evaluation/benchmarks/nlp/1000-books.txt" | head -n ${ENTRIES})
 do
     cat $IN$input | tr 'a-z' '[A-Z]' | tr -sc 'AEIOU' '[\012*]'| sort | uniq -c  > ${OUT}${input}.out
 done

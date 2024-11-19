@@ -23,9 +23,7 @@ fi
 if [ ! -e ./pg ]; then
     mkdir pg
     cd pg
-    book_count=120
-
-    head -n $book_count ../book_links.txt | while IFS= read -r line
+    cat ../book_links.txt | while IFS= read -r line
     do
         full_url="https://atlas-group.cs.brown.edu/data/gutenberg/${line}"
         echo "Downloading $full_url"

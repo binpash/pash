@@ -42,11 +42,15 @@ CONFIGS=(
   # Local:16G:PaSh:4
   # Local:16G:PaSh:8
   # AWS:2048M:Bash:1
-  AWS:2048M:Splash:1
+  # AWS:2048M:Splash:1
   # AWS:2048M:Splash:2
   # AWS:2048M:Splash:4
   # AWS:2048M:Splash:8
   # AWS:2048M:Splash:16
+  # AWS:2048M:Splash:32
+  # AWS:2048M:Splash:64
+  AWS:2048M:Splash:128
+  # AWS:2048M:Splash:256
   # AWS:2048M:Hybrid:1
   # AWS:2048M:Hybrid:2
   # AWS:2048M:Hybrid:4
@@ -70,13 +74,15 @@ then
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
-    # nfa-regex.sh:1G.txt
+    nfa-regex.sh:3G.txt
     # shortest-scripts.sh:all_cmds.txt
-    # sort-sort.sh:1G.txt
-    # sort.sh:1G.txt
-    spell.sh:1G.txt
-    # top-n.sh:1G.txt
-    # wf.sh:1G.txt
+    # sort-sort.sh:3G.txt
+    # sort.sh:3G.txt
+    # sort.sh:3G.txt
+    # spell.sh:3G.txt
+    # top-n.sh:3G.txt
+    # wf.sh:3G.txt
+    # bi-grams.sh:3G.txt
   )
   INPUT_TYPE=""
 fi
@@ -95,11 +101,13 @@ do
 
     OUTPUT="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.out"
     TIME="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.time"
+    LOG="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.log"
 
     SCRIPT_PATH="${SCRIPTS_DIR}/${SCRIPT}"
     INPUT_PATH="${INPUTS_DIR}/${INPUT}"
     OUTPUT_PATH="${OUTPUTS_DIR}/${OUTPUT}"
     TIME_PATH="${TIMES_DIR}/${TIME}"
+    LOG_PATH="${TIMES_DIR}/${LOG}/"
 
     S3_INPUT_PATH="${S3_INPUTS_DIR}/${INPUT}"
     S3_OUTPUT_PATH="${S3_OUTPUTS_DIR}/${OUTPUT}/" # make sure this is a directory
@@ -130,7 +138,11 @@ do
     elif [[ $ENVIRONMENT == "AWS" && $SYSTEM == "Splash" ]]
     then
       python3 "$PASH_TOP"/scripts/serverless/delete-log-streams.py
-      { time IN=$S3_INPUT_PATH OUT=$"$S3_OUTPUT_PATH" DICT="$S3_INPUTS_DIR/dict.txt" "$PASH_TOP"/pa.sh  -d 1 -w "$WIDTH" "$SCRIPT_PATH" --serverless_exec ; } 2>"$TIME_PATH"
+      { time IN=$S3_INPUT_PATH OUT=$"$S3_OUTPUT_PATH" DICT="$S3_INPUTS_DIR/dict.txt" "$PASH_TOP"/pa.sh -d 1 -w "$WIDTH" "$SCRIPT_PATH" --serverless_exec ; } 2>"$TIME_PATH"
+      # sleep 30 # w-4 wait for the ports to be recycled
+      # # sleep 480 # w-64 wait for the ports to be recycled
+      # rm -rf "$LOG_PATH"
+      # LOG_FOLDER="$LOG_PATH" python3 "$PASH_TOP"/scripts/serverless/get-log-streams.py
     fi
 
     grep real "$TIME_PATH"

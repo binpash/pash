@@ -1,0 +1,844 @@
+Found credentials in environment variables.
+Daemon:  [Serverless Manager] Table sls-result already exists!
+Daemon:  SocketManager: Made sure that socket does not exist
+Daemon:  SocketManager: Created socket
+Daemon:  SocketManager: Successfully bound to socket
+Daemon:  SocketManager: Listenting on socket
+Daemon:  Received data: Daemon Start
+
+PaSh:  Arguments:
+PaSh:  input ['/pash/evaluation/benchmarks/file-enc/scripts/encrypt_files.sh']
+PaSh:  preprocess_only False
+PaSh:  output_preprocessed False
+PaSh:  interactive False
+PaSh:  command None
+PaSh:  a False
+PaSh:  v False
+PaSh:  x False
+PaSh:  expand_using_bash_mirror False
+PaSh:  output_time False
+PaSh:  debug 1
+PaSh:  log_file 
+PaSh:  width 1
+PaSh:  no_optimize False
+PaSh:  dry_run_compiler False
+PaSh:  assert_compiler_success False
+PaSh:  avoid_pash_runtime_completion False
+PaSh:  profile_driven False
+PaSh:  output_optimized False
+PaSh:  graphviz no
+PaSh:  graphviz_dir /tmp
+PaSh:  no_eager False
+PaSh:  no_daemon False
+PaSh:  parallel_pipelines True
+PaSh:  r_split_batch_size 1000000
+PaSh:  r_split False
+PaSh:  dgsh_tee False
+PaSh:  speculative False
+PaSh:  speculation no_spec
+PaSh:  termination clean_up_graph
+PaSh:  daemon_communicates_through_unix_pipes False
+PaSh:  distributed_exec False
+PaSh:  serverless_exec True
+PaSh:  sls_instance lambda
+PaSh:  sls_output 
+PaSh:  config_path 
+PaSh:  preprocess_mode pash
+PaSh:  ----------------------------------------
+PaSh Preprocessor:  Preprocessing -- Parsing time: 11.427  ms
+PaSh Preprocessor:  Preprocessing -- PaSh time: 7.971  ms
+PaSh Preprocessor:  Preprocessing -- Unparsing time: 0.278  ms
+PaSh:  Preprocessed script stored in: /tmp/pash_Tk5tVC4/tmp9qlzwo65
+PaSh:  Executing: PASH_TMP_PREFIX=/tmp/pash_Tk5tVC4/ pash_shell_name=/pash/evaluation/benchmarks/file-enc/scripts/encrypt_files.sh /usr/bin/env bash +a -c source /tmp/pash_Tk5tVC4/tmp9qlzwo65 /pash/evaluation/benchmarks/file-enc/scripts/encrypt_files.sh
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Writing vars to: /tmp/pash_Tk5tVC4//variables_173652539913055
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_173652539913055
+85607: (2) Before asking the daemon for compilation...
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_14268212039933| Variable File:/tmp/pash_Tk5tVC4//variables_173652539913055| Input IR File:/tmp/pash_Tk5tVC4/tmp5x5jaeke
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_14268212039933| Variable File:/tmp/pash_Tk5tVC4//variables_173652539913055| Input IR File:/tmp/pash_Tk5tVC4/tmp5x5jaeke
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_173652539913055
+Daemon:  Variable Reading time: 0.078  ms
+Daemon:  Variable Tokenizing time: 6.776  ms
+Daemon:  Variable Loading time: 9.846  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp5x5jaeke ... 
+Daemon:  Done!
+Daemon:  WARNING: Exception caught: InputOutputInformation for export not provided so considered side-effectful.
+Daemon:  Daemon Compile time: 3.444  ms
+Daemon:  Unsafe running: False
+Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
+Daemon:  Request handling time: 13.909  ms
+Got response from compilation-server: ERROR: 1 failed to compile
+85607: (2) Compiler exited with code: 1
+85607: (2) Traps set: 
+Sending msg to compilation-server: Exit:1
+Daemon:  Received data: Exit:1
+
+Daemon:  Process: 1 exited. Exec time was: 27.336
+Daemon:  The following process exited: 1
+Got response from compilation-server: 
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4/tmphho41pra:
+export -f pure_func
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+85607: (5) BaSh script exited with ec: 0
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Writing vars to: /tmp/pash_Tk5tVC4//variables_84403223124931
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_84403223124931
+85607: (2) Before asking the daemon for compilation...
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_213921740917065| Variable File:/tmp/pash_Tk5tVC4//variables_84403223124931| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_213921740917065| Variable File:/tmp/pash_Tk5tVC4//variables_84403223124931| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_84403223124931
+Daemon:  Variable Reading time: 0.035  ms
+Daemon:  Variable Tokenizing time: 7.209  ms
+Daemon:  Variable Loading time: 7.975  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_4SICS-GeekLounge-151020.pcap
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_4SICS-GeekLounge-151020.pcap
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151020.pcap
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151020.pcap
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 5.944  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 1.143  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_213921740917065
+Daemon:  Daemon Compile time: 11.257  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 19.726  ms
+Got response from compilation-server: OK: 2 /tmp/pash_Tk5tVC4//pash_213921740917065 /tmp/pash_Tk5tVC4//variables_84403223124931 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+To set: huB
+From set: huBc
+To set: hBc
+To add: u
+To remove: 
+85607: (1) Previous exit status: 0
+To add: 
+85607: (1) Previous set state: hBc
+To remove: u
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_213921740917065:
+Writing vars to: /tmp/pash_Tk5tVC4//variables_26189277728187
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_26189277728187
+85607: (2) Before asking the daemon for compilation...
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_221331871026086| Variable File:/tmp/pash_Tk5tVC4//variables_26189277728187| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_221331871026086| Variable File:/tmp/pash_Tk5tVC4//variables_26189277728187| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_26189277728187
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmpx1h1bktm
+Daemon:  Variable Reading time: 0.023  ms
+Daemon:  Variable Tokenizing time: 8.788  ms
+Daemon:  Variable Loading time: 9.586  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_4SICS-GeekLounge-151021.pcap
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_4SICS-GeekLounge-151021.pcap
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151021.pcap
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151021.pcap
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 4.767  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 2.066  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_221331871026086
+Daemon:  Daemon Compile time: 9.162  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 19.286  ms
+Got response from compilation-server: OK: 3 /tmp/pash_Tk5tVC4//pash_221331871026086 /tmp/pash_Tk5tVC4//variables_26189277728187 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: huBc
+To set: hBc
+From set: hBc
+To set: huB
+To add: 
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+To add: u
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_221331871026086:
+Daemon:  Backend time: 2.773  ms
+To remove: 
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/39986f91-66ed-4b39-bb15-dfe3681a6d24
+Writing vars to: /tmp/pash_Tk5tVC4//variables_32642267734792
+Daemon:  Backend time: 1.247  ms
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_32642267734792
+85607: (2) Before asking the daemon for compilation...
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/11e5e2ec-696c-48bd-89ab-e81226fdcfaa
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_960130728201| Variable File:/tmp/pash_Tk5tVC4//variables_32642267734792| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmpq3f2lazm
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_960130728201| Variable File:/tmp/pash_Tk5tVC4//variables_32642267734792| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_32642267734792
+Daemon:  Variable Reading time: 0.11  ms
+Daemon:  Variable Tokenizing time: 7.99  ms
+Daemon:  Variable Loading time: 8.924  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_4SICS-GeekLounge-151022.pcap
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_4SICS-GeekLounge-151022.pcap
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151022.pcap
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151022.pcap
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 9.406  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 2.544  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_960130728201
+Daemon:  Daemon Compile time: 16.892  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 26.467  ms
+Got response from compilation-server: OK: 4 /tmp/pash_Tk5tVC4//pash_960130728201 /tmp/pash_Tk5tVC4//variables_32642267734792 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+Daemon:  Backend time: 2.051  ms
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/4a2dfb6d-1696-4cdd-8320-7052558455d2
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+Daemon:  Backend time: 1.453  ms
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/a9a72ad1-fe4f-4215-a244-ab90b62e07fd
+From set: huBc
+To set: hBc
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+To add: 
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_960130728201:
+Writing vars to: /tmp/pash_Tk5tVC4//variables_313431153717573
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_313431153717573
+85607: (2) Before asking the daemon for compilation...
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_186901188332644| Variable File:/tmp/pash_Tk5tVC4//variables_313431153717573| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmpnikze2mz
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_186901188332644| Variable File:/tmp/pash_Tk5tVC4//variables_313431153717573| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_313431153717573
+Daemon:  Variable Reading time: 0.027  ms
+Daemon:  Variable Tokenizing time: 7.93  ms
+Daemon:  Variable Loading time: 9.057  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_challenge101-0.pcapng
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_challenge101-0.pcapng
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-0.pcapng
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-0.pcapng
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 5.824  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 2.606  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_186901188332644
+Daemon:  Daemon Compile time: 10.867  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 20.611  ms
+Got response from compilation-server: OK: 5 /tmp/pash_Tk5tVC4//pash_186901188332644 /tmp/pash_Tk5tVC4//variables_313431153717573 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+To set: huB
+From set: huBc
+To set: hBc
+To add: 
+To add: u
+To remove: u
+To remove: 
+85607: (3) Reverted to BaSh set state: hBc
+85607: (1) Previous exit status: 0
+Daemon:  Backend time: 2.917  ms
+85607: (4) Restoring previous exit code: 0
+85607: (1) Previous set state: hBc
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_186901188332644:
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/044335dd-192f-4221-83f7-23fd74b306a9
+Writing vars to: /tmp/pash_Tk5tVC4//variables_8530101507696
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_8530101507696
+Daemon:  Backend time: 1.294  ms
+85607: (2) Before asking the daemon for compilation...
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/cab1cbdf-ab0d-439d-bfca-20dc6030cbad
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_127462689819583| Variable File:/tmp/pash_Tk5tVC4//variables_8530101507696| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  [Serverless Manager] Counter value: 1
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmpuqy0jswc
+Daemon:  [Serverless Manager] Counter value: 2
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_127462689819583| Variable File:/tmp/pash_Tk5tVC4//variables_8530101507696| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Sending msg to compilation-server: Exit:2
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_8530101507696
+Daemon:  Variable Reading time: 0.381  ms
+Sending msg to compilation-server: Exit:3
+Daemon:  Variable Tokenizing time: 8.951  ms
+Daemon:  Variable Loading time: 17.911  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_challenge101-1.pcapng
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_challenge101-1.pcapng
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-1.pcapng
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-1.pcapng
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 5.482  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 2.031  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_127462689819583
+Daemon:  Daemon Compile time: 10.248  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 28.815  ms
+Daemon:  Received data: Exit:2
+
+Daemon:  Process: 2 exited. Exec time was: 419.5
+Daemon:  The following process exited: 2
+Daemon:  Received data: Exit:3
+
+Daemon:  Process: 3 exited. Exec time was: 333.986
+Daemon:  The following process exited: 3
+Got response from compilation-server: OK: 6 /tmp/pash_Tk5tVC4//pash_127462689819583 /tmp/pash_Tk5tVC4//variables_8530101507696 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+Got response from compilation-server: 
+Got response from compilation-server: 
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+From set: huBc
+To set: huB
+To set: hBc
+Daemon:  Backend time: 2.784  ms
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/d1cfd1b1-40f3-4179-9792-59fc7fec8ae3
+Daemon:  Backend time: 1.105  ms
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/5b94c653-722d-482e-ab88-8875e560c93f
+To add: 
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+To add: u
+85607: (4) Restoring previous exit code: 0
+To remove: 
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_127462689819583:
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Writing vars to: /tmp/pash_Tk5tVC4//variables_294232597730486
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_294232597730486
+85607: (2) Before asking the daemon for compilation...
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_26307735211352| Variable File:/tmp/pash_Tk5tVC4//variables_294232597730486| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_26307735211352| Variable File:/tmp/pash_Tk5tVC4//variables_294232597730486| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmp37nzqwek
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_294232597730486
+Daemon:  Variable Reading time: 0.023  ms
+Daemon:  Variable Tokenizing time: 8.368  ms
+Daemon:  Variable Loading time: 9.283  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_challenge101-3.pcapng
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_challenge101-3.pcapng
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-3.pcapng
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-3.pcapng
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 3.686  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 1.332  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_26307735211352
+Daemon:  Daemon Compile time: 6.992  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 16.966  ms
+Got response from compilation-server: OK: 7 /tmp/pash_Tk5tVC4//pash_26307735211352 /tmp/pash_Tk5tVC4//variables_294232597730486 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+Daemon:  [Serverless Manager] Counter value: 3
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+Sending msg to compilation-server: Exit:4
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+To set: huB
+From set: huBc
+To set: hBc
+Daemon:  Received data: Exit:4
+
+Daemon:  Process: 4 exited. Exec time was: 348.243
+Daemon:  The following process exited: 4
+Got response from compilation-server: 
+To add: 
+To remove: u
+To add: u
+85607: (3) Reverted to BaSh set state: hBc
+To remove: 
+85607: (4) Restoring previous exit code: 0
+85607: (1) Previous exit status: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_26307735211352:
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Writing vars to: /tmp/pash_Tk5tVC4//variables_12862100528473
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_12862100528473
+85607: (2) Before asking the daemon for compilation...
+Daemon:  Backend time: 3.569  ms
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_4505242930529| Variable File:/tmp/pash_Tk5tVC4//variables_12862100528473| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/647e3e78-2728-460c-a7f8-e0c870075788
+Daemon:  Backend time: 1.43  ms
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/3759fece-ba72-47cd-bee2-3e97a136d97b
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmp_ae4qt55
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_4505242930529| Variable File:/tmp/pash_Tk5tVC4//variables_12862100528473| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_12862100528473
+Daemon:  Variable Reading time: 0.024  ms
+Daemon:  Variable Tokenizing time: 7.594  ms
+Daemon:  Variable Loading time: 8.255  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_challenge101-4.pcapng
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_challenge101-4.pcapng
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-4.pcapng
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-4.pcapng
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 3.533  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 1.467  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_4505242930529
+Daemon:  Daemon Compile time: 7.398  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 16.08  ms
+Got response from compilation-server: OK: 8 /tmp/pash_Tk5tVC4//pash_4505242930529 /tmp/pash_Tk5tVC4//variables_12862100528473 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+Daemon:  [Serverless Manager] Counter value: 4
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+Sending msg to compilation-server: Exit:5
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: huBc
+To set: hBc
+From set: hBc
+To set: huB
+Daemon:  Received data: Exit:5
+
+Daemon:  Process: 5 exited. Exec time was: 339.833
+Daemon:  The following process exited: 5
+Got response from compilation-server: 
+To add: u
+To remove: 
+To add: 
+85607: (1) Previous exit status: 0
+To remove: u
+85607: (1) Previous set state: hBc
+85607: (3) Reverted to BaSh set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+85607: (4) Restoring previous exit code: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_4505242930529:
+Writing vars to: /tmp/pash_Tk5tVC4//variables_10671057224161
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_10671057224161
+85607: (2) Before asking the daemon for compilation...
+Daemon:  Backend time: 2.747  ms
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/3fecd896-f7e3-4dd1-8397-52f1b950e78c
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_1907948019538| Variable File:/tmp/pash_Tk5tVC4//variables_10671057224161| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  Backend time: 1.136  ms
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/8c515125-333d-4dea-88c8-a51bdf904524
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmpnqd94lkm
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_1907948019538| Variable File:/tmp/pash_Tk5tVC4//variables_10671057224161| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_10671057224161
+Daemon:  Variable Reading time: 0.021  ms
+Daemon:  Variable Tokenizing time: 7.598  ms
+Daemon:  Variable Loading time: 8.213  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_challenge101-5.pcapng
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_challenge101-5.pcapng
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-5.pcapng
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-5.pcapng
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 3.706  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 1.821  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_1907948019538
+Daemon:  Daemon Compile time: 6.757  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 15.471  ms
+Got response from compilation-server: OK: 9 /tmp/pash_Tk5tVC4//pash_1907948019538 /tmp/pash_Tk5tVC4//variables_10671057224161 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+To set: huB
+From set: huBc
+To set: hBc
+Daemon:  [Serverless Manager] Counter value: 5
+To add: u
+To remove: 
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Sending msg to compilation-server: Exit:6
+Writing vars to: /tmp/pash_Tk5tVC4//variables_250521838530372
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_250521838530372
+85607: (2) Before asking the daemon for compilation...
+To add: 
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_1907948019538:
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_177231191118243| Variable File:/tmp/pash_Tk5tVC4//variables_250521838530372| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  Backend time: 2.928  ms
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/a8d60058-fd14-45a8-b7f4-b89b3f70fb54
+Daemon:  Backend time: 1.607  ms
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/f7db9359-bbd2-4f8c-b6c4-ea112d73ac4c
+Daemon:  Received data: Exit:6
+
+Daemon:  Process: 6 exited. Exec time was: 327.203
+Daemon:  The following process exited: 6
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_177231191118243| Variable File:/tmp/pash_Tk5tVC4//variables_250521838530372| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Got response from compilation-server: 
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_250521838530372
+Daemon:  Variable Reading time: 0.021  ms
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmp7wme811d
+Daemon:  Variable Tokenizing time: 7.425  ms
+Daemon:  Variable Loading time: 8.272  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_challenge101-6.pcapng
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_challenge101-6.pcapng
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-6.pcapng
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-6.pcapng
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 4.131  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 2.023  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_177231191118243
+Daemon:  Daemon Compile time: 9.295  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 18.054  ms
+Got response from compilation-server: OK: 10 /tmp/pash_Tk5tVC4//pash_177231191118243 /tmp/pash_Tk5tVC4//variables_250521838530372 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+Daemon:  [Serverless Manager] Counter value: 6
+To set: huB
+From set: huBc
+To set: hBc
+Sending msg to compilation-server: Exit:7
+To add: u
+To remove: 
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Writing vars to: /tmp/pash_Tk5tVC4//variables_13216273015107
+Daemon:  Backend time: 3.453  ms
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_13216273015107
+85607: (2) Before asking the daemon for compilation...
+To add: 
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/cb7371af-472e-4bdb-8137-343a5aea3141
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_177231191118243:
+Daemon:  Backend time: 1.193  ms
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_280871384910565| Variable File:/tmp/pash_Tk5tVC4//variables_13216273015107| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/91eed4de-6e14-4142-a515-60f9a69b95b6
+Daemon:  Received data: Exit:7
+
+Daemon:  Process: 7 exited. Exec time was: 331.594
+Daemon:  The following process exited: 7
+Got response from compilation-server: 
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_280871384910565| Variable File:/tmp/pash_Tk5tVC4//variables_13216273015107| Input IR File:/tmp/pash_Tk5tVC4/tmp2hqxouy6
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_13216273015107
+Daemon:  Variable Reading time: 0.02  ms
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmp8saj7yb9
+Daemon:  Variable Tokenizing time: 7.803  ms
+Daemon:  Variable Loading time: 8.49  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
+Daemon:  Done!
+Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: item value: pcap10_challenge101-7.pcapng
+Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
+Expansion: Var: item value: pcap10_challenge101-7.pcapng
+Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-7.pcapng
+Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
+Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-7.pcapng
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  class of path <class 'definitions.ir.arg.Arg'>
+Daemon:  Compilation time: 4.083  ms
+Daemon:  Total nodes after optimization: 2
+Daemon:   -- out of which:
+Daemon:  Eager nodes: 0
+Daemon:  Optimization time: 1.355  ms
+Daemon:  Optimized script saved in: /tmp/pash_Tk5tVC4//pash_280871384910565
+Daemon:  Daemon Compile time: 7.452  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 16.627  ms
+Got response from compilation-server: OK: 11 /tmp/pash_Tk5tVC4//pash_280871384910565 /tmp/pash_Tk5tVC4//variables_13216273015107 /tmp/pash_Tk5tVC4/tmp2hqxouy6
+85607: (2) Compiler exited with code: 0
+85607: (2) Traps set: 
+85607: (2) Running pipeline...
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+From set: hBc
+To set: huB
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+To add: u
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4//pash_280871384910565:
+To remove: 
+85607: (1) Previous exit status: 0
+85607: (1) Previous set state: hBc
+85607: (1) Set state reverted to PaSh-internal set state: huBc
+Writing vars to: /tmp/pash_Tk5tVC4//variables_133737352215
+85607: (1) Bash variables saved in: /tmp/pash_Tk5tVC4//variables_133737352215
+85607: (2) Before asking the daemon for compilation...
+Sending msg to compilation-server: Compile:/tmp/pash_Tk5tVC4//pash_1044290582517| Variable File:/tmp/pash_Tk5tVC4//variables_133737352215| Input IR File:/tmp/pash_Tk5tVC4/tmp67309ao4
+Daemon:  Backend time: 2.99  ms
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/a1c2012d-884a-4a5c-bac0-be140547e78f
+Daemon:  Backend time: 1.057  ms
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/edf4d094-de7b-44bb-b29b-9144a097e1bc
+$PASH_TOP/compiler/serverless/serverless_exec_graph.sh /tmp/pash_Tk5tVC4/tmpecguzpnd
+Daemon:  Received data: Compile:/tmp/pash_Tk5tVC4//pash_1044290582517| Variable File:/tmp/pash_Tk5tVC4//variables_133737352215| Input IR File:/tmp/pash_Tk5tVC4/tmp67309ao4
+
+Daemon:  Reading variables from: /tmp/pash_Tk5tVC4//variables_133737352215
+Daemon:  Variable Reading time: 0.017  ms
+Daemon:  Variable Tokenizing time: 7.709  ms
+Daemon:  Variable Loading time: 8.475  ms
+Daemon:  Selected width: 1
+Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp67309ao4 ... 
+Daemon:  Done!
+Daemon:  WARNING: Exception caught: InputOutputInformation for echo not provided so considered side-effectful.
+Daemon:  Daemon Compile time: 1.512  ms
+Daemon:  Unsafe running: False
+Daemon:  Waiting for all processes to finish. There are 4 processes remaining.
+Daemon:  [Serverless Manager] Counter value: 7
+Sending msg to compilation-server: Exit:8
+Daemon:  Backend time: 14.963  ms
+Daemon:  Received data: Exit:8
+
+Daemon:  [Serverless Manager] Counter value: 8
+Daemon:  Process: 8 exited. Exec time was: 397.264
+Daemon:  The following process exited: 8
+Daemon:  [Serverless Manager] Script for first lambda saved in:/tmp/pash_Tk5tVC4/15a04d9c-75ca-46cb-88ba-03901801ebf6
+Daemon:  Backend time: 1.012  ms
+Got response from compilation-server: 
+Daemon:  [Serverless Manager] Script for main shell saved in:/tmp/pash_Tk5tVC4/c06aa05e-878a-420a-95a4-240fa5c1ec89
+Sending msg to compilation-server: Exit:9
+Daemon:  Received data: Exit:9
+
+Daemon:  Process: 9 exited. Exec time was: 333.244
+Daemon:  The following process exited: 9
+Got response from compilation-server: 
+Daemon:  [Serverless Manager] Counter value: 9
+Sending msg to compilation-server: Exit:10
+Daemon:  Received data: Exit:10
+
+Daemon:  Process: 10 exited. Exec time was: 318.042
+Daemon:  The following process exited: 10
+Got response from compilation-server: 
+Daemon:  [Serverless Manager] Counter value: 10
+Sending msg to compilation-server: Exit:11
+Daemon:  Received data: Exit:11
+
+Daemon:  Process: 11 exited. Exec time was: 307.814
+Daemon:  The following process exited: 11
+Daemon:  Request handling time: 245.773  ms
+Got response from compilation-server: 
+Got response from compilation-server: ERROR: 12 failed to compile
+85607: (2) Compiler exited with code: 1
+85607: (2) Traps set: 
+Sending msg to compilation-server: Exit:12
+Daemon:  Received data: Exit:12
+
+Daemon:  Process: 12 exited. Exec time was: 23.077
+Daemon:  The following process exited: 12
+Got response from compilation-server: 
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (3) Reverted to BaSh set state: hBc
+85607: (4) Restoring previous exit code: 0
+85607: (4) Will execute script in /tmp/pash_Tk5tVC4/tmpcc6q00z4:
+echo 'done';
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+85607: (5) BaSh script exited with ec: 0
+85607: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+85607: (7) Reverted to BaSh set state before exiting: hBc
+PaSh:  ----------------------------------------
+Sending msg to compilation-server: Done
+Daemon:  Received data: Done
+
+Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
+Daemon:  SocketManager: Closed
+Daemon:  PaSh daemon is shutting down...
+Daemon:  PaSh daemon shut down successfully...
+Got response from compilation-server: All finished
+Sending msg to serverless: Done
+Daemon:  [Serverless Manager] All jobs are done with total time: 19.912097215652466
+Got response from serverless: All jobs are done, shutting down the serverless manager
+
+real	0m7.213s
+user	0m3.633s
+sys	0m1.337s
