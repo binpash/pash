@@ -281,7 +281,7 @@ void seek_fds(const char *infile)
     struct open_fd_vec *vec = load_open_fd_vec(infile);
     for (i = 0; i < vec->size; i++) {
 	struct open_fd *open_fd = vec->open_fds[i];
-	if (open_fd->dup_of == -1) {
+	if (open_fd->dup_of == -1 && open_fd->mode == O_RDONLY) {
 	    lseek(open_fd->fd, open_fd->offset, SEEK_SET);
 	}
     }
