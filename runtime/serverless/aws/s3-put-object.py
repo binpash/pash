@@ -24,16 +24,16 @@ total_time = round(total_time, 3)
 
 print(f"[s3-put-object.py] Finish putting {object_key} in {total_time} seconds")
 
-session = boto3.Session()
-dynamodb = session.client("dynamodb")
-try:
-    response = dynamodb.put_item(
-        TableName="sls-result",
-        Item={
-            "key": {"S": s3_folder_id},
-            "output_id": {"S": object_key},
-        },
-    )
-    print(f"[s3-put-object.py] Successfully wrote item {s3_folder_id}:{object_key} to dynamoDB.")
-except Exception as e:
-    print(f"[s3-put-object.py] Failed to write item {s3_folder_id}:{object_key} to dynamoDB. {e}")
+# session = boto3.Session()
+# dynamodb = session.client("dynamodb")
+# try:
+#     response = dynamodb.put_item(
+#         TableName="sls-result",
+#         Item={
+#             "key": {"S": s3_folder_id},
+#             "output_id": {"S": object_key},
+#         },
+#     )
+#     print(f"[s3-put-object.py] Successfully wrote item {s3_folder_id}:{object_key} to dynamoDB.")
+# except Exception as e:
+#     print(f"[s3-put-object.py] Failed to write item {s3_folder_id}:{object_key} to dynamoDB. {e}")
