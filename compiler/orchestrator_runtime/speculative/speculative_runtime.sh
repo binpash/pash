@@ -58,12 +58,17 @@ elif [[ "$daemon_response" == *"UNSAFE:"* ]]; then
     ## Execute the command.
     ## KK 2023-06-01 Does `eval` work in general? We need to be precise
     ##               about which commands are unsafe to determine how to execute them.
-    cmd=$(cat "$PASH_SPEC_NODE_DIRECTORY/$pash_speculative_command_id")
+    cmd="$(cat "$PASH_SPEC_NODE_DIRECTORY/$pash_speculative_command_id")"
     ## KK 2023-06-01 Not sure if this shellcheck warning must be resolved:
     ## > note: Double quote to prevent globbing and word splitting.
     # shellcheck disable=SC2086
-    eval "$cmd"
     cmd_exit_code=$?
+    if [ -z "${PASH_OLD_IFS+x}" ]; then
+	unset IFS
+    else
+	IFS="$PASH_OLD_IFS"
+    fi
+    eval "$cmd"
 elif [ -z "$daemon_response" ]; then
     ## Trouble... Daemon crashed, rip
     pash_redir_output echo "$$: ERROR: (2) Scheduler crashed!"
@@ -78,6 +83,9 @@ pash_redir_output echo "$$: (2) Scheduler returned exit code: ${cmd_exit_code} f
 
 
 pash_runtime_final_status=${cmd_exit_code}
-
+unset cmd_exit_code
+unset output_variable_file
+unset cmd
+unset stdout_file
 
 ## TODO: Also need to use wrap_vars maybe to `set` properly etc
