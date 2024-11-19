@@ -1,0 +1,1 @@
+cat $IN | sort | uniq > ${OUT}stdout.txt

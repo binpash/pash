@@ -43,13 +43,14 @@ CONFIGS=(
   # AWS:2048M:Splash:4
   # AWS:2048M:Splash:8
   # AWS:2048M:Splash:16
+  AWS:2048M:Splash:64
   # AWS:2048M:Hybrid:1
   # AWS:2048M:Hybrid:2
   # AWS:2048M:Hybrid:4
   # AWS:2048M:Hybrid:8
   # AWS:2048M:Hybrid:16
-  AWS:2048M:EC2_BASH:1
-  AWS:2048M:Lambda_BASH:1
+  # AWS:2048M:EC2_BASH:1
+  # AWS:2048M:Lambda_BASH:1
 )
 
 if [[ "$*" == *"--small"* ]]
@@ -60,7 +61,7 @@ then
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
-    max-temp-process.sh:temperatures_1G.txt
+    max-temp-process.sh:temperatures.2015.txt
   )
   INPUT_TYPE=""
 fi
@@ -79,11 +80,13 @@ do
 
     OUTPUT="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.out"
     TIME="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.time"
+    LOG="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.log"
 
     SCRIPT_PATH="${SCRIPTS_DIR}/${SCRIPT}"
     INPUT_PATH="${INPUTS_DIR}/${INPUT}"
     OUTPUT_PATH="${OUTPUTS_DIR}/${OUTPUT}"
     TIME_PATH="${TIMES_DIR}/${TIME}"
+    LOG_PATH="${TIMES_DIR}/${LOG}/"
 
     S3_INPUT_PATH="${S3_INPUTS_DIR}/${INPUT}"
     S3_OUTPUT_PATH="${S3_OUTPUTS_DIR}/${OUTPUT}/" # make sure this is a directory
@@ -114,7 +117,7 @@ do
     elif [[ $ENVIRONMENT == "AWS" && $SYSTEM == "Splash" ]]
     then
       python3 "$PASH_TOP"/scripts/serverless/delete-log-streams.py
-      { time IN=$S3_INPUT_PATH OUT=$"$S3_OUTPUT_PATH" DICT="$S3_INPUTS_DIR/dict.txt" "$PASH_TOP"/pa.sh  -d 1 -w "$WIDTH" "$SCRIPT_PATH" --serverless_exec ; } 2>"$TIME_PATH"
+      { time IN=$S3_INPUT_PATH OUT=$"$S3_OUTPUT_PATH" DICT="$S3_INPUTS_DIR/dict.txt" "$PASH_TOP"/pa.sh --parallel_pipelines -d 1 -w "$WIDTH" "$SCRIPT_PATH" --serverless_exec ; } 2>"$TIME_PATH"
     fi
 
     grep real "$TIME_PATH"

@@ -3,11 +3,11 @@
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt}
 
-. bi-gram.aux.sh
+. $PASH_TOP/evaluation/benchmarks/oneliners/scripts/bi-gram.aux.sh
 
 cat "$IN" |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
   bigrams_aux |
   sort |
-  uniq
+  uniq > ${OUT}stdout.txt

@@ -22,7 +22,8 @@ S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 INPUTS=(
   # temperatures_200M.txt
   # temperatures_500M.txt
-  temperatures_1G.txt
+  # temperatures_1G.txt
+  temperatures.2015.txt
 )
 
 for INPUT in "${INPUTS[@]}"; do

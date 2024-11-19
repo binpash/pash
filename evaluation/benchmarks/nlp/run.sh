@@ -39,8 +39,8 @@ CONFIGS=(
   # Local:16G:Bash:1
   # AWS:2048M:Bash:1
   AWS:2048M:Splash:1
-  AWS:2048M:Splash:2
-  AWS:2048M:Splash:4
+  # AWS:2048M:Splash:2
+  # AWS:2048M:Splash:4
   # AWS:2048M:Splash:8
   # AWS:2048M:Splash:16
   # AWS:2048M:Splash:32
@@ -77,21 +77,27 @@ then
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
+    # # 1_1_batch.sh:pg
     # 1_1.sh:pg
     # 2_1.sh:pg
     # 2_2.sh:pg
     # 3_1.sh:pg
     # 3_2.sh:pg
     # 3_3.sh:pg
+    # 4_3.sh:pg
     # 6_1_1.sh:pg
     # 6_1_2.sh:pg
     # 6_2.sh:pg
     # 6_3.sh:pg
     # 6_4.sh:pg
     # 6_5.sh:pg
-    6_7.sh:pg
-    7_1.sh:pg
-    7_2.sh:pg
+    # 6_7.sh:pg
+    # 7_1.sh:pg
+    # 7_2.sh:pg
+    # 8.2_1.sh:pg
+    # 6_1.sh:pg
+    # 8_1.sh:pg
+    8.3_2.sh:pg
   )
   INPUT_TYPE=""
 fi
@@ -131,7 +137,7 @@ do
     then
       echo "Running $SCRIPT with $ENVIRONMENT:$SYSTEM on $S3_INPUT_PATH"
       python3 "$PASH_TOP"/scripts/serverless/delete-log-streams.py
-      { time IN=$S3_INPUT_PATH OUT=$S3_OUTPUT_PATH ENTRIES=10 "$PASH_TOP"/pa.sh -w "$WIDTH" "$SCRIPT_PATH" --serverless_exec; } 2>"$TIME_PATH"
+      { time IN=$S3_INPUT_PATH OUT=$S3_OUTPUT_PATH ENTRIES=1000 "$PASH_TOP"/pa.sh -w "$WIDTH" -d 1 "$SCRIPT_PATH" --parallel_pipelines --serverless_exec; } 2>"$TIME_PATH"
     fi
 
     grep real "$TIME_PATH"

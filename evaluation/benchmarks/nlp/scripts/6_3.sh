@@ -126,7 +126,7 @@ ppow10.txt
 teop210.txt
 wvr1210.txt
 "
-for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
+for input in $(cat "$PASH_TOP/evaluation/benchmarks/nlp/1000-books.txt" | head -n ${ENTRIES})
 do
     cat $IN$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | grep -vi '[aeiou]' | sort | uniq -c > ${OUT}${input}.out
 done

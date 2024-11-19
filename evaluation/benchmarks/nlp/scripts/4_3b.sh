@@ -138,7 +138,7 @@ pure_func() {
     rm -rf ${TEMPDIR}
 }
 export -f pure_func
-for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
+for input in $(cat "$PASH_TOP/evaluation/benchmarks/nlp/1000-books.txt" | head -n ${ENTRIES})
 do
     cat $IN$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | pure_func $input > ${OUT}${input}.trigrams
 done

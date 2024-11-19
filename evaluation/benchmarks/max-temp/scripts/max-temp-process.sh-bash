@@ -1,20 +1,25 @@
 #!/bin/bash
 
+IN=max-temp/inputs/temperatures_1G.txt
+OUT=max-temp/outputs/max-temp-process.bash.out/
+
 ## Processing
 python3 aws/s3-get-object.py "$IN" /dev/stdout |
   cut -c 88-92 |
   grep -v 999 |
   sort -rn |
-  head -n 1
+  head -n 1 |
+  python3 aws/s3-put-object.py ${OUT}max.txt /dev/stdin max-temp-bash-max
 
 python3 aws/s3-get-object.py "$IN" /dev/stdout |
   cut -c 88-92 |
   grep -v 999 |
   sort -n |
-  head -n 1 
+  head -n 1 |
+  python3 aws/s3-put-object.py ${OUT}min.txt /dev/stdin max-temp-bash-min
 
 python3 aws/s3-get-object.py "$IN" /dev/stdout |
   cut -c 88-92 |
   grep -v 999 |
   awk "{ total += \$1; count++ } END { print total/count }" |
-  python3 aws/s3-put-object.py ${OUT}avg.txt /dev/stdin
+  python3 aws/s3-put-object.py ${OUT}avg.txt /dev/stdin max-temp-bash-avg

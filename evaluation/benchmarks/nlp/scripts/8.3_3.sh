@@ -138,7 +138,7 @@ pure_func() {
 }
 export -f pure_func
 
-for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
+for input in $(cat "$PASH_TOP/evaluation/benchmarks/nlp/1000-books.txt" | head -n ${ENTRIES})
 do
     cat $IN$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | sort -u | pure_func $input $INPUT2 > ${OUT}${input}.out
 done
