@@ -97,9 +97,9 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 if matching_subgraph not in subgraph_script_id_pairs:
                     script_identifier = uuid4()
                     subgraph_script_id_pairs[matching_subgraph] = script_identifier
-                    incovation_node = serverless_lambda_invoke.make_serverless_lambda_invoke(script_identifier)
-                    subgraph.add_node(incovation_node)
-                    subgraph_to_invocation_node[matching_subgraph] = incovation_node
+                    # incovation_node = serverless_lambda_invoke.make_serverless_lambda_invoke(script_identifier)
+                    # subgraph.add_node(incovation_node)
+                    # subgraph_to_invocation_node[matching_subgraph] = incovation_node
                 if subgraph not in subgraph_to_downstream_subgraphs:
                     subgraph_to_downstream_subgraphs[subgraph] = []
                 # print("Adding downstream subgraph to ", subgraph_script_id_pairs[matching_subgraph])
