@@ -13,8 +13,6 @@ if object_key == "/dev/null":
     print(f"[s3-put-object.py] Get /dev/null as key, ignore.")
     exit(0)
 
-session = boto3.Session()
-
 s3 = boto3.client('s3')
 start_time = time.time()
 with open(infile, "rb") as f:
@@ -26,6 +24,7 @@ total_time = round(total_time, 3)
 
 print(f"[s3-put-object.py] Finish putting {object_key} in {total_time} seconds")
 
+session = boto3.Session()
 dynamodb = session.client("dynamodb")
 try:
     response = dynamodb.put_item(
