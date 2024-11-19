@@ -2,6 +2,8 @@
 
 source "$PASH_TOP/compiler/orchestrator_runtime/pash_orch_lib.sh"
 
+export PASH_SPEC_NODE_DIRECTORY="${PASH_TMP_PREFIX}/speculative/partial_order/"
+
 pash_spec_communicate_scheduler()
 {
     local message=$1

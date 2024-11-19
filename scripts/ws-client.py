@@ -5,58 +5,77 @@ import time
 
 from websocket import create_connection
 
-RESULT_POLLING_FREQUENCY=60
+RESULT_POLLING_FREQUENCY = 60
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--target_branch", 
-                        help="the target branch to fork and run the tests on")
-    parser.add_argument("-c", "--target_commit", 
-                        help="the target commit to checkout to run the tests on")
-    parser.add_argument("-m", "--mode",
-                        help="the execution mode. `run` runs and waits until the results are there, `wait` just waits, and `check` just returns the current task",
-                        choices=['run', 'wait', 'check'],
-                        default='run')
+    parser.add_argument(
+        "-b", "--target_branch", help="the target branch to fork and run the tests on"
+    )
+    parser.add_argument(
+        "-c",
+        "--target_commit",
+        help="the target commit to checkout to run the tests on",
+    )
+    parser.add_argument(
+        "-m",
+        "--mode",
+        help="the execution mode. `run` runs and waits until the results are there, `wait` just waits, and `check` just returns the current task",
+        choices=["run", "wait", "check"],
+        default="run",
+    )
     args = parser.parse_args()
     return args
 
+
 def issue_test_run(websocket, target_commit, target_branch):
-    run_tests_req_data = {"cmd": {"job": "issue",
-                                "benchmark": "CORRECTNESS",
-                                "commit": target_commit,
-                                "branch": target_branch,
-                                }}
-    msg = json.dumps(run_tests_req_data) 
+    run_tests_req_data = {
+        "cmd": {
+            "job": "issue",
+            "benchmark": "CORRECTNESS",
+            "commit": target_commit,
+            "branch": target_branch,
+        }
+    }
+    msg = json.dumps(run_tests_req_data)
     websocket.send(msg)
-    print("POSIX Tests request made for branch:", target_branch, "and commit:", target_commit, file=sys.stderr)
+    print(
+        "POSIX Tests request made for branch:",
+        target_branch,
+        "and commit:",
+        target_commit,
+        file=sys.stderr,
+    )
+
 
 def fetch_runs(websocket):
-    data = {"cmd": {"job": "/fetch_runs", 
-                    "count": 50}}
-    msg = json.dumps(data) 
+    data = {"cmd": {"job": "/fetch_runs", "count": 50}}
+    msg = json.dumps(data)
     # print("Sending:", msg, file=sys.stderr)
     websocket.send(msg)
     # print("Sent!", file=sys.stderr)
     res = websocket.recv()
-    runs_data = json.loads(res)    
+    runs_data = json.loads(res)
     return runs_data
+
 
 def current_task(websocket):
     data = {"cmd": {"job": "/current_task"}}
-    msg = json.dumps(data) 
+    msg = json.dumps(data)
     # print("Sending:", msg, file=sys.stderr)
     websocket.send(msg)
     # print("Sent!", file=sys.stderr)
     res = websocket.recv()
-    res_data = json.loads(res)    
+    res_data = json.loads(res)
     return res_data
+
 
 def wait_for_result(websocket, target_commit):
     found = False
     sleep_duration = RESULT_POLLING_FREQUENCY
 
     while not found:
-
         ## Fetch all runs
         runs_data = fetch_runs(websocket)
         result_rows = runs_data["data"]["rows"]
@@ -96,7 +115,7 @@ elif args.mode in ["run", "wait"]:
     if args.mode == "run":
         ## Issue the POSIX tests requests
         issue_test_run(ws, target_commit, target_branch)
-    
+
     ##
     ## Wait until we have the POSIX test results
     ##

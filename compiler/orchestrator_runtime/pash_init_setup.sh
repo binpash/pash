@@ -13,11 +13,12 @@ export pash_output_time_flag=1
 export pash_execute_flag=1
 export pash_dry_run_compiler_flag=0
 export pash_assert_compiler_success_flag=0
+export pash_assert_all_regions_parallelizable_flag=0
 export pash_checking_log_file=0
 export pash_checking_debug_level=0
 export pash_avoid_pash_runtime_completion_flag=0
 export pash_profile_driven_flag=1
-export pash_parallel_pipelines=0
+export pash_no_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
 export show_version=0
@@ -51,6 +52,10 @@ do
         export pash_assert_compiler_success_flag=1
     fi
 
+    if [ "--assert_all_regions_parallelizable" == "$item" ]; then
+        export pash_assert_all_regions_parallelizable_flag=1
+    fi
+
     if [ "--log_file" == "$item" ]; then
         pash_checking_log_file=1
     fi
@@ -67,8 +72,8 @@ do
         pash_checking_debug_level=1
     fi
 
-    if [ "--parallel_pipelines" == "$item" ]; then
-        export pash_parallel_pipelines=1
+    if [ "--no_parallel_pipelines" == "$item" ]; then
+        export pash_no_parallel_pipelines=1
     fi
 
     if [ "--daemon_communicates_through_unix_pipes" == "$item" ]; then

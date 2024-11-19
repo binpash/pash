@@ -47,12 +47,11 @@ n_inputs=(
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
     configurations=(
-        # "" # Commenting this out since the tests take a lot of time to finish
-        "--parallel_pipelines"
+        ""
     )
 else
     configurations=(
-        "--parallel_pipelines --profile_driven"
+        "--profile_driven"
     )
 fi
 
@@ -190,7 +189,7 @@ execute_tests() {
 }
 
 execute_tests "" "${script_microbenchmarks[@]}"
-execute_tests "--assert_compiler_success" "${pipeline_microbenchmarks[@]}"
+execute_tests "--assert_all_regions_parallelizable" "${pipeline_microbenchmarks[@]}"
 
 #cat ${results_time} | sed 's/,/./' > /tmp/a
 #cat /tmp/a | sed 's/@/,/' > ${results_time}
