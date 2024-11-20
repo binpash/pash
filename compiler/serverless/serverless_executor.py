@@ -250,10 +250,10 @@ class ServerlessManager:
 
             response_msg = f"OK {s3_folder_id} {main_subgraph_script_id}"
             bytes_message = response_msg.encode('utf-8')
-            conn.sendall(bytes_message)
-            conn.close()
             # preempt number of lambdas to be invoked
             self.counter.increment(len(script_id_to_script)-1)
+            conn.sendall(bytes_message)
+            conn.close()
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
