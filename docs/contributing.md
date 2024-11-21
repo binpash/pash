@@ -124,7 +124,7 @@ Restart-Computer
 Run the `wsl` command (or find the installed Linux distribution in Windows Start menu and run it).
 After a few minutes of installation, enter a username and password for the internal WSL account to be created.
 
-Continue the PaSh installation process from [here](https://github.com/binpash/pash/blob/main/docs/tutorial/tutorial.md#installation) inside the WSL installation.
+Continue the PaSh installation process from [here](tutorial.md#installation) inside the WSL installation.
 
 
 ## Docker TODO
@@ -137,7 +137,7 @@ Here are commands related to launching a screen session:
 * `screen`                   -> start a new session
 * `screen -ls`               -> show all screen sessions in this machine
 * `screen -x <ID>`           -> attach to screen with id `<ID>`, as shown by `-ls` above.
-* `screen -x <user>/<pash>`  -> attach to session `pash` of user `user`, assuming it exists/running; 
+* `screen -x <user>/<pash>`  -> attach to session `pash` of user `user`, assuming it exists/running;
 
 When in a `screen` session, all `screen`-related commands are prefixed by `ctr-a` (which means pressing `ctrl` and `a` _together_, and _then_ pressing the followup character). Here are the 5 most useful commands:
 * `ctrl-a c`                 -> create­a new window in the current session
@@ -168,7 +168,7 @@ git merge master           # fetch changes from main/master
 
 (You can use `rebase` instead of `merge` if your branch is local and hasn't been pushed to GitHub, but `merge` if your branch is already pushed.)
 
-## Process for Using EC2 Instance 
+## Process for Using EC2 Instance
 
 A reason to use Amazon Elastic Compute Cloud (EC2) is having insufficient computing power in your local machine. The steps to do are as follows. The generated key is of the form user@hostname.
 
