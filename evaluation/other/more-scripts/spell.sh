@@ -6,7 +6,7 @@
 # TODO: `groff is an interesting "pure", whose wrapper only needs split input
 # TODO: files carefully.
 
-# Data: http://ndr.md/data/dummy/ronn.1
+# Data: atlas.cs.brown.edu/data/dummy/ronn.1
 # dict depends on the system (and has to be sorted), so we assume it exists
 dict=./input/dict.txt
 

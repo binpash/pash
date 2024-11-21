@@ -6,7 +6,7 @@
 # http://thegenomefactory.blogspot.com/2019/09/25-reasons-assemblies-dont-make-it-into.html
 
 # Require: csvkit
-# Data: http://ndr.md/data/bio/genbank.txt
+# Data: atlas.cs.brown.edu/data/bio/genbank.txt
 
 IN=./input/genbank.txt
 OUT=./output/out.txt

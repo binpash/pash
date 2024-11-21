@@ -17,8 +17,7 @@ setup_dataset() {
     wget $wiki_archive || eexit "cannot fetch wikipedia"
     7za x wikipedia-en-html.tar.7z
     tar -xvf wikipedia-en-html.tar
-    wget http://ndr.md/data/wikipedia/index.txt # || eexit "cannot fetch wiki indices"
-    # It is actually OK if we don't have this index since we download the 500/1000 below
+    wget atlas-group.cs.brown.edu/data/wikipedia/index.txt # FIXME: we download index below?
   fi
 
   if [ "$1" = "--small" ]; then
