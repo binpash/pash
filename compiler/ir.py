@@ -19,6 +19,9 @@ from pash_annotations.annotation_generation.datatypes.CommandProperties import (
 from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
+from pash_annotations.annotation_generation.annotation_generators.InputOutputInfoGeneratorCustom import InputOutputInfoGeneratorCustom
+from pash_annotations.annotation_generation.annotation_generators.ParallelizabilityInfoGeneratorCustom import ParallelizabilityInfoGeneratorCustom
+
 
 from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
 from annotations_utils.util_cmd_invocations import (
@@ -243,9 +246,29 @@ def compile_command_to_DFG(fileIdGen, command, options, redirections=None):
         command_invocation
     )
     if io_info is None:
-        raise UnparallelizableError(
-            f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful."
-        )
+        #get input,output,parallelizability info of the command
+        #print(f"InputOutputInformation for {format_arg_chars(command)} not provided")
+        #input_info = input(f"Enter input:")
+        #output_info = input(f"Enter output:")
+
+        # info to provide: parallelizer_list, round_robin_comp_with_cat, is_commutative (for optimisations)
+        #print(f"ParallelizabilityInformation for {format_arg_chars(command)} not provided")
+        #parallelizability_info_parallelizer_list = input(f"Enter parallelizer list info:")
+        #parallelizability_info_round_robin_comp_with_cat = input(f"Enter round robin info:")
+        #parallelizability_info_is_commutative = input(f"Enter commutative info [Y/N]:")
+
+        #generate_info
+        custom_generator_io = InputOutputInfoGeneratorCustom(command)
+        custom_generator_io.generate_info()
+
+        custom_generator_parallelizability = ParallelizabilityInfoGeneratorCustom(command)
+        custom_generator_parallelizability.generate_info()
+        
+        print("Inline Custom Command Attempt")
+        #
+        #raise UnparallelizableError(
+        #    f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful."
+        #)
     if io_info.has_other_outputs():
         raise UnparallelizableError(
             f"Command {format_arg_chars(command)} has outputs other than streaming."
