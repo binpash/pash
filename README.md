@@ -24,6 +24,12 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization de
 Run `./pa.sh --help` to get more information about the available commands.
 Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
 
+### Compatibility
+
+PaSh currently aims for compatibility with bash, and runs scripts on it.
+
+However, PaSh's parser is POSIX compliant and therefore it only supports scripts that have POSIX-compliant syntax.
+
 ## Installation
 
 On Ubuntu, Fedora, and Debian run the following to set up PaSh.
