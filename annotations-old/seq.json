@@ -1,0 +1,12 @@
+{
+    "command": "seq",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": [],
+            "outputs": ["stdout"]
+        }
+    ]
+}

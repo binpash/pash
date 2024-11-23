@@ -1,0 +1,23 @@
+{
+    "command": "bigrams_aux",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "parallelizable_pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "name": "bigram_aux_reduce"
+            },
+            "mapper":
+            {
+                "name": "bigram_aux_map",
+                "num_outputs": 3,
+                "comment": "This is only needed if the map phase of a command is not the same as the command itself. In addition, this map here needs to keep extra info. TODO: At some point, the num_outputs should be extracted from the annotation of the mapper itself."
+            }
+        }
+    ],
+    "comment": "This is a custom command that is used in our evaluation."
+}

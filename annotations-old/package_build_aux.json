@@ -1,0 +1,12 @@
+{
+    "command": "package_build_aux",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["args[0]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

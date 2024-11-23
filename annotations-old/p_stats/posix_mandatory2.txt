@@ -1,0 +1,37 @@
+strings     pure                                Find printable strings in files [nv: simple pure, a la DFS]
+cmp         stateless                           Compare two files; see also diff [nv: like diff]
+file        DFS                                 Determine file type [nv: performs 3 tests---"DFS" for the 1st and "pure" for 2nd and 3rd).
+find        DFS                                 Find files
+ar          pure                                Create and maintain library archives [nv: but interface is FS]
+bc          pure                                Arbitrary-precision arithmetic language [nv: could be used in data-intensive examples]]
+crontab     side-effect                         Schedule periodic background work
+gencat      DFS                                 Generate a formatted message catalog [nv: pure but depends on fs]
+getconf     env-ro                              Get configuration values [nv: does not use stdin]
+grep        stateless                           Search text for a pattern
+locale      env-ro                              Get locale-specific information
+localedef   env-w                               Define locale environment
+m4          pure                                Macro processor[nv: formal verification of m4 would be interesting]
+mailx       side-effect                         Process messages
+man         stateless                           Display system documentation
+mesg        env-w                               Permit or deny messages
+newgrp      side-effect                         Change to a new group [nv: creates a new shell exec. env. with new real/effective GIDs]
+pax         pure?                               Portable archive interchange
+tabs        side-effect                         Set terminal tabs [nv: affects where tabs stop on terminal output]
+tput        env                                 Change terminal characteristics
+write       side-effect                         Write to another user's terminal
+uudecode    stateless                           Decode a binary file
+uuencode    stateless                           Encode a binary file
+at          side-effect                         Execute commands at a later time
+batch       side-effect                         Schedule commands to be executed in a batch queue
+ps          env-ro                              Report process status
+renice      side-effect                         Set nice values of running processes
+logger      DFS                                 Log messages    4.3BSD
+sh          ?                                   Shell, the standard command language interpreter
+xargs       higher-order                        Construct argument lists and invoke utility (higher order, depends on command)
+awk         pure                                Pattern scanning and processing language
+diff        pure                                Compare two files; see also cmp
+ed          stateless                           The standard text editor [nv: line-oriented text-editing, precursor to sed]
+iconv       stateless                           Codeset conversion[nv: stateless modulo definition of '\n']
+lp          side-effect                         Send files to a printer
+patch       pure                                Apply changes to files
+sed         stateless                           Stream editor

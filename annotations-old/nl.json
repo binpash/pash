@@ -1,0 +1,13 @@
+{
+    "command": "nl",
+    "aggregate": "$PASH_TOP/runtime/agg/py/nl.py",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

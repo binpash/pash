@@ -1,0 +1,59 @@
+{
+  "command": "cat",
+  "cases": [
+    {
+      "predicate": {
+        "operator": "exists",
+        "operands": []
+      },
+      "class": "stateless",
+      "inputs": [
+        "args[:]"
+      ],
+      "outputs": [
+        "stdout"
+      ],
+      "true_str": "cat relpath_1"
+    },
+    {
+      "predicate": {
+        "operator": "and",
+        "operands": [
+            {
+                "operator": "exists",
+                "operands": ["-n"]
+            },
+            {
+                "operator": "len_args_eq",
+                "operands": [0]
+            }
+        ]
+      },
+      "class": "non-pure",
+      "inputs": [
+        "stdin"
+      ],
+      "outputs": [
+        "stdout"
+      ],
+      "true_str": "cat -n"
+    },
+    {
+      "predicate": {
+        "operator": "exists",
+        "operands": [
+          "-n"
+        ]
+      },
+      "class": "non-pure",
+      "inputs": [
+        "args[:]"
+      ],
+      "outputs": [
+        "stdout"
+      ],
+      "true_str": "cat -n relpath_1"
+    }
+  ],
+  "options": ["stdin-hyphen"]
+}

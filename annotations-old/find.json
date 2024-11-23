@@ -1,0 +1,12 @@
+{
+    "command": "find",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "side-effectful",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

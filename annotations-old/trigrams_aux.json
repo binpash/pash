@@ -1,0 +1,13 @@
+{
+    "command": "trigrams_aux",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
+

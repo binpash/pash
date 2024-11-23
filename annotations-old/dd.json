@@ -1,0 +1,12 @@
+{
+    "command": "dd",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "side-effectful",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

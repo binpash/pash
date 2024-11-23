@@ -1,0 +1,12 @@
+{
+    "command": "pandoc",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "non-pure",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

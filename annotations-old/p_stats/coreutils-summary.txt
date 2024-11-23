@@ -1,0 +1,104 @@
+basename   : S :   Removes the path prefix from a given pathname
+dirname    : S :   Strips non-directory suffix from file name
+echo       : S :   Displays a specified line of text
+factor     : P :   Factors numbers
+od         : P :   Dumps files in octal and other formats [nv: but changes \n location]
+pathchk    : S :   Checks whether file names are valid or portable
+printf     : P :   Formats and prints data
+shuf       : S :   generate random permutations
+test       : S :   Evaluates an expression
+tr         : S :   Translates or deletes characters
+unexpand   : S :   Converts spaces to tabs
+yes        : S :   Prints a string repeatedly
+comm       : P :   Compares two sorted files line by line
+cut        : S :   Removes sections from each line of files
+expand     : S :   Converts tabs to spaces
+fold       : P :   Wraps each input line to fit in specified width [nv: like map, from one to two lines]
+join       : P :   Joins lines of two files on a common field
+nl         : P :   Numbers lines of files
+numfmt     : S :   Reformat numbers
+paste      : P :   Merges lines of files
+fmt        : P :   Simple optimal text formatter [nv: might need to fill from next line]
+cat        : S :   Concatenates and prints files on the standard output
+uniq       : P :   Removes duplicate lines from a sorted file
+sort       : P :   sort lines of text files
+wc         : P :   Prints the number of bytes, words, and lines in files
+pr         : P :   Converts text files for printing
+tac        : P :   Concatenates and prints files in reverse order line by line
+head       : P :   Outputs the first part of files [nv: if we have chunks and watermarks, then this is trivially parallelizable]
+tail       : P :   Outputs the last part of files
+seq        : P :   Prints a sequence of numbers
+b2sum      : N :   Computes and checks BLAKE2b message digest
+base32     : N :   Encodes or decodes Base32, and prints result to standard output
+base64     : N :   Encodes or decodes Base64, and prints result to standard output
+cksum      : N :   Checksums and count the bytes in a file
+md5sum     : N :   Computes and checks MD5 message digest
+sha1sum    : N :   Computes and checks SHA-1/SHA-2 message digests
+sha224sum  : N :   Computes and checks SHA-1/SHA-2 message digests
+sha256sum  : N :   Computes and checks SHA-1/SHA-2 message digests
+sha384sum  : N :   Computes and checks SHA-1/SHA-2 message digests
+sha512sum  : N :   Computes and checks SHA-1/SHA-2 message digests
+sum        : N :   Checksums and counts the blocks in a file
+tsort      : N :   Performs a topological sort
+expr       : N :   Evaluates expressions [nv: not shell, but math etc]
+chcon      : E :   Changes file security context (SELinux)
+chgrp      : E :   Changes file group ownership
+chmod      : E :   Changes the permissions of a file or directory
+chown      : E :   Changes file ownership
+cp         : E :   Copies a file or directory
+csplit     : E :   Splits a file into sections determined by context lines
+dd         : E :   Copies and converts a file
+install    : E :   Copies files and set attributes
+link       : E :   Creates a link to a file
+ln         : E :   Creates a link to a file
+mkdir      : E :   Creates a directory
+mktemp     : E :   Creates a temporary file or directory
+mv         : E :   Moves files or rename files
+readlink   : E :   Displays value of a symbolic link
+realpath   : E :   Returns the resolved absolute or relative path for a file
+rm         : E :   Removes (deletes) files, directories, device nodes and symbolic links
+rmdir      : E :   Removes empty directories
+shred      : E :   Overwrites a file to hide its contents, and optionally deletes it
+split      : E :   Splits a file into pieces [nv: splitting is pure]
+sync       : E :   Flushes file system buffers
+touch      : E :   Changes file timestamps
+truncate   : E :   Shrink or extend the size of a file to the specified size
+unlink     : E :   Removes the specified file using the unlink function
+vdir       : E :   Is exactly like "ls -l -b". (Files are by default listed in long format.)
+arch       : E :   Prints machine hardware name (same as uname -m)
+date       : E :   Prints or sets the system date and time
+df         : E :   Shows disk free space on file systems
+dir        : E :   Is exactly like "ls -C -b". (Files are by default listed in columns and sorted vertically.)
+du         : E :   Shows disk usage on file systems
+groups     : E :   Prints the groups of which the user is a member
+hostid     : E :   Prints the numeric identifier for the current host
+id         : E :   Prints real or effective UID and GID
+logname    : E :   Print the user's login name
+ls         : E :   Lists the files in a directory
+pinky      : E :   A lightweight version of finger
+printenv   : E :   Prints environment variables
+pwd        : E :   Prints the current working directory
+stat       : E :   Returns data about an inode
+timeout    : E :   Run a command with a time limit
+tty        : E :   Prints terminal name
+uname      : E :   Prints system information
+uptime     : E :   Tells how long the system has been running
+users      : E :   Prints the user names of users currently logged into the current host
+who        : E :   Prints a list of all users currently logged in
+whoami     : E :   Prints the effective userid
+chroot     : E :   Changes the root directory
+dircolors  : E :   Set up color for ls
+env        : E :   Displays and modifies environment variables
+stty       : E :   Changes and prints terminal line settings
+false      : E :   Does nothing, but exits unsuccessfully
+nice       : E :   Modifies scheduling priority
+nohup      : E :   Allows a command to continue running after logging out
+nproc      : E :   Queries the number of (active) processors
+sleep      : E :   Delays for a specified amount of time
+true       : E :   Does nothing, but exits successfully
+mkfifo     : E :   Makes named pipes (FIFOs) [nv: might affect DAG]
+mknod      : E :   Makes block or character special files
+ptx        : ? :   Produces a permuted index of file contents [nv: not sure about its invariants]
+runcon     : E :   Run command with specified security context
+stdbuf     : ? :   Controls buffering for commands that use stdio
+tee        : E :   Sends output to multiple files [nv: affects DAG]

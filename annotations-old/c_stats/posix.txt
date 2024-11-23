@@ -1,0 +1,160 @@
+qalter      Batch utilities          Obsolescent (BE)    Alter batch job    
+qdel        Batch utilities          Obsolescent (BE)    Delete batch jobs    
+qhold       Batch utilities          Obsolescent (BE)    Hold batch jobs    
+qmove       Batch utilities          Obsolescent (BE)    Move batch jobs    
+qmsg        Batch utilities          Obsolescent (BE)    Send message to batch jobs    
+qrerun      Batch utilities          Obsolescent (BE)    Rerun batch jobs    
+qrls        Batch utilities          Obsolescent (BE)    Release batch jobs    
+qselect     Batch utilities          Obsolescent (BE)    Select batch jobs    
+qsig        Batch utilities          Obsolescent (BE)    Signal batch jobs    
+qstat       Batch utilities          Obsolescent (BE)    Show status of batch jobs    
+qsub        Batch utilities          Obsolescent (BE)    Submit a script    
+cc/c99      C programming            Optional (CD)       Compile standard C programs                                                IEEE Std 1003.1-2001
+cflow       C programming            Optional (XSI)      Generate a C-language call graph                                           System V
+ctags       C programming            Optional (SD)       Create a tags file                                                         3BSD
+cxref       C programming            Optional (XSI)      Generate a C-language program cross-reference table                        System V
+lex         C programming            Optional (CD)       Generate programs for lexical tasks                                        Version 7 AT&T UNIX
+nm          C programming            Optional (SD, XSI)  Write the name list of an object file                                      Version 1 AT&T UNIX
+strings     C programming            Mandatory           Find printable strings in files                                            2BSD
+strip       C programming            Optional (SD)       Remove unnecessary information from executable files                       Version 1 AT&T UNIX
+yacc        C programming            Optional (CD)       Yet another compiler compiler                                              PWB UNIX
+basename    Filesystem               Mandatory           Return non-directory part of pathname; cf.dirname                          Version 7 AT&T UNIX
+cat         Filesystem               Mandatory           Concatenate and print files                                                Version 1 AT&T UNIX
+cd          Filesystem               Mandatory           Change the working directory                                               Version 6 AT&T UNIX
+chgrp       Filesystem               Mandatory           Change the file group ownership                                            PWB UNIX
+chmod       Filesystem               Mandatory           Change the file modes/attributes/permissions                               Version 1 AT&T UNIX
+chown       Filesystem               Mandatory           Change the file ownership                                                  Version 1 AT&T UNIX
+cksum       Filesystem               Mandatory           Write file checksums and sizes                                             4.4BSD
+cmp         Filesystem               Mandatory           Compare two files; see also diff                                           Version 1 AT&T UNIX
+compress    Filesystem               Optional (XSI)      Compress data                                                              4.3BSD
+cp          Filesystem               Mandatory           Copy files                                                                 Version 1 AT&T UNIX
+dd          Filesystem               Mandatory           Convert and copy a file                                                    Version 5 AT&T UNIX
+df          Filesystem               Mandatory           Report free disk space                                                     Version 1 AT&T UNIX
+dirname     Filesystem               Mandatory           Return the directory part of pathname; cf. basename                        System III
+du          Filesystem               Mandatory           Estimate file space usage                                                  Version 1 AT&T UNIX
+file        Filesystem               Mandatory           Determine file type                                                        Version 4 AT&T UNIX
+find        Filesystem               Mandatory           Find files                                                                 Version 1 AT&T UNIX
+link        Filesystem               Optional (XSI)      Create a hard link to a file                                               Version 1 AT&T UNIX
+ln          Filesystem               Mandatory           Link files                                                                 Version 1 AT&T UNIX
+ls          Filesystem               Mandatory           List directory contents                                                    Version 1 AT&T UNIX
+mkdir       Filesystem               Mandatory           Make directories                                                           Version 1 AT&T UNIX
+mkfifo      Filesystem               Mandatory           Make FIFO special files                                                    4.4BSD[dubious – discuss]
+mv          Filesystem               Mandatory           Move or rename files                                                       Version 1 AT&T UNIX
+pathchk     Filesystem               Mandatory           Check pathnames    
+pwd         Filesystem               Mandatory           present working directory - Return  name                                   Version 5 AT&T UNIX
+rm          Filesystem               Mandatory           Remove directory entries                                                   Version 1 AT&T UNIX
+rmdir       Filesystem               Mandatory           Remove directories, if they are empty.                                     Version 1 AT&T UNIX
+touch       Filesystem               Mandatory           Change file access and modification times                                  Version 7 AT&T UNIX
+unlink      Filesystem               Optional (XSI)      Call the unlink function                                                   Version 1 AT&T UNIX
+fort77      FORTRAN77 prog.          Obsolescent (FD)    FORTRAN compiler                                                           XPG4
+alias       Misc                     Mandatory           Define or display aliases    
+ar          Misc                     Mandatory           Create and maintain library archives                                       Version 1 AT&T UNIX
+bc          Misc                     Mandatory           Arbitrary-precision arithmetic language                                    Version 6 AT&T UNIX
+cal         Misc                     Optional (XSI)      Print a calendar                                                           Version 5 AT&T UNIX
+crontab     Misc                     Mandatory           Schedule periodic background work                                          System V
+date        Misc                     Mandatory           Display the date and time                                                  Version 1 AT&T UNIX
+env         Misc                     Mandatory           Set the environment for command invocation                                 System III
+fc          Misc                     Optional (UP)       Process the command history list    
+gencat      Misc                     Mandatory           Generate a formatted message catalog    
+getconf     Misc                     Mandatory           Get configuration values    
+grep        Misc                     Mandatory           Search text for a pattern                                                  Version 4 AT&T UNIX
+hash        Misc                     Mandatory           hash database access method    
+id          Misc                     Mandatory           Return user identity                                                       System V
+ipcrm       Misc                     Optional (XSI)      Remove a message queue, semaphore set, or shared memory segment identifier System V
+ipcs        Misc                     Optional (XSI)      Report interprocess communication facilities status                        System V
+locale      Misc                     Mandatory           Get locale-specific information    
+localedef   Misc                     Mandatory           Define locale environment    
+logname     Misc                     Mandatory           Return the user's login name                                               4.4BSD
+m4          Misc                     Mandatory           Macro processor                                                            PWB UNIX
+mailx       Misc                     Mandatory           Process messages                                                           Version 1 AT&T UNIX
+man         Misc                     Mandatory           Display system documentation                                               Version 2 AT&T UNIX
+mesg        Misc                     Mandatory           Permit or deny messages                                                    Version 1 AT&T UNIX
+newgrp      Misc                     Mandatory           Change to a new group (functionality similar to sg[1])                     Version 6 AT&T UNIX
+od          Misc                     Mandatory           Dump files in various formats                                              Version 1 AT&T UNIX
+pax         Misc                     Mandatory           Portable archive interchange                                               4.4BSD[citation needed]
+split       Misc                     Mandatory           Split files into pieces                                                    Version 3 AT&T UNIX
+stty        Misc                     Mandatory           Set the options for a terminal                                             Version 2 AT&T UNIX
+tabs        Misc                     Mandatory           Set terminal tabs                                                          PWB UNIX
+talk        Misc                     Optional (UP)       Talk to another user                                                       4.2BSD
+tput        Misc                     Mandatory           Change terminal characteristics                                            System V
+tty         Misc                     Mandatory           Return user's terminal name                                                Version 1 AT&T UNIX
+type        Misc                     Optional (XSI)      Displays how a name would be interpreted if used as a command              
+ulimit      Misc                     Optional (XSI)      Set or report file size limit    
+umask       Misc                     Mandatory           Get or set the file mode creation mask                                     System III
+unalias     Misc                     Mandatory           Remove alias definitions    
+uname       Misc                     Mandatory           Return system name                                                         PWB UNIX
+uncompress  Misc                     Optional (XSI)      Expand compressed data                                                     4.3BSD
+write       Misc                     Mandatory           Write to another user's terminal                                           Version 1 AT&T UNIX
+uucp        Network                  Optional (UU)       System-to-system copy                                                      Version 7 AT&T UNIX
+uudecode    Network                  Mandatory           Decode a binary file                                                       4BSD
+uuencode    Network                  Mandatory           Encode a binary file                                                       4BSD
+uustat      Network                  Optional (UU)       uucp status inquiry and job control                                        System III
+at          Process management       Mandatory           Execute commands at a later time                                           Version 7 AT&T UNIX
+batch       Process management       Mandatory           Schedule commands to be executed in a batch queue    
+bg          Process management       Optional (UP)       Run jobs in the background    
+fg          Process management       Optional (UP)       Run jobs in the foreground    
+fuser       Process management       Optional (XSI)      List process IDs of all processes that have one or more files open         System V
+jobs        Process management       Optional (UP)       Display status of jobs in the current session    
+kill        Process management       Mandatory           Terminate or signal processes                          Version 4 AT&T UNIX
+nice        Process management       Mandatory           Invoke a utility with an altered nice value            Version 4 AT&T UNIX
+nohup       Process management       Mandatory           Invoke a utility immune to hangups                     Version 4 AT&T UNIX
+ps          Process management       Mandatory           Report process status                                  Version 4 AT&T UNIX
+renice      Process management       Mandatory           Set nice values of running processes                   4BSD
+time        Process management       Mandatory           Time a simple command                                  Version 3 AT&T UNIX
+uux         Process management       Optional (UU)       Remote command execution                               Version 7 AT&T UNIX
+wait        Process management       Mandatory           Await process completion                               Version 4 AT&T UNIX
+make        Programming              Optional (SD)       Maintain, update, and regenerate groups of programs    PWB UNIX
+admin       SCCS                     Optional (XSI)      Create and administer SCCS files         PWB UNIX
+delta       SCCS                     Optional (XSI)      Make a delta (change) to an SCCS file    PWB UNIX
+get         SCCS                     Optional (XSI)      Get a version of an SCCS file            PWB UNIX
+prs         SCCS                     Optional (XSI)      Print an SCCS file    PWB UNIX
+rmdel       SCCS                     Optional (XSI)      Remove a delta from an SCCS file    PWB UNIX
+sact        SCCS                     Optional (XSI)      Print current SCCS file-editing activity    System III
+sccs        SCCS                     Optional (XSI)      Front end for the SCCS subsystem    4.3BSD
+unget       SCCS                     Optional (XSI)      Undo a previous get of an SCCS file    System III
+val         SCCS                     Optional (XSI)      Validate SCCS files    System III
+what        SCCS                     Optional (XSI)      Identify SCCS files    PWB UNIX
+command     Shell programming        Mandatory           Execute a simple command    
+echo        Shell programming        Mandatory           Write arguments to standard output    Version 2 AT&T UNIX
+expr        Shell programming        Mandatory           Evaluate arguments as an expression    Version 7 AT&T UNIX
+false       Shell programming        Mandatory           Return false value    Version 7 AT&T UNIX
+getopts     Shell programming        Mandatory           Parse utility options    
+logger      Shell programming        Mandatory           Log messages    4.3BSD
+printf      Shell programming        Mandatory           Write formatted output    4.3BSD-Reno
+read        Shell programming        Mandatory           Read a line from standard input    
+sh          Shell programming        Mandatory           Shell, the standard command language interpreter    Version 7 AT&T UNIX (in earlier versions, sh was either the Thompson shell or the PWB shell)
+sleep       Shell programming        Mandatory           Suspend execution for an interval    Version 4 AT&T UNIX
+tee         Shell programming        Mandatory           Duplicate the standard output    Version 5 AT&T UNIX
+test        Shell programming        Mandatory           Evaluate expression    Version 7 AT&T UNIX
+true        Shell programming        Mandatory           Return true value    Version 7 AT&T UNIX
+xargs       Shell programming        Mandatory           Construct argument lists and invoke utility    PWB UNIX
+who         System administration    Mandatory           Display who is on the system    Version 1 AT&T UNIX
+asa         Text processing          Optional (FR)       Interpret carriage-control characters    System V
+awk         Text processing          Mandatory           Pattern scanning and processing language    Version 7 AT&T UNIX
+comm        Text processing          Mandatory           Select or reject lines common to two files    Version 4 AT&T UNIX
+csplit      Text processing          Mandatory           Split files based on context    PWB UNIX
+cut         Text processing          Mandatory           Cut out selected fields of each line of a file    System III
+diff        Text processing          Mandatory           Compare two files; see also cmp    Version 5 AT&T UNIX
+ed          Text processing          Mandatory           The standard text editor    Version 1 AT&T UNIX
+ex          Text processing          Optional (XSI)      Text editor    1BSD
+expand      Text processing          Mandatory           Convert tabs to spaces    3BSD
+fold        Text processing          Mandatory           Filter for folding lines    1BSD
+head        Text processing          Mandatory           Copy the first part of files    PWB UNIX[citation needed]
+iconv       Text processing          Mandatory           Codeset conversion    HP-UX
+join        Text processing          Mandatory           Merges two sorted text files based on the presence of a common field    Version 7 AT&T UNIX
+lp          Text processing          Mandatory           Send files to a printer    System V
+more        Text processing          Optional (UP)       Display files on a page-by-page basis    3BSD
+nl          Text processing          Optional (XSI)      Line numbering filter    System III
+paste       Text processing          Mandatory           Merge corresponding or subsequent lines of files    Version 32V AT&T UNIX
+patch       Text processing          Mandatory           Apply changes to files    4.3BSD
+pr          Text processing          Mandatory           Print files    Version 1 AT&T UNIX
+sed         Text processing          Mandatory           Stream editor    Version 7 AT&T UNIX
+sort        Text processing          Mandatory           Sort, merge, or sequence check text files    Version 1 AT&T UNIX
+tail        Text processing          Mandatory           Copy the last part of a file    PWB UNIX[citation needed]
+tr          Text processing          Mandatory           Translate characters    Version 4 AT&T UNIX
+tsort       Text processing          Mandatory           Topological sort    Version 7 AT&T UNIX
+unexpand    Text processing          Mandatory           Convert spaces to tabs    3BSD
+uniq        Text processing          Mandatory           Report or filter out repeated lines in a file    Version 3 AT&T UNIX
+vi          Text processing          Optional (UP)       Screen-oriented (visual) display editor    1BSD
+wc          Text processing          Mandatory           Line, word and byte or character count    Version 1 AT&T UNIX
+zcat        Text processing          Optional (XSI)      Expand and concatenate data    4.3BSD
