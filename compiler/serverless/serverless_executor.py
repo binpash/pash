@@ -116,12 +116,13 @@ class ServerlessManager:
         )
         self.concurrency_limit = 1000
         self.counter = ThreadSafeCounter(self.concurrency_limit)
+        self.ec2_enabled = False
+        self.ec2_ip = "54.236.13.134"
+        self.ec2_port = 9999
     
     def invoke_ec2(self, folder_ids, script_ids):
-        EC2_IP="54.236.13.134"
-        EC2_PORT = 9999
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((EC2_IP, EC2_PORT))
+        s.connect((self.ec2_ip, self.ec2_port))
         json_data = json.dumps({"ids": script_ids, "folder_ids": folder_ids})
         try:
             s.sendall(json_data.encode("utf-8"))
@@ -179,7 +180,6 @@ class ServerlessManager:
         # print(f"[Serverless Manager] Received request: {request}")
         args = request.split(':', 1)[1].strip()
         ir_filename, declared_functions_file = args.split()
-
         try:
             # prepare scripts
             ir, shell_vars, args = init(ir_filename)
@@ -203,11 +203,11 @@ class ServerlessManager:
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
-                if script_id not in ec2_set:
-                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
+                if self.ec2_enabled and script_id in ec2_set:
+                    invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
                     invocation_thread.start()
                 else:
-                    invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
+                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
                     invocation_thread.start()
         
         except Exception as e:
@@ -216,8 +216,3 @@ class ServerlessManager:
             bytes_message = response_msg.encode('utf-8')
             conn.sendall(bytes_message)
             conn.close()
-
-if __name__ == '__main__':
-    ir_filename = sys.argv[1:][0]
-    declared_functions =  sys.argv[1:][1]
-    main(ir_filename, declared_functions)
