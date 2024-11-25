@@ -12,6 +12,7 @@ from dspash.ir_helper import split_ir
 from ir_to_ast import to_shell
 from ir import *
 import config
+import pash_compiler
 
 
 def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
@@ -111,7 +112,6 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 matching_subgraph.add_edge(new_edge)
             if (not matching_subgraph is main_graph):
                 # arg = recv_rdvkey_1_0_output-fifoname
-                
                 arg = "recv*"+str(communication_key)+"*1*0*"+config.PASH_TMP_PREFIX+str(new_edge)
                 if matching_subgraph not in subgraph_stun_lib_args:
                     subgraph_stun_lib_args[matching_subgraph] = []
@@ -137,16 +137,17 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             for in_edge in subgraph.get_node_input_fids(source):
                 # TODO: also consider in_edge.has_file_descriptor_resource()
                 if in_edge.has_file_resource():
-                    filename = in_edge.get_resource().uri
-                    # Add remote read to current subgraph
-                    ephemeral_edge = file_id_gen.next_ephemeral_file_id()
-                    subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
-                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
-                                                                              is_remote_read=True,
-                                                                              remote_key=filename,
-                                                                              output_edge=None,
-                                                                              is_tcp=False)
-                    subgraph.add_node(remote_read)
+                    subgraph.get_node(source).cmd_invocation_with_io_vars.cmd_name ="python3 aws/s3-get-object.py"
+                    # filename = in_edge.get_resource().uri
+                    # # Add remote read to current subgraph
+                    # ephemeral_edge = file_id_gen.next_ephemeral_file_id()
+                    # subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
+                    # remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
+                    #                                                           is_remote_read=True,
+                    #                                                           remote_key=filename,
+                    #                                                           output_edge=None,
+                    #                                                           is_tcp=False)
+                    # subgraph.add_node(remote_read)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
