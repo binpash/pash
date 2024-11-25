@@ -183,6 +183,21 @@ class ServerlessManager:
         )
         self.concurrency_limit = 1000
         self.counter = ThreadSafeCounter(self.concurrency_limit)
+    
+    def invoke_ec2(self, folder_ids, script_ids):
+        EC2_IP="54.236.13.134"
+        EC2_PORT = 9999
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((EC2_IP, EC2_PORT))
+        json_data = json.dumps({"ids": script_ids, "folder_ids": folder_ids})
+        try:
+            s.sendall(json_data.encode("utf-8"))
+            s.sendall(b"END")
+            _ = s.recv(1024)
+            s.close()
+            self.counter.decrement()
+        except Exception as e:
+            log(f"EC2 failed {folder_ids} && {folder_ids}: {e}")
 
     def invoke_lambda(self, folder_ids, script_ids):
         # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
@@ -235,9 +250,7 @@ class ServerlessManager:
         try:
             # prepare scripts
             ir, shell_vars, args = init(ir_filename)
-            main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
-
-            # put scripts into s3
+            main_graph_script_id, main_subgraph_script_id, script_id_to_script, ec2_set = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
             s3_folder_id = str(int(time.time()))
             s3 = boto3.client('s3')
             bucket = os.getenv("AWS_BUCKET")
@@ -257,8 +270,12 @@ class ServerlessManager:
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
-                invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
-                invocation_thread.start()
+                if script_id not in ec2_set:
+                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
+                    invocation_thread.start()
+                else:
+                    invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
+                    invocation_thread.start()
         
         except Exception as e:
             log(f"[Serverless Manager] Failed to add job to a queue: {e}")
