@@ -21,38 +21,6 @@ import multiprocessing
 
 AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
 QUEUE=os.environ.get("AWS_QUEUE")
-EC2_IP=os.environ.get("AWS_EC2_IP")
-
-def wait_msg_done_sqs():
-    while True:
-        sqs = boto3.client('sqs')
-        queue_url = f'https://sqs.us-east-1.amazonaws.com/{AWS_ACCOUNT_ID}/{QUEUE}'
-        # Receive message from SQS queue
-        response = sqs.receive_message(
-            QueueUrl=queue_url,
-            AttributeNames=[
-                'SentTimestamp'
-            ],
-            MaxNumberOfMessages=1,
-            MessageAttributeNames=[
-                'All'
-            ],
-            VisibilityTimeout=30,
-            WaitTimeSeconds=20
-        )
-        try:
-            message = response['Messages'][0]
-            receipt_handle = message['ReceiptHandle']
-
-            # Delete received message from queue
-            sqs.delete_message(
-                QueueUrl=queue_url,
-                ReceiptHandle=receipt_handle
-            )
-            log('Received and deleted message: %s' % message)
-            break
-        except:
-            time.sleep(1)
 
 def create_dynamo_table():
     dynamo = boto3.client('dynamodb')
@@ -79,45 +47,10 @@ def create_dynamo_table():
         log(f"[Serverless Manager] Table sls-result already exists!")
     return
 
-
-def wait_msg_done_dynamo(key):
-    try:
-        while True:
-            dynamo = boto3.client('dynamodb')
-            table_name = 'sls-result'
-            response = dynamo.get_item(
-                TableName=table_name,
-                Key={
-                    'key': {
-                        'S': key
-                    }
-                }
-            )
-            if 'Item' in response:
-                break
-            time.sleep(1)    
-    except:
-        log(f"[Serverless Manager] DynamoDB get item error: {e}")
-    return
-
 def read_graph(filename):
     with open(filename, "rb") as ir_file:
         ir, shell_vars, args = pickle.load(ir_file)
     return ir, shell_vars, args
-
-def invoke_lambda_ec2(script_id_to_script, script_id, folder_id):
-    EC2_PORT = 9999
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((EC2_IP, EC2_PORT))
-    json_data = json.dumps({"id": script_id, "folder_id": folder_id})
-    # send length first?
-    # s.sendall(str(len(encoded_json_data))+"\r\n".encode("utf-8"))
-    try:
-        s.sendall(json_data.encode("utf-8"))
-        s.close()
-    except Exception as e:
-        log(f"EC2 {script_id} invocation error: {e}")
-    log(f"EC2 {script_id} invocation")
 
 def init(ir_filename: str) -> Tuple[IR, argparse.Namespace, dict]:
     # init pash_args, config, logging
