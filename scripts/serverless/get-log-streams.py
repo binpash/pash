@@ -3,7 +3,8 @@ import boto3
 from datetime import datetime
 client = boto3.client('logs')
 
-folder = os.getenv("LOG_FOLDER")
+# folder = os.getenv("LOG_FOLDER")
+folder = "logs"
 if not os.path.exists(folder):
     os.mkdir(folder)
 
