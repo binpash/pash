@@ -111,6 +111,8 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
             if (not matching_subgraph is main_graph):
+                if not args.no_eager:
+                    pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
                 # arg = recv_rdvkey_1_0_output-fifoname
                 arg = "recv*"+str(communication_key)+"*1*0*"+config.PASH_TMP_PREFIX+str(new_edge)
                 if matching_subgraph not in subgraph_stun_lib_args:
