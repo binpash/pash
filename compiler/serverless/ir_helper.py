@@ -218,6 +218,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     
     # save the output scripts
     script_id_to_script = {}
+    ec2_set = set()
     for subgraph, id_ in subgraph_script_id_pairs.items():
         # making necessary temp directories
         dir_set = set()
@@ -244,5 +245,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         else:
             log("[Serverless Manager] Script for other lambda saved in:"+script_name)
         # log(script)
+        if ("split" in script) or ("sort -m" in script):
+            ec2_set.add(str(id_))
 
-    return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script
+    return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set
