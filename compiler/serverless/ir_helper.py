@@ -139,17 +139,16 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             for in_edge in subgraph.get_node_input_fids(source):
                 # TODO: also consider in_edge.has_file_descriptor_resource()
                 if in_edge.has_file_resource():
-                    subgraph.get_node(source).cmd_invocation_with_io_vars.cmd_name ="python3 aws/s3-get-object.py"
-                    # filename = in_edge.get_resource().uri
-                    # # Add remote read to current subgraph
-                    # ephemeral_edge = file_id_gen.next_ephemeral_file_id()
-                    # subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
-                    # remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
-                    #                                                           is_remote_read=True,
-                    #                                                           remote_key=filename,
-                    #                                                           output_edge=None,
-                    #                                                           is_tcp=False)
-                    # subgraph.add_node(remote_read)
+                    filename = in_edge.get_resource().uri
+                    # Add remote read to current subgraph
+                    ephemeral_edge = file_id_gen.next_ephemeral_file_id()
+                    subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
+                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
+                                                                              is_remote_read=True,
+                                                                              remote_key=filename,
+                                                                              output_edge=None,
+                                                                              is_tcp=False)
+                    subgraph.add_node(remote_read)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
@@ -245,7 +244,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         else:
             log("[Serverless Manager] Script for other lambda saved in:"+script_name)
         # log(script)
-        if ("split" in script) or ("sort -m" in script):
+        if ("split" in script) or ("s3-put" in script) or ("sort -m" in script) or ("merge" in script):
             ec2_set.add(str(id_))
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set
