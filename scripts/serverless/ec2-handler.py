@@ -4,6 +4,9 @@ import subprocess
 import uuid
 import os
 import json
+import boto3
+
+BUCKET=os.environ.get("AWS_BUCKET")
 
 # Function to handle each client connection
 def handle_client(client_socket, client_address, tmp_dir):
@@ -20,19 +23,27 @@ def handle_client(client_socket, client_address, tmp_dir):
             client_socket.close()
             return
         event = json.loads(request.decode("utf-8"))
-        data = event["data"]
-        id_ = event["id"]
-        scripts_dict = json.loads(data)
-        with open(f"{tmp_dir}/data-{id_}", "w") as f:
-            f.write(data)
-        print("[EC2 Handler] Executing script ID", id_)
-        # print(scripts_dict[id_])
-        with open(f"{tmp_dir}/script-{id_}.sh", "w") as f:
-            f.write(scripts_dict[id_])
-        process = subprocess.run(
-            ["/bin/bash", f"{tmp_dir}/script-{id_}.sh", f"{tmp_dir}/data-{id_}"]
-        )
-        print(f"[EC2 Handler] script {id_} execution return code: {process.returncode}")
+        for i, folder_id in enumerate(event['folder_ids']):
+            id_ = event['ids'][i]
+            # load the data from s3
+            s3 = boto3.client("s3")
+            key = f"sls-scripts/{folder_id}/{id_}.sh"
+            print(f"Try to pull script from {key}")
+            response = s3.get_object(Bucket=BUCKET, Key=key)
+            print("[EC2 Handler] Executing script ID", id_, flush=True)
+            with open(f"/tmp/script-{folder_id}-{id_}.sh", "wb") as f:
+                while True:
+                    x = response["Body"].read(10000)
+                    if not x:
+                        break
+                    f.write(x)
+                    f.flush()
+            # with open(f"/tmp/script-{id_}.sh", "r") as f:
+            #     print(f"Script: {f.read()}", flush=True)
+            process = subprocess.run(
+                ["/bin/bash", f"/tmp/script-{folder_id}-{id_}.sh", folder_id]
+            )
+            print(f"[EC2 Handler] script {folder_id}/{id_} execution return code: {process.returncode}")
     except Exception as e:
         print(f"[EC2 Handler] Error handling client {client_address}: {e}")
     finally:

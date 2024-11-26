@@ -227,7 +227,7 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             # pr.print_stats()
 
             # Eagers are added in remote notes when using distributed exec
-            if(not args.no_eager and not args.distributed_exec): 
+            if(not args.no_eager and not args.distributed_exec and not args.serverless_exec): 
                 eager_distributed_graph = add_eager_nodes(distributed_graph)
             else:
                 eager_distributed_graph = distributed_graph
