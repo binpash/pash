@@ -95,7 +95,7 @@ def wait_msg_done_dynamo(key):
             )
             if 'Item' in response:
                 break
-            time.sleep(1)    
+            time.sleep(1)
     except:
         log(f"[Serverless Manager] DynamoDB get item error: {e}")
     return
@@ -154,7 +154,7 @@ class ThreadSafeCounter:
                 self.counter_history.append((time.time(), self.value))
                 break
         return self.value
-    
+
     def decrement(self, time_taken=0):
         with self._lock:
             self.value -= 1
@@ -165,7 +165,7 @@ class ThreadSafeCounter:
     def get_value(self):
         with self._lock:
             return self.value, self.total_time
-    
+
     def print_history(self):
         with self._lock:
             for time, value in self.counter_history:
@@ -181,7 +181,7 @@ class ServerlessManager:
             connect_timeout=60,
             retries={"max_attempts": 0}
         )
-        self.concurrency_limit = 1000
+        self.concurrency_limit = 2000 # NOTE Changing this for leash invocation microbenchmark
         self.counter = ThreadSafeCounter(self.concurrency_limit)
 
     def invoke_lambda(self, folder_ids, script_ids):
@@ -204,7 +204,7 @@ class ServerlessManager:
         end = time.time()
         self.counter.decrement(end-start)
         return
-    
+
     def run(self):
         self.sls_socket = SocketManager(os.getenv('SERVERLESS_SOCKET'))
 
@@ -238,15 +238,38 @@ class ServerlessManager:
             main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
 
             # put scripts into s3
+
             s3_folder_id = str(int(time.time()))
-            s3 = boto3.client('s3')
+
+            client_config = BotocoreConfig(max_pool_connections=1000)
+
+            s3 = boto3.client('s3', config=client_config)
             bucket = os.getenv("AWS_BUCKET")
             if not bucket:
                 raise Exception("AWS_BUCKET environment variable not set")
+
+            start = time.time()
+
+            upload_threads = []
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
-                s3.put_object(Bucket=bucket, Key=f'sls-scripts/{s3_folder_id}/{script_id}.sh', Body=script)
+
+                # s3.put_object(Bucket=bucket, Key=f'sls-scripts/{s3_folder_id}/{script_id}.sh', Body=script)
+                upload_thread = threading.Thread(target=s3.put_object, kwargs={
+                        'Bucket': bucket,
+                        'Key': f'sls-scripts/{s3_folder_id}/{script_id}.sh',
+                        'Body': script
+                    })
+                upload_threads.append(upload_thread)
+                upload_thread.start()
+
+            for upload_thread in upload_threads:
+                upload_thread.join()
+
+            end = time.time()
+
+            print(f"Uploaded all s3 scripts in {end-start} seconds")
 
             response_msg = f"OK {s3_folder_id} {main_subgraph_script_id}"
             bytes_message = response_msg.encode('utf-8')
@@ -259,7 +282,7 @@ class ServerlessManager:
                     continue
                 invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
                 invocation_thread.start()
-        
+
         except Exception as e:
             log(f"[Serverless Manager] Failed to add job to a queue: {e}")
             response_msg = f"ERR {e}"
