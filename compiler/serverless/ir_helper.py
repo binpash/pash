@@ -12,6 +12,7 @@ from dspash.ir_helper import split_ir
 from ir_to_ast import to_shell
 from ir import *
 import config
+import pash_compiler
 
 
 def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
@@ -110,8 +111,9 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
             if (not matching_subgraph is main_graph):
+                if not args.no_eager:
+                    pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
                 # arg = recv_rdvkey_1_0_output-fifoname
-                
                 arg = "recv*"+str(communication_key)+"*1*0*"+config.PASH_TMP_PREFIX+str(new_edge)
                 if matching_subgraph not in subgraph_stun_lib_args:
                     subgraph_stun_lib_args[matching_subgraph] = []
@@ -215,6 +217,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     
     # save the output scripts
     script_id_to_script = {}
+    ec2_set = set()
     for subgraph, id_ in subgraph_script_id_pairs.items():
         # making necessary temp directories
         dir_set = set()
@@ -241,5 +244,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         else:
             log("[Serverless Manager] Script for other lambda saved in:"+script_name)
         # log(script)
+        if ("split" in script) or ("s3-put" in script) or ("sort -m" in script) or ("merge" in script):
+            ec2_set.add(str(id_))
 
-    return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script
+    return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set

@@ -21,38 +21,6 @@ import multiprocessing
 
 AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
 QUEUE=os.environ.get("AWS_QUEUE")
-EC2_IP=os.environ.get("AWS_EC2_IP")
-
-def wait_msg_done_sqs():
-    while True:
-        sqs = boto3.client('sqs')
-        queue_url = f'https://sqs.us-east-1.amazonaws.com/{AWS_ACCOUNT_ID}/{QUEUE}'
-        # Receive message from SQS queue
-        response = sqs.receive_message(
-            QueueUrl=queue_url,
-            AttributeNames=[
-                'SentTimestamp'
-            ],
-            MaxNumberOfMessages=1,
-            MessageAttributeNames=[
-                'All'
-            ],
-            VisibilityTimeout=30,
-            WaitTimeSeconds=20
-        )
-        try:
-            message = response['Messages'][0]
-            receipt_handle = message['ReceiptHandle']
-
-            # Delete received message from queue
-            sqs.delete_message(
-                QueueUrl=queue_url,
-                ReceiptHandle=receipt_handle
-            )
-            log('Received and deleted message: %s' % message)
-            break
-        except:
-            time.sleep(1)
 
 def create_dynamo_table():
     dynamo = boto3.client('dynamodb')
@@ -104,20 +72,6 @@ def read_graph(filename):
     with open(filename, "rb") as ir_file:
         ir, shell_vars, args = pickle.load(ir_file)
     return ir, shell_vars, args
-
-def invoke_lambda_ec2(script_id_to_script, script_id, folder_id):
-    EC2_PORT = 9999
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((EC2_IP, EC2_PORT))
-    json_data = json.dumps({"id": script_id, "folder_id": folder_id})
-    # send length first?
-    # s.sendall(str(len(encoded_json_data))+"\r\n".encode("utf-8"))
-    try:
-        s.sendall(json_data.encode("utf-8"))
-        s.close()
-    except Exception as e:
-        log(f"EC2 {script_id} invocation error: {e}")
-    log(f"EC2 {script_id} invocation")
 
 def init(ir_filename: str) -> Tuple[IR, argparse.Namespace, dict]:
     # init pash_args, config, logging
@@ -183,6 +137,22 @@ class ServerlessManager:
         )
         self.concurrency_limit = 2000 # NOTE Changing this for leash invocation microbenchmark
         self.counter = ThreadSafeCounter(self.concurrency_limit)
+        self.ec2_enabled = False
+        self.ec2_ip = "54.236.13.134"
+        self.ec2_port = 9999
+
+    def invoke_ec2(self, folder_ids, script_ids):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((self.ec2_ip, self.ec2_port))
+        json_data = json.dumps({"ids": script_ids, "folder_ids": folder_ids})
+        try:
+            s.sendall(json_data.encode("utf-8"))
+            s.sendall(b"END")
+            _ = s.recv(1024)
+            s.close()
+            self.counter.decrement()
+        except Exception as e:
+            log(f"EC2 failed {folder_ids} && {folder_ids}: {e}")
 
     def invoke_lambda(self, folder_ids, script_ids):
         # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
@@ -231,14 +201,10 @@ class ServerlessManager:
         # print(f"[Serverless Manager] Received request: {request}")
         args = request.split(':', 1)[1].strip()
         ir_filename, declared_functions_file = args.split()
-
         try:
             # prepare scripts
             ir, shell_vars, args = init(ir_filename)
-            main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
-
-            # put scripts into s3
-
+            main_graph_script_id, main_subgraph_script_id, script_id_to_script, ec2_set = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
             s3_folder_id = str(int(time.time()))
 
             client_config = BotocoreConfig(max_pool_connections=1000)
@@ -273,15 +239,19 @@ class ServerlessManager:
 
             response_msg = f"OK {s3_folder_id} {main_subgraph_script_id}"
             bytes_message = response_msg.encode('utf-8')
-            conn.sendall(bytes_message)
-            conn.close()
             # preempt number of lambdas to be invoked
             self.counter.increment(len(script_id_to_script)-1)
+            conn.sendall(bytes_message)
+            conn.close()
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
-                invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
-                invocation_thread.start()
+                if self.ec2_enabled and script_id in ec2_set:
+                    invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
+                    invocation_thread.start()
+                else:
+                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
+                    invocation_thread.start()
 
         except Exception as e:
             log(f"[Serverless Manager] Failed to add job to a queue: {e}")
@@ -289,8 +259,3 @@ class ServerlessManager:
             bytes_message = response_msg.encode('utf-8')
             conn.sendall(bytes_message)
             conn.close()
-
-if __name__ == '__main__':
-    ir_filename = sys.argv[1:][0]
-    declared_functions =  sys.argv[1:][1]
-    main(ir_filename, declared_functions)
