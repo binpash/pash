@@ -48,6 +48,9 @@ def init():
 
     pash_compiler.runtime_config = config.config['distr_planner']
 
+    ## Initialize the parallelization success flag
+    config.parallelization_success = False
+
     return args
 
 
@@ -291,15 +294,15 @@ class Scheduler:
 
         ## Do not increase the running procs if assert_compiler_success is enabled
         ##  and compilation failed, since nothing will run then.
-        if not compile_success and config.pash_args.assert_compiler_success:
-            pass
+        if (not compile_success and config.pash_args.assert_all_regions_parallelizable): 
+            pass 
+        elif (not compile_success and current_region_parallelizable and config.pash_args.assert_compiler_success): 
+            pass 
         else:
             self.running_procs += 1
-    
-        if ast_or_ir is not None:
-            compile_success = True
-            if run_parallel:
-                self.parallelized_flag = True
+
+        if config.parallelization_success:
+            self.parallelized_flag = True
 
         ## Get the time before we start executing (roughly) to determine how much time this command execution will take
         command_exec_start_time = datetime.now()
@@ -341,18 +344,11 @@ class Scheduler:
         ## Get the execution time        
         command_finish_exec_time = datetime.now()
         command_start_exec_time = self.process_id_input_ir_map[process_id].get_start_exec_time()
-        exec_time = (command_finish_exec_time - command_start_exec_time).total_seconds()
+        exec_time = (command_finish_exec_time - command_start_exec_time) / timedelta(milliseconds=1)
         log("Process:", process_id, "exited. Exec time was:", exec_time)
         self.handle_time_measurement(process_id, exec_time)
 
-        proc_info = self.process_id_input_ir_map[process_id]
-        if proc_info.compiler_config.width > 1:  # Check if it was parallelized
-            if exec_time < 1:
-                log(f"Process {process_id} was parallelized but had negligible execution time: {exec_time:.2f} seconds.")
-            else:
-                log(f"Process {process_id} was parallelized successfully. Execution time: {exec_time:.2f} seconds.")
-        else:
-            log(f"Process {process_id} was not parallelized. Sequential execution time: {exec_time:.2f} seconds.")
+
     
         self.remove_process(process_id)
         ## Necessary so that Exit doesn't block
@@ -430,15 +426,17 @@ class Scheduler:
         
         self.connection_manager.close()
         if not self.parallelized_flag:
-            log("No parts of the input script were parallelized. Ensure commands are annotated for parallelization.")
+            log("[PaSh Warning] No region of the script was parallelized. Maybe you are missing relevant annotations? Use -d 1 for more info.", level=0)
         elif all(
             proc_info.exec_time is not None and proc_info.exec_time < 1
             for proc_info in self.process_id_input_ir_map.values()
         ):
-            log("Some script fragments were parallelized, but their execution times were negligible.")
-            log("Consider optimizing your script to include longer-running tasks.")
-        else:
-            log("Parallelization completed successfully.")
+            if any(proc_info.exec_time is None for proc_info in self.process_id_input_ir_map.values()):
+                    log("[PaSh Warning] Some processes did not have their execution times recorded. Check process handling logic.", level=0)
+            else:
+                log("[PaSh Warning] Some script fragments were parallelized, but their execution times were negligible (<1s).")
+
+        
         shutdown()
 
 
