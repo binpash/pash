@@ -51,6 +51,7 @@ def main_body():
         config.load_config(args.config_path)
 
     runtime_config = config.config['distr_planner']
+    config.parallelization_success = False
 
     ## Read any shell variables files if present
     vars_dict = env_vars_util.read_vars_file(args.var_file)
@@ -93,9 +94,10 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
         if ret is None:
-            log("No parallelization opportunities detected for this script.")
+            log("[PaSh Info] No parallelization opportunities detected for this region.")
     except Exception as e:
-        log("WARNING: Exception caught:", e)
+        log("[PaSh Warning] Compilation failed due to an unexpected error.", level=0)
+        log(traceback.format_exc(), level=1)
         # traceback.print_exc()
 
     return ret
@@ -137,7 +139,7 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
     
         ret = optimized_ast_or_ir
     else:
-        raise Exception("Script failed to compile!")
+        log("[PaSh Warning] Script failed to compile. Ensure regions are annotated properly.", level=0)
     
     return ret
 
@@ -213,6 +215,9 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             ## Assert that the graph that was returned from compilation is valid
             assert(ast_or_ir.valid())
 
+        if ast_or_ir.valid():
+            config.parallelization_success = True
+
             # log(ir_node)
             # with cProfile.Profile() as pr:
             distributed_graph = choose_and_apply_parallelizing_transformations(ast_or_ir, compiler_config.width,
@@ -252,6 +257,8 @@ def print_graph_statistics(graph):
 
 def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, r_split_batch_size):
     parallelizer_map = choose_parallelizing_transformations(graph)
+    if any(parallelizer_map.values()):  # Check if any transformations were applied
+        config.parallelization_success = True
     apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, 
                                         r_split_batch_size)
     return graph
