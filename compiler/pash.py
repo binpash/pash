@@ -36,8 +36,8 @@ def main():
         
         log("-" * 40) #log end marker
         
-        if args.debug >= 1:
-            log("Use the '-d 1' option for detailed debugging information.")
+        log("[PaSh Info] Use the '-d 1' option for detailed debugging information.")
+
         ## Return the exit code of the executed script
         sys.exit(return_code)
 
