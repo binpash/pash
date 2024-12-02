@@ -70,40 +70,45 @@ function run_all_benchmarks() {
   find . -type d -name "outputs" 2> /dev/null | xargs rm -rf
   # do not remove any input from the node_modules dataset
   find . -type d -not -path "*/node_modules/*" -name "output" 2> /dev/null | xargs rm -rf
-  find . -type d -name "pash_logs" 2> /dev/null | xargs rm -rf
+  # find . -type d -name "pash_logs" 2> /dev/null | xargs rm -rf # Caruca: We want this
   find . -type f -name "*.res" 2> /dev/null | xargs rm -f
   # start preparing from execution
-  export PASH_ALL_FLAGS=(" "
-                         "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
-  export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "nlp" "max-temp" "web-index" "dependency_untangling")
-  export PASH_MODE=("pash_aot" 
-                    "pash_jit")
+  # export PASH_ALL_FLAGS=(" "
+  #                        "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
 
-  echo 'Running all bash benchmarks'
-  time run_bash
+  export PASH_ALL_FLAGS=("-d 1")
+  # export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "nlp" "max-temp" "web-index" "dependency_untangling")
+  export PASH_BENCHMARK=("oneliners")
+  # export PASH_MODE=("pash_aot" 
+  #                   "pash_jit")
+  export PASH_MODE=("pash_jit")
+
+
+  # echo 'Running all bash benchmarks'
+  # time run_bash
   echo 'Running PaSh JIT/PaSh AOT benchmarks'
   time run_bench 
 
-  ##### Figure 6
-  export PASH_ALL_FLAGS=("--r_split --dgsh_tee --r_split_batch_size 1000000" 
-                         "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines" )
-  export PASH_BENCHMARK=("nlp" "max-temp" "dependency_untangling")
-  export PASH_MODE=("pash_jit_no_prof_no_du" 
-                    "pash_jit_no_prof")
+  # ##### Figure 6
+  # export PASH_ALL_FLAGS=("--r_split --dgsh_tee --r_split_batch_size 1000000" 
+  #                        "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines" )
+  # export PASH_BENCHMARK=("nlp" "max-temp" "dependency_untangling")
+  # export PASH_MODE=("pash_jit_no_prof_no_du" 
+  #                   "pash_jit_no_prof")
 
-  time run_bench 
+  # time run_bench 
 
-  ##### Figure 7
-  export PASH_ALL_FLAGS=(
-  #"--dgsh_tee  # omitted until it's fixed
-  "--parallel_pipelines --profile_driven" )
-  export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "max-temp" "web-index")
-  export PASH_MODE=("pash_jit_no_comm")
+  # ##### Figure 7
+  # export PASH_ALL_FLAGS=(
+  # #"--dgsh_tee  # omitted until it's fixed
+  # "--parallel_pipelines --profile_driven" )
+  # export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "max-temp" "web-index")
+  # export PASH_MODE=("pash_jit_no_comm")
 
-  time run_bench 
+  # time run_bench 
 
-  # kill the hanging processes 
-  pkill -f cat
+  # # kill the hanging processes 
+  # pkill -f cat
 }
 # run all the tests and store the results $RES_FOLDER
 run_all_benchmarks ${RES_FOLDER}
