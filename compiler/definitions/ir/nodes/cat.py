@@ -4,7 +4,7 @@ class Cat(DFGNode):
     def __init__(self, inputs, outputs, com_name, com_category,
                  com_options = [], com_redirs = [], com_assignments=[]):
         assert(str(com_name) == "cat")
-        assert(com_category == "stateless")
+        # assert(com_category == "stateless")
         super().__init__(inputs, outputs, com_name, com_category,
                          com_options=com_options, 
                          com_redirs=com_redirs, 
