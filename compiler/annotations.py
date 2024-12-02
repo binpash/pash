@@ -220,7 +220,7 @@ def interpret_io(io, options, ann_options):
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
 
-        # log(io, options)
+        # log("caruca", io, options)
 
         ## Find the file arguments (and their indices)
         args_indices = non_option_args_indices(options)
@@ -317,9 +317,11 @@ def get_command_from_annotation(command, options, annotation):
 
 def find_annotation_case(options, cases):
     for case in cases:
+        # log("caruca", case)
         if(predicate_satisfied(options, case['predicate'])):
             return case
 
+    log("caruca: no annotation matched!")
     ## Unreachable
     assert(False)
 
@@ -331,7 +333,6 @@ def predicate_satisfied(options, predicate):
     return func(options)
 
 def interpret_predicate(predicate):
-    # log(predicate)
     operator = predicate['operator']
     operands = []
     try:
@@ -350,6 +351,8 @@ def interpret_predicate(predicate):
         return lambda options: or_operator(operands, options)
     elif(operator == 'not'):
         return lambda options: not_operator(operands, options)
+    elif(operator == 'and'):
+        return lambda options: and_operator(operands, options)
 
     ## TODO: Fill in the rest
     return lambda x: log("Uninterpreted operator:", operator); False
@@ -364,6 +367,8 @@ def len_args(desired_length, options):
     return (len(args) == desired_length)
 
 def exists_operator(desired_options, options):
+    if len(desired_options) == 0:
+        return len(option_args(options)) == 0
     opt_args_set = set(option_args(options))
     existence = map(lambda opt: opt in opt_args_set, desired_options)
     return any(existence)
@@ -389,6 +394,10 @@ def all_operator(desired_options, options):
 def or_operator(operands, options):
     operand_predicates = map(lambda op: interpret_predicate(op)(options), operands)
     return any(operand_predicates)
+
+def and_operator(operands, options):
+    operand_predicates = map(lambda op: interpret_predicate(op)(options), operands)
+    return all(operand_predicates)
 
 ## Operands: One predicate
 def not_operator(operands, options):

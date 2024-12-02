@@ -213,7 +213,7 @@ def find_command_category(command, options):
     global custom_command_categories
 
     command_string = format_arg_chars(command)
-    # log("Command to categorize:", command_string)
+    log("caruca command to categorize:", command_string)
 
     assert(isinstance(command_string, str))
 
@@ -227,6 +227,9 @@ def find_command_category(command, options):
     command_class_from_annotation = get_command_class_from_annotations(command_string,
                                                                        options,
                                                                        config.annotations)
+
+    log("caruca class:", command_class_from_annotation, "found for:", command_string, format_args(options))
+
     if (command_class_from_annotation):
         log("class:", command_class_from_annotation, "found for:", command_string)
         return command_class_from_annotation

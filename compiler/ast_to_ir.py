@@ -8,6 +8,7 @@ from expand import *
 import subprocess
 import config
 import pickle
+from ir_utils import *
 
 ##
 ## Compile AST -> Extended AST with IRs
@@ -102,11 +103,10 @@ def compile_asts(ast_objects, fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        # log("Compiling AST {}".format(i))
-        # log(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
         expanded_ast = expand_command(ast_object, config)
+        # log("caruca exp", expanded_ast)
         compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
         # log("Compiled AST:")
@@ -151,6 +151,8 @@ def compile_asts(ast_objects, fileIdGen, config):
 
 
 def compile_node(ast_object, fileIdGen, config):
+    # if hasattr(ast_object, "arguments"):
+    #     log("caruca ast", format_args(ast_object.arguments))
     global compile_cases
     return ast_match(ast_object, compile_cases, fileIdGen, config)
 
@@ -247,7 +249,7 @@ def compile_node_command(ast_node, fileIdGen, config):
             compiled_ast = ir
         except ValueError as err:
             ## TODO: Delete this log from here
-            log(err)
+            log("caruca err", err)
             ## TODO: Maybe we want to fail here instead of waiting for later?
             ##       Is there any case where a non-compiled command is fine?
             # log(traceback.format_exc())
@@ -986,6 +988,7 @@ def ast_match_untyped(untyped_ast_object, cases, *args):
 def ast_match(ast_node, cases, *args):
     ## TODO: Remove that once `ast_match_untyped` is fixed to
     ##       construct the whole AstNode object.
+    # log("caruca ast", ast_node)
     if(not isinstance(ast_node, AstNode)):
         return ast_match_untyped(ast_node, cases, *args)
 
