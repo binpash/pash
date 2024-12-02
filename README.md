@@ -82,3 +82,5 @@ location = {Online Event, United Kingdom},
 series = {EuroSys '21}
 }
 ```
+
+Caruca Note: docker run -it -v "$(pwd)":/opt/pash pash:caruca bash
