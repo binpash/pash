@@ -20,12 +20,13 @@ if [[ "$1" == "-c" ]]; then
 fi
 
 setup_dataset() {
+    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input/small
     # generate small inputs 
     if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
       if [ ! -d ./small ]; then                                                          
         echo "Generating small-size inputs"                                             
         # FIXME PR: Do we need all of them?                                             
-        curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/unix50.zip' > unix50.zip
+        wget --no-check-certificate 'https://atlas.cs.brown.edu/data/small/unix50.zip'
         unzip unix50.zip                                                                 
         rm -f unix50.zip                                                                 
       fi                                                                                 

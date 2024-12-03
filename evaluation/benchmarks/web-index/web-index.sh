@@ -109,14 +109,14 @@ extract_text()
     do
         cat $line |
             iconv -c -t ascii//TRANSLIT |
-            pandoc +RTS -K64m -RTS --from html --to plain --quiet
+            pandoc +RTS -K64m -RTS --from html --to plain
     done
 }
 
 export -f extract_text
 
 cat $IN |
-  sed "s#^#$WIKI#" |
+  sed "s#^#$WIKI/articles/#" |
   extract_text |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |

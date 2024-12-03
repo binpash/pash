@@ -52,7 +52,7 @@ run_bench() {
             ${bench}_pash ${setup_flags}
             mkdir -p ${pdir}
             # move the folder to our dest
-            rm -rf ${bench}/outputs
+            # rm -rf ${bench}/outputs # Caruca: we want this
             # copy the time file
             mv ${bench}/par.res ${pdir}/
         done
@@ -67,10 +67,10 @@ function run_all_benchmarks() {
   mkdir -p ${RES_FOLDER}
   cd ${PASH_TOP}/evaluation/benchmarks
   # remove all res files from previous runs
-  find . -type d -name "outputs" 2> /dev/null | xargs rm -rf
+  # find . -type d -name "outputs" 2> /dev/null | xargs rm -rf # Caruca: We keep this
   # do not remove any input from the node_modules dataset
-  find . -type d -not -path "*/node_modules/*" -name "output" 2> /dev/null | xargs rm -rf
-  # find . -type d -name "pash_logs" 2> /dev/null | xargs rm -rf # Caruca: We want this
+  # find . -type d -not -path "*/node_modules/*" -name "output" 2> /dev/null | xargs rm -rf
+  # find . -type d -name "pash_logs" 2> /dev/null | xargs rm -rf # Caruca: We keep this
   find . -type f -name "*.res" 2> /dev/null | xargs rm -f
   # start preparing from execution
   # export PASH_ALL_FLAGS=(" "
@@ -78,7 +78,7 @@ function run_all_benchmarks() {
 
   export PASH_ALL_FLAGS=("-d 1")
   # export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "nlp" "max-temp" "web-index" "dependency_untangling")
-  export PASH_BENCHMARK=("oneliners")
+  export PASH_BENCHMARK=("dependency_untangling")
   # export PASH_MODE=("pash_aot" 
   #                   "pash_jit")
   export PASH_MODE=("pash_jit")
@@ -86,7 +86,7 @@ function run_all_benchmarks() {
 
   # echo 'Running all bash benchmarks'
   # time run_bash
-  echo 'Running PaSh JIT/PaSh AOT benchmarks'
+  echo 'Running PaSh JIT'
   time run_bench 
 
   # ##### Figure 6

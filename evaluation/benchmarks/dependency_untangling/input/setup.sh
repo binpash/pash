@@ -25,6 +25,8 @@ if [ "$1" == "-c" ]; then
 fi
 
 setup_dataset() {
+
+  return 0;
   if [ "$1" == "--small" ]; then
       LOG_DATA_FILES=6
       WAV_DATA_FILES=20

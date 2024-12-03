@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 7zip
-pkgs='p7zip-full curl wget nodejs' 
+pkgs='p7zip-full curl wget nodejs pandoc' 
 if ! dpkg -s $pkgs >/dev/null 2>&1 ; then
   sudo apt-get install $pkgs -y
   echo 'Packages Installed'

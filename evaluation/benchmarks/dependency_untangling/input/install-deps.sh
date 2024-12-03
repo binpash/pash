@@ -25,9 +25,9 @@ if [ ! -d ${IN}/deps/samtools-1.7 ]; then
     echo 'Samtools installed'
 fi
 
-if ! dpkg -s "makedeb-makepkg" >/dev/null 2>&1 ; then
-    cd ${IN}/deps/
-    wget http://pac-n4.csail.mit.edu:81/pash_data/makedeb.deb
-    sudo dpkg -i makedeb.deb
-    echo 'Makedeb installed'
-fi
+# if ! dpkg -s "makedeb-makepkg" >/dev/null 2>&1 ; then
+#     cd ${IN}/deps/
+#     wget http://pac-n4.csail.mit.edu:81/pash_data/makedeb.deb
+#     sudo dpkg -i makedeb.deb
+#     echo 'Makedeb installed'
+# fi

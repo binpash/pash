@@ -13,19 +13,25 @@ setup_dataset() {
   rm -rf ../1-grams.txt ../2-grams.txt 
   
   ## Downloading the dataset needs to happen for both small and large
-  if [[ ! -d ./en ]]; then
-    wget $wiki_archive || eexit "cannot fetch wikipedia"
-    7za x wikipedia-en-html.tar.7z
-    tar -xvf wikipedia-en-html.tar
-    wget atlas-group.cs.brown.edu/data/wikipedia/index.txt # FIXME: we download index below?
-  fi
+  # if [[ ! -d ./en ]]; then
+  #   wget $wiki_archive || eexit "cannot fetch wikipedia"
+  #   7za x wikipedia-en-html.tar.7z
+  #   tar -xvf wikipedia-en-html.tar
+  #   wget atlas-group.cs.brown.edu/data/wikipedia/index.txt # FIXME: we download index below?
+  # fi
+
+
 
   if [ "$1" = "--small" ]; then
     # 500 entries
-    wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
-    unzip web-index.small.zip
-    mv small/500.txt .
-    rm -rf small web-index.small.zip
+    wget https://atlas-group.cs.brown.edu/data/wikipedia/input_small/articles.tar.gz --no-check-certificate
+    wget https://atlas-group.cs.brown.edu/data/wikipedia/input_small/index.txt --no-check-certificate
+
+    # wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
+    # unzip web-index.small.zip
+    tar -xf articles.tar.gz
+    mv index.txt 500.txt
+    # rm -rf small web-index.small.zip
   else
     # elif [ "$1" = "--full" ]; then
     # the default full 
@@ -39,7 +45,7 @@ setup_dataset() {
 
 source_var() {
   export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
-  export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
+  export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input
   if [[ "$1" == "--small" ]]; then
     export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt
   else
