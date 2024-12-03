@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/web-index/input/5.txt}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt}
 WEB_INDEX_DIR=${WEB_INDEX_DIR:-$PASH_TOP/evaluation/benchmarks/web-index/input}
 WIKI=${WIKI:-$PASH_TOP/evaluation/benchmarks/web-index/input/}
 
@@ -116,6 +116,7 @@ extract_text()
 export -f extract_text
 
 cat $IN |
+  head -n 10 |
   sed "s#^#$WIKI/articles/#" |
   extract_text |
   tr -cs A-Za-z '\n' |
