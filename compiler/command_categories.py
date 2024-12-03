@@ -219,9 +219,12 @@ def find_command_category(command, options):
 
     ## Override standard categories
     if (command_string in custom_command_categories):
-        log(" -- Warning: Overriding standard category for:", command_string)
+        log("caruca: Overriding standard category for:", command_string)
         custom_category_fun = custom_command_categories[command_string]
-        return custom_category_fun(options)
+        command_class_from_annotation = custom_category_fun(options)
+        # Repeated code is repeated :|
+        log("caruca class:", command_class_from_annotation, "found for:", command_string, format_args(options))
+        return command_class_from_annotation
 
     ## Find the class of the command in the annotation files (if it exists)
     command_class_from_annotation = get_command_class_from_annotations(command_string,
