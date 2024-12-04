@@ -56,3 +56,17 @@ runtime/dgsh-tee
 .vscode/*
 .idea/*
 .vs/*
+other
+evaluation/benchmarks/analytics-mts/outputs
+evaluation/benchmarks/dependency_untangling/input/deps/samtools-1.7
+evaluation/benchmarks/dependency_untangling/input/output/nginx-logs
+evaluation/benchmarks/dependency_untangling/outputs
+evaluation/benchmarks/max-temp/outputs
+evaluation/benchmarks/max-temp/average.txt
+evaluation/benchmarks/max-temp/max.txt
+evaluation/benchmarks/max-temp/min.txt
+evaluation/benchmarks/max-temp/temperatures.txt
+evaluation/benchmarks/nlp/outputs
+evaluation/benchmarks/oneliners/outputs
+evaluation/benchmarks/unix50/outputs
+evaluation/benchmarks/web-index/outputs/web-index.par.time
