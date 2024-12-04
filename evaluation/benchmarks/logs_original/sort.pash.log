@@ -1,0 +1,502 @@
+PaSh Preprocessor:  Arguments:
+PaSh Preprocessor:  input ['sort.sh']
+PaSh Preprocessor:  preprocess_only False
+PaSh Preprocessor:  output_preprocessed False
+PaSh Preprocessor:  interactive False
+PaSh Preprocessor:  command None
+PaSh Preprocessor:  a False
+PaSh Preprocessor:  v False
+PaSh Preprocessor:  x False
+PaSh Preprocessor:  width 16
+PaSh Preprocessor:  no_optimize False
+PaSh Preprocessor:  dry_run_compiler False
+PaSh Preprocessor:  assert_compiler_success False
+PaSh Preprocessor:  avoid_pash_runtime_completion False
+PaSh Preprocessor:  expand_using_bash_mirror False
+PaSh Preprocessor:  profile_driven False
+PaSh Preprocessor:  output_time False
+PaSh Preprocessor:  output_optimized False
+PaSh Preprocessor:  debug 1
+PaSh Preprocessor:  graphviz no
+PaSh Preprocessor:  graphviz_dir /tmp
+PaSh Preprocessor:  log_file pash_logs/sort.pash.log
+PaSh Preprocessor:  no_eager False
+PaSh Preprocessor:  no_cat_split_vanish False
+PaSh Preprocessor:  no_daemon False
+PaSh Preprocessor:  parallel_pipelines False
+PaSh Preprocessor:  r_split False
+PaSh Preprocessor:  r_split_batch_size 1000000
+PaSh Preprocessor:  dgsh_tee False
+PaSh Preprocessor:  speculation no_spec
+PaSh Preprocessor:  termination clean_up_graph
+PaSh Preprocessor:  daemon_communicates_through_unix_pipes False
+PaSh Preprocessor:  distributed_exec False
+PaSh Preprocessor:  config_path 
+PaSh Preprocessor:  ----------------------------------------
+PaSh Preprocessor:  Preprocessing -- Parsing time: 0.91  ms
+PaSh Preprocessor:  Preprocessing -- PaSh time: 0.665  ms
+PaSh Preprocessor:  Preprocessing -- Unparsing time: 0.123  ms
+PaSh Preprocessor:  Preprocessed script stored in: /tmp/pash_THWBPAc/tmp5mger6_f
+PaSh Preprocessor:  Executing: PASH_TMP_PREFIX=/tmp/pash_THWBPAc/ pash_shell_name=sort.sh /usr/bin/env bash +a -c source /tmp/pash_THWBPAc/tmp5mger6_f sort.sh
+613340: (1) Previous exit status: 0
+613340: (1) Previous set state: hBc
+Writing vars to: /tmp/pash_THWBPAc//pash_21584279852248
+613340: (1) Bash variables saved in: /tmp/pash_THWBPAc//pash_21584279852248
+613340: (1) Bash set state at start of execution: hBc
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+613340: (1) Set state reverted to PaSh-internal set state: huBc
+613340: (2) Before asking the daemon for compilation...
+Sending msg to daemon: Compile:/tmp/pash_THWBPAc//pash_59281816422751| Variable File:/tmp/pash_THWBPAc//pash_21584279852248| Input IR File:/tmp/pash_THWBPAc/tmp8hpxms5g
+Daemon:  Received data: Compile:/tmp/pash_THWBPAc//pash_59281816422751| Variable File:/tmp/pash_THWBPAc//pash_21584279852248| Input IR File:/tmp/pash_THWBPAc/tmp8hpxms5g
+
+Daemon:  Reading variables from: /tmp/pash_THWBPAc//pash_21584279852248
+Daemon:  Variable Reading time: 0.011  ms
+Daemon:  Variable Tokenizing time: 3.517  ms
+Daemon:  Variable Loading time: 3.871  ms
+Daemon:  Selected width: 16
+Daemon:  Retrieving candidate DF region: /tmp/pash_THWBPAc/tmp8hpxms5g ... Daemon:  Done!
+Daemon:  Var: IN value: /opt/pash/evaluation/benchmarks/oneliners/input/small/3G.txt
+Daemon:  caruca command to categorize: cat
+Daemon:  caruca class: stateless found for: cat ['/opt/pash/evaluation/benchmarks/oneliners/input/small/3G.txt']
+Daemon:  class: stateless found for: cat
+Daemon:  caruca command to categorize: sort
+Daemon:  caruca class: parallelizable_pure found for: sort []
+Daemon:  class: parallelizable_pure found for: sort
+Daemon:  properties: ['commutative'] found for: sort
+Daemon:  aggregator: Aggregator(name=sort,opts=['-m']) found for: sort
+Daemon:  Compilation time: 1.943  ms
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[22, 23] out:[38]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[24, 25] out:[39]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[26, 27] out:[40]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[28, 29] out:[41]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[30, 31] out:[42]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[32, 33] out:[43]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[34, 35] out:[44]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[36, 37] out:[45]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[38, 39] out:[46]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[40, 41] out:[47]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[42, 43] out:[48]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[44, 45] out:[49]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[46, 47] out:[50]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[48, 49] out:[51]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[50, 51] out:[52]
+Daemon:  Total nodes after optimization: 78
+Daemon:   -- out of which:
+Daemon:  Cat nodes: 1
+Daemon:  Eager nodes: 45
+Daemon:  Optimization time: 4.903  ms
+Daemon:  Backend time: 18.357  ms
+Daemon:  Optimized script saved in: /tmp/pash_THWBPAc//pash_59281816422751
+Daemon:  Daemon Compile time: 26.282  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 30.545  ms
+Got response from daemon: OK: 1 /tmp/pash_THWBPAc//pash_59281816422751 /tmp/pash_THWBPAc//pash_21584279852248 /tmp/pash_THWBPAc/tmp8hpxms5g
+613340: (2) Compiler exited with code: 0
+613340: (2) Traps set: 
+Sending msg to daemon: Exit:1|Time:
+Daemon:  Received data: Exit:1|Time:
+
+Daemon:  Time part is: Time:
+
+Daemon:  Process: 1 exited. Exec time was: None
+Daemon:  The following process exited: 1
+Got response from daemon: 
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+613340: (3) Reverted to BaSh set state: hBc
+613340: (3) Reverted to BaSh input arguments: 
+613340: (4) Restoring previous exit code: 0
+613340: (4) Will execute script in /tmp/pash_THWBPAc//pash_59281816422751:
+rm_pash_fifos() {
+{ rm -f "/tmp/pash_THWBPAc/5197259c52684a87b40f48df7475325a/#fifo2" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo5" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo6" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo7" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo8" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo9" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo10" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo11" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo12" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo13" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo14" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo15" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo16" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo17" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo18" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo19" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo20" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo21" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo22" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo23" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo24" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo25" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo26" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo27" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo28" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo29" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo30" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo31" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo32" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo33" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo34" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo35" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo36" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo37" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo38" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo39" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo40" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo41" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo42" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo43" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo44" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo45" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo46" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo47" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo48" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo49" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo50" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo51" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo52" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo53" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo54" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo55" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo56" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo57" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo58" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo59" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo60" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo61" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo62" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo63" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo64" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo65" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo66" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo67" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo68" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo69" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo70" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo71" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo72" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo73" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo74" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo75" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo76" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo77" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo78" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo79" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo80" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo81" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo82" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo83" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo84" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo85" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo86" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo87" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo88" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo89" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo90" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo91" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo92" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo93" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo94" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo95" ; } 
+ { { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo96" ; } 
+ { rm -f "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo97" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+}
+mkfifo_pash_fifos() {
+{ mkfifo "/tmp/pash_THWBPAc/5197259c52684a87b40f48df7475325a/#fifo2" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo5" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo6" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo7" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo8" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo9" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo10" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo11" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo12" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo13" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo14" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo15" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo16" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo17" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo18" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo19" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo20" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo21" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo22" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo23" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo24" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo25" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo26" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo27" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo28" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo29" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo30" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo31" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo32" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo33" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo34" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo35" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo36" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo37" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo38" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo39" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo40" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo41" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo42" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo43" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo44" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo45" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo46" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo47" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo48" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo49" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo50" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo51" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo52" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo53" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo54" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo55" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo56" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo57" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo58" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo59" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo60" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo61" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo62" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo63" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo64" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo65" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo66" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo67" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo68" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo69" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo70" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo71" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo72" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo73" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo74" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo75" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo76" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo77" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo78" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo79" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo80" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo81" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo82" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo83" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo84" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo85" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo86" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo87" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo88" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo89" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo90" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo91" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo92" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo93" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo94" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo95" ; } 
+ { { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo96" ; } 
+ { mkfifo "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo97" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+}
+rm_pash_fifos
+mkfifo_pash_fifos
+pids_to_kill=""
+{ cat /opt/pash/evaluation/benchmarks/oneliners/input/small/3G.txt >"/tmp/pash_THWBPAc/5197259c52684a87b40f48df7475325a/#fifo2" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/auto-split.sh "/tmp/pash_THWBPAc/5197259c52684a87b40f48df7475325a/#fifo2" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo5" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo6" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo7" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo8" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo9" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo10" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo11" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo12" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo13" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo14" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo15" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo16" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo17" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo18" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo19" "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo20" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo53" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo22" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo54" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo23" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo55" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo24" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo56" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo25" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo57" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo26" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo58" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo27" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo59" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo28" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo60" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo29" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo61" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo30" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo62" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo31" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo63" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo32" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo64" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo33" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo65" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo34" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo66" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo35" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo67" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo36" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo20" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo37" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo68" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo69" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo38" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo70" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo71" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo39" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo72" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo73" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo40" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo74" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo75" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo41" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo76" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo77" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo42" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo78" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo79" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo43" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo80" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo81" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo44" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo82" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo83" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo45" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo84" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo85" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo46" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo86" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo87" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo47" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo88" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo89" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo48" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo90" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo91" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo49" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo92" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo93" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo50" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo94" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo95" >"/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo51" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo5" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo53" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_1 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo6" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo54" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_2 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo7" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo55" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_3 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo8" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo56" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_4 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo9" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo57" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_5 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo10" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo58" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_6 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo11" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo59" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_7 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo12" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo60" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_8 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo13" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo61" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_9 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo14" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo62" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_10 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo15" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo63" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_11 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo16" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo64" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_12 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo17" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo65" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_13 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo18" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo66" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_14 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo19" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo67" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_15 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo22" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo68" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_16 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo23" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo69" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_17 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo24" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo70" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_18 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo25" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo71" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_19 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo26" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo72" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_20 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo27" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo73" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_21 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo28" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo74" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_22 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo29" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo75" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_23 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo30" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo76" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_24 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo31" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo77" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_25 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo32" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo78" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_26 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo33" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo79" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_27 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo34" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo80" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_28 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo35" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo81" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_29 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo36" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo82" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_30 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo37" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo83" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_31 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo38" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo84" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_32 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo39" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo85" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_33 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo40" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo86" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_34 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo41" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo87" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_35 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo42" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo88" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_36 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo43" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo89" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_37 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo44" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo90" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_38 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo45" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo91" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_39 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo46" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo92" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_40 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo47" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo93" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_41 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo48" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo94" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_42 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo49" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo95" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_43 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo50" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo96" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_44 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_THWBPAc/a7d6e4d0c898402991ece8ff2a842e65/#fifo51" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo97" /tmp/pash_THWBPAc/52a9266a429c4592b0d5900340b1dd38/pash_eager_intermediate_45 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo96" "/tmp/pash_THWBPAc/6267dc7c859b4c66aa36bd80ad63b254/#fifo97" & }
+pids_to_kill="${!} ${pids_to_kill}"
+source /opt/pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!} 2>>pash_logs/sort.pash.log
+rm_pash_fifos
+( exit "${internal_exec_status}" )
+613340: (5) BaSh script exited with ec: 0
+613340: (5) Writing current BaSh set state to: /tmp/pash_THWBPAc//pash_37zWl7xTni
+613340: (5) Current BaSh shell: hBc
+From set: hBc
+To set: huBc
+To add: u
+To remove: 
+613340: (5) Reverted to PaSh set state to: huBc
+Writing vars to: /tmp/pash_THWBPAc//pash_C6gVArF8nf
+Execution time: 349.814  ms
+613340: (7) Recovering BaSh variables from: /tmp/pash_THWBPAc//pash_C6gVArF8nf
+/dev/fd/63: line 5: FUNCNAME: variable may not be assigned value
+/dev/fd/63: line 36: declare: PPID: readonly variable
+/dev/fd/63: line 48: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 51: declare: UID: readonly variable
+613340: (7) Reading current BaSh set state from: /tmp/pash_THWBPAc//pash_37zWl7xTni
+613340: (7) Current BaSh set state: hBc
+613340: (7) Arguments (might) have been updated to be: 
+613340: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+613340: (7) Reverted to BaSh set state before exiting: hBc
+613340: (7) Reverting last BaSh exit code: 0
+PaSh Preprocessor:  ----------------------------------------
+Sending msg to daemon: Done
+Daemon:  Received data: Done
+
+Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
+Daemon:  SocketManager: Closed
+Daemon:  PaSh daemon is shutting down...
+Daemon:  PaSh daemon shut down successfully...
+Got response from daemon: All finished

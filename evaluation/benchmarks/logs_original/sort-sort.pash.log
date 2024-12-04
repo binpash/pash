@@ -1,0 +1,933 @@
+PaSh Preprocessor:  Arguments:
+PaSh Preprocessor:  input ['sort-sort.sh']
+PaSh Preprocessor:  preprocess_only False
+PaSh Preprocessor:  output_preprocessed False
+PaSh Preprocessor:  interactive False
+PaSh Preprocessor:  command None
+PaSh Preprocessor:  a False
+PaSh Preprocessor:  v False
+PaSh Preprocessor:  x False
+PaSh Preprocessor:  width 16
+PaSh Preprocessor:  no_optimize False
+PaSh Preprocessor:  dry_run_compiler False
+PaSh Preprocessor:  assert_compiler_success False
+PaSh Preprocessor:  avoid_pash_runtime_completion False
+PaSh Preprocessor:  expand_using_bash_mirror False
+PaSh Preprocessor:  profile_driven False
+PaSh Preprocessor:  output_time False
+PaSh Preprocessor:  output_optimized False
+PaSh Preprocessor:  debug 1
+PaSh Preprocessor:  graphviz no
+PaSh Preprocessor:  graphviz_dir /tmp
+PaSh Preprocessor:  log_file pash_logs/sort-sort.pash.log
+PaSh Preprocessor:  no_eager False
+PaSh Preprocessor:  no_cat_split_vanish False
+PaSh Preprocessor:  no_daemon False
+PaSh Preprocessor:  parallel_pipelines False
+PaSh Preprocessor:  r_split False
+PaSh Preprocessor:  r_split_batch_size 1000000
+PaSh Preprocessor:  dgsh_tee False
+PaSh Preprocessor:  speculation no_spec
+PaSh Preprocessor:  termination clean_up_graph
+PaSh Preprocessor:  daemon_communicates_through_unix_pipes False
+PaSh Preprocessor:  distributed_exec False
+PaSh Preprocessor:  config_path 
+PaSh Preprocessor:  ----------------------------------------
+PaSh Preprocessor:  Preprocessing -- Parsing time: 0.956  ms
+PaSh Preprocessor:  Preprocessing -- PaSh time: 0.603  ms
+PaSh Preprocessor:  Preprocessing -- Unparsing time: 0.134  ms
+PaSh Preprocessor:  Preprocessed script stored in: /tmp/pash_Emqzevu/tmppmfgsmfw
+PaSh Preprocessor:  Executing: PASH_TMP_PREFIX=/tmp/pash_Emqzevu/ pash_shell_name=sort-sort.sh /usr/bin/env bash +a -c source /tmp/pash_Emqzevu/tmppmfgsmfw sort-sort.sh
+622478: (1) Previous exit status: 0
+622478: (1) Previous set state: hBc
+Writing vars to: /tmp/pash_Emqzevu//pash_286265661552
+622478: (1) Bash variables saved in: /tmp/pash_Emqzevu//pash_286265661552
+622478: (1) Bash set state at start of execution: hBc
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+622478: (1) Set state reverted to PaSh-internal set state: huBc
+622478: (2) Before asking the daemon for compilation...
+Sending msg to daemon: Compile:/tmp/pash_Emqzevu//pash_1148380527468| Variable File:/tmp/pash_Emqzevu//pash_286265661552| Input IR File:/tmp/pash_Emqzevu/tmpvb7m_7ph
+Daemon:  Received data: Compile:/tmp/pash_Emqzevu//pash_1148380527468| Variable File:/tmp/pash_Emqzevu//pash_286265661552| Input IR File:/tmp/pash_Emqzevu/tmpvb7m_7ph
+
+Daemon:  Reading variables from: /tmp/pash_Emqzevu//pash_286265661552
+Daemon:  Variable Reading time: 0.012  ms
+Daemon:  Variable Tokenizing time: 3.545  ms
+Daemon:  Variable Loading time: 3.91  ms
+Daemon:  Selected width: 16
+Daemon:  Retrieving candidate DF region: /tmp/pash_Emqzevu/tmpvb7m_7ph ... Daemon:  Done!
+Daemon:  Var: IN value: /opt/pash/evaluation/benchmarks/oneliners/input/small/1G.txt
+Daemon:  caruca command to categorize: cat
+Daemon:  caruca class: stateless found for: cat ['/opt/pash/evaluation/benchmarks/oneliners/input/small/1G.txt']
+Daemon:  class: stateless found for: cat
+Daemon:  caruca command to categorize: tr
+Daemon:  caruca: Overriding standard category for: tr
+Daemon:  caruca class: stateless found for: tr ['A-Z', 'a-z']
+Daemon:  caruca command to categorize: sort
+Daemon:  caruca class: parallelizable_pure found for: sort []
+Daemon:  class: parallelizable_pure found for: sort
+Daemon:  properties: ['commutative'] found for: sort
+Daemon:  aggregator: Aggregator(name=sort,opts=['-m']) found for: sort
+Daemon:  caruca command to categorize: sort
+Daemon:  caruca class: parallelizable_pure found for: sort ['-r']
+Daemon:  class: parallelizable_pure found for: sort
+Daemon:  properties: ['commutative'] found for: sort
+Daemon:  aggregator: Aggregator(name=sort,opts=['-m']) found for: sort
+Daemon:  Compilation time: 3.101  ms
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[42, 43] out:[58]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[44, 45] out:[59]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[46, 47] out:[60]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[48, 49] out:[61]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[50, 51] out:[62]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[52, 53] out:[63]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[54, 55] out:[64]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[56, 57] out:[65]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[58, 59] out:[66]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[60, 61] out:[67]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[62, 63] out:[68]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[64, 65] out:[69]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[66, 67] out:[70]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[68, 69] out:[71]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[70, 71] out:[72]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[90, 91] out:[106]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[92, 93] out:[107]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[94, 95] out:[108]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[96, 97] out:[109]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[98, 99] out:[110]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[100, 101] out:[111]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[102, 103] out:[112]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[104, 105] out:[113]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[106, 107] out:[114]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[108, 109] out:[115]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[110, 111] out:[116]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[112, 113] out:[117]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[114, 115] out:[118]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[116, 117] out:[119]
+Daemon:  Generic Aggregator Created: Pure: "sort" in:[118, 119] out:[120]
+Daemon:  Total nodes after optimization: 171
+Daemon:   -- out of which:
+Daemon:  Cat nodes: 1
+Daemon:  Eager nodes: 90
+Daemon:  Optimization time: 10.122  ms
+Daemon:  Backend time: 44.279  ms
+Daemon:  Optimized script saved in: /tmp/pash_Emqzevu//pash_1148380527468
+Daemon:  Daemon Compile time: 59.533  ms
+Daemon:  Unsafe running: False
+Daemon:  Request handling time: 64.045  ms
+Got response from daemon: OK: 1 /tmp/pash_Emqzevu//pash_1148380527468 /tmp/pash_Emqzevu//pash_286265661552 /tmp/pash_Emqzevu/tmpvb7m_7ph
+622478: (2) Compiler exited with code: 0
+622478: (2) Traps set: 
+Sending msg to daemon: Exit:1|Time:
+Daemon:  Received data: Exit:1|Time:
+
+Daemon:  Time part is: Time:
+
+Daemon:  Process: 1 exited. Exec time was: None
+Daemon:  The following process exited: 1
+Got response from daemon: 
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+622478: (3) Reverted to BaSh set state: hBc
+622478: (3) Reverted to BaSh input arguments: 
+622478: (4) Restoring previous exit code: 0
+622478: (4) Will execute script in /tmp/pash_Emqzevu//pash_1148380527468:
+rm_pash_fifos() {
+{ rm -f "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo2" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo4" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo6" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo9" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo10" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo11" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo12" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo13" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo14" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo15" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo16" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo17" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo18" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo19" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo20" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo21" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo22" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo23" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo24" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo25" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo26" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo27" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo28" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo29" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo30" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo31" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo32" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo33" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo34" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo35" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo36" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo37" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo38" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo39" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo40" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo41" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo42" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo43" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo44" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo45" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo46" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo47" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo48" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo49" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo50" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo51" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo52" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo53" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo54" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo55" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo56" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo57" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo58" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo59" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo60" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo61" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo62" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo63" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo64" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo65" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo66" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo67" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo68" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo69" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo70" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo71" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo72" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo73" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo74" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo75" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo76" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo77" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo78" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo79" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo80" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo81" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo82" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo83" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo84" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo85" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo86" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo87" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo88" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo89" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo90" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo91" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo92" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo93" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo94" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo95" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo96" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo97" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo98" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo99" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo100" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo101" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo102" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo103" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo104" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo105" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo106" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo107" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo108" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo109" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo110" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo111" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo112" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo113" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo114" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo115" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo116" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo117" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo118" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo119" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo120" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo121" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo122" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo123" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo124" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo125" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo126" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo127" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo128" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo129" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo130" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo131" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo132" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo133" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo134" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo135" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo136" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo137" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo138" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo139" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo140" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo141" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo142" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo143" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo144" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo145" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo146" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo147" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo148" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo149" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo150" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo151" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo152" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo153" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo154" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo155" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo156" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo157" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo158" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo159" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo160" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo161" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo162" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo163" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo164" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo165" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo166" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo167" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo168" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo169" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo170" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo171" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo172" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo173" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo174" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo175" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo176" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo177" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo178" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo179" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo180" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo181" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo182" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo183" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo184" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo185" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo186" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo187" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo188" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo189" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo190" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo191" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo192" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo193" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo194" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo195" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo196" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo197" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo198" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo199" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo200" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo201" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo202" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo203" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo204" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo205" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo206" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo207" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo208" ; } 
+ { { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo209" ; } 
+ { rm -f "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo210" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+}
+mkfifo_pash_fifos() {
+{ mkfifo "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo2" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo4" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo6" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo9" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo10" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo11" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo12" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo13" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo14" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo15" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo16" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo17" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo18" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo19" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo20" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo21" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo22" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo23" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo24" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo25" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo26" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo27" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo28" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo29" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo30" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo31" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo32" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo33" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo34" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo35" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo36" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo37" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo38" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo39" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo40" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo41" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo42" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo43" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo44" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo45" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo46" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo47" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo48" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo49" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo50" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo51" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo52" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo53" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo54" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo55" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo56" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo57" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo58" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo59" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo60" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo61" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo62" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo63" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo64" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo65" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo66" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo67" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo68" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo69" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo70" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo71" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo72" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo73" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo74" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo75" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo76" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo77" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo78" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo79" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo80" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo81" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo82" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo83" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo84" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo85" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo86" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo87" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo88" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo89" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo90" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo91" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo92" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo93" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo94" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo95" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo96" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo97" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo98" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo99" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo100" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo101" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo102" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo103" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo104" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo105" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo106" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo107" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo108" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo109" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo110" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo111" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo112" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo113" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo114" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo115" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo116" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo117" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo118" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo119" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo120" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo121" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo122" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo123" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo124" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo125" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo126" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo127" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo128" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo129" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo130" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo131" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo132" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo133" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo134" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo135" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo136" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo137" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo138" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo139" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo140" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo141" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo142" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo143" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo144" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo145" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo146" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo147" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo148" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo149" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo150" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo151" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo152" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo153" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo154" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo155" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo156" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo157" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo158" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo159" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo160" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo161" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo162" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo163" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo164" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo165" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo166" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo167" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo168" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo169" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo170" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo171" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo172" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo173" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo174" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo175" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo176" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo177" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo178" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo179" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo180" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo181" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo182" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo183" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo184" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo185" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo186" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo187" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo188" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo189" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo190" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo191" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo192" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo193" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo194" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo195" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo196" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo197" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo198" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo199" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo200" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo201" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo202" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo203" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo204" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo205" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo206" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo207" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo208" ; } 
+ { { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo209" ; } 
+ { mkfifo "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo210" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+}
+rm_pash_fifos
+mkfifo_pash_fifos
+pids_to_kill=""
+{ cat /opt/pash/evaluation/benchmarks/oneliners/input/small/1G.txt >"/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo2" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/auto-split.sh "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo2" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo9" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo10" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo11" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo12" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo13" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo14" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo15" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo16" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo17" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo18" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo19" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo20" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo21" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo22" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo23" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo24" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo121" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo26" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo122" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo27" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo123" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo28" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo124" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo29" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo125" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo30" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo126" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo31" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo127" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo32" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo128" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo33" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo129" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo34" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo130" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo35" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo131" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo36" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo132" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo37" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo133" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo38" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo134" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo39" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo135" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo40" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ tr A-Z a-z <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo24" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo41" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo26" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo42" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo27" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo43" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo28" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo44" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo29" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo45" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo30" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo46" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo31" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo47" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo32" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo48" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo33" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo49" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo34" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo50" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo35" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo51" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo36" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo52" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo37" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo53" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo38" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo54" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo39" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo55" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo40" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo56" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo41" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo57" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo136" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo137" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo58" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo138" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo139" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo59" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo140" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo141" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo60" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo142" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo143" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo61" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo144" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo145" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo62" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo146" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo147" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo63" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo148" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo149" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo64" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo150" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo151" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo65" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo152" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo153" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo66" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo154" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo155" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo67" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo156" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo157" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo68" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo158" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo159" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo69" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo160" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo161" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo70" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo162" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo163" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo71" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo164" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo165" >"/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo6" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/auto-split.sh "/tmp/pash_Emqzevu/33931b1fe2754beebff7ff7fefe0faeb/#fifo6" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo73" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo74" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo75" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo76" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo77" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo78" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo79" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo80" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo81" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo82" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo83" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo84" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo85" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo86" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo87" "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo88" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo166" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo90" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo167" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo91" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo168" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo92" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo169" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo93" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo170" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo94" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo171" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo95" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo172" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo96" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo173" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo97" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo174" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo98" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo175" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo99" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo176" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo100" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo177" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo101" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo178" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo102" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo179" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo103" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo180" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo104" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r <"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo88" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo105" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo181" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo182" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo106" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo183" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo184" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo107" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo185" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo186" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo108" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo187" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo188" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo109" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo189" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo190" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo110" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo191" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo192" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo111" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo193" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo194" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo112" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo195" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo196" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo113" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo197" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo198" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo114" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo199" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo200" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo115" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo201" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo202" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo116" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo203" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo204" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo117" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo205" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo206" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo118" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo207" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo208" >"/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo119" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo9" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo121" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_1 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo10" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo122" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_2 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo11" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo123" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_3 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo12" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo124" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_4 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo13" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo125" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_5 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo14" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo126" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_6 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo15" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo127" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_7 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo16" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo128" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_8 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo17" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo129" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_9 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo18" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo130" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_10 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo19" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo131" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_11 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo20" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo132" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_12 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo21" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo133" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_13 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo22" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo134" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_14 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo23" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo135" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_15 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo42" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo136" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_16 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo43" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo137" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_17 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo44" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo138" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_18 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo45" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo139" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_19 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo46" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo140" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_20 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo47" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo141" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_21 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo48" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo142" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_22 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo49" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo143" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_23 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo50" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo144" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_24 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo51" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo145" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_25 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo52" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo146" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_26 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo53" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo147" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_27 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo54" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo148" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_28 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo55" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo149" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_29 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo56" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo150" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_30 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo57" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo151" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_31 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo58" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo152" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_32 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo59" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo153" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_33 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo60" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo154" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_34 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo61" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo155" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_35 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo62" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo156" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_36 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo63" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo157" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_37 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo64" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo158" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_38 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo65" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo159" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_39 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo66" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo160" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_40 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo67" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo161" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_41 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo68" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo162" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_42 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo69" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo163" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_43 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo70" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo164" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_44 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo71" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo165" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_45 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo73" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo166" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_46 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo74" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo167" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_47 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo75" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo168" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_48 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo76" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo169" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_49 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo77" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo170" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_50 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo78" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo171" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_51 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo79" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo172" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_52 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo80" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo173" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_53 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo81" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo174" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_54 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo82" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo175" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_55 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo83" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo176" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_56 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo84" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo177" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_57 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo85" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo178" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_58 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo86" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo179" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_59 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo87" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo180" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_60 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo90" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo181" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_61 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo91" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo182" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_62 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo92" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo183" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_63 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo93" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo184" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_64 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo94" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo185" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_65 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo95" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo186" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_66 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo96" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo187" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_67 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo97" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo188" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_68 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo98" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo189" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_69 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo99" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo190" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_70 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo100" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo191" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_71 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo101" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo192" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_72 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo102" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo193" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_73 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo103" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo194" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_74 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo104" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo195" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_75 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo105" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo196" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_76 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo106" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo197" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_77 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo107" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo198" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_78 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo108" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo199" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_79 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo109" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo200" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_80 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo110" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo201" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_81 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo111" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo202" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_82 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo112" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo203" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_83 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo113" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo204" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_84 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo114" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo205" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_85 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo115" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo206" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_86 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo116" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo207" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_87 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo117" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo208" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_88 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo118" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo209" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_89 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pash/runtime/eager.sh "/tmp/pash_Emqzevu/17ccbd0a1be64c63914c98259063375d/#fifo119" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo210" /tmp/pash_Emqzevu/f545e7eb4a934e3a98fd7bfd868f2a89/pash_eager_intermediate_90 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ sort -r -m "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo209" "/tmp/pash_Emqzevu/efdd395d82b141a0ad7332728978e193/#fifo210" & }
+pids_to_kill="${!} ${pids_to_kill}"
+source /opt/pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!} 2>>pash_logs/sort-sort.pash.log
+rm_pash_fifos
+( exit "${internal_exec_status}" )
+622478: (5) BaSh script exited with ec: 0
+622478: (5) Writing current BaSh set state to: /tmp/pash_Emqzevu//pash_KUY4WOeu8x
+622478: (5) Current BaSh shell: hBc
+From set: hBc
+To set: huBc
+To add: u
+To remove: 
+622478: (5) Reverted to PaSh set state to: huBc
+Writing vars to: /tmp/pash_Emqzevu//pash_fhUZWENKKK
+Execution time: 664.658  ms
+622478: (7) Recovering BaSh variables from: /tmp/pash_Emqzevu//pash_fhUZWENKKK
+/dev/fd/63: line 5: FUNCNAME: variable may not be assigned value
+/dev/fd/63: line 36: declare: PPID: readonly variable
+/dev/fd/63: line 48: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 51: declare: UID: readonly variable
+622478: (7) Reading current BaSh set state from: /tmp/pash_Emqzevu//pash_KUY4WOeu8x
+622478: (7) Current BaSh set state: hBc
+622478: (7) Arguments (might) have been updated to be: 
+622478: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+622478: (7) Reverted to BaSh set state before exiting: hBc
+622478: (7) Reverting last BaSh exit code: 0
+PaSh Preprocessor:  ----------------------------------------
+Sending msg to daemon: Done
+Daemon:  Received data: Done
+
+Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
+Daemon:  SocketManager: Closed
+Daemon:  PaSh daemon is shutting down...
+Daemon:  PaSh daemon shut down successfully...
+Got response from daemon: All finished

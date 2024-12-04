@@ -1,0 +1,126 @@
+PaSh Preprocessor:  Arguments:
+PaSh Preprocessor:  input ['22.sh']
+PaSh Preprocessor:  preprocess_only False
+PaSh Preprocessor:  output_preprocessed False
+PaSh Preprocessor:  interactive False
+PaSh Preprocessor:  command None
+PaSh Preprocessor:  a False
+PaSh Preprocessor:  v False
+PaSh Preprocessor:  x False
+PaSh Preprocessor:  width 16
+PaSh Preprocessor:  no_optimize False
+PaSh Preprocessor:  dry_run_compiler False
+PaSh Preprocessor:  assert_compiler_success False
+PaSh Preprocessor:  avoid_pash_runtime_completion False
+PaSh Preprocessor:  expand_using_bash_mirror False
+PaSh Preprocessor:  profile_driven False
+PaSh Preprocessor:  output_time False
+PaSh Preprocessor:  output_optimized False
+PaSh Preprocessor:  debug 1
+PaSh Preprocessor:  graphviz no
+PaSh Preprocessor:  graphviz_dir /tmp
+PaSh Preprocessor:  log_file pash_logs/22.pash.log
+PaSh Preprocessor:  no_eager False
+PaSh Preprocessor:  no_cat_split_vanish False
+PaSh Preprocessor:  no_daemon False
+PaSh Preprocessor:  parallel_pipelines False
+PaSh Preprocessor:  r_split False
+PaSh Preprocessor:  r_split_batch_size 1000000
+PaSh Preprocessor:  dgsh_tee False
+PaSh Preprocessor:  speculation no_spec
+PaSh Preprocessor:  termination clean_up_graph
+PaSh Preprocessor:  daemon_communicates_through_unix_pipes False
+PaSh Preprocessor:  distributed_exec False
+PaSh Preprocessor:  config_path 
+PaSh Preprocessor:  ----------------------------------------
+PaSh Preprocessor:  Preprocessing -- Parsing time: 1.244  ms
+PaSh Preprocessor:  Preprocessing -- PaSh time: 0.703  ms
+PaSh Preprocessor:  Preprocessing -- Unparsing time: 0.127  ms
+PaSh Preprocessor:  Preprocessed script stored in: /tmp/pash_6uBz1kT/tmp09k8bcfn
+PaSh Preprocessor:  Executing: PASH_TMP_PREFIX=/tmp/pash_6uBz1kT/ pash_shell_name=22.sh /usr/bin/env bash +a -c source /tmp/pash_6uBz1kT/tmp09k8bcfn 22.sh
+648536: (1) Previous exit status: 0
+648536: (1) Previous set state: hBc
+Writing vars to: /tmp/pash_6uBz1kT//pash_121713143322370
+648536: (1) Bash variables saved in: /tmp/pash_6uBz1kT//pash_121713143322370
+648536: (1) Bash set state at start of execution: hBc
+From set: hBc
+To set: huB
+To add: u
+To remove: 
+648536: (1) Set state reverted to PaSh-internal set state: huBc
+648536: (2) Before asking the daemon for compilation...
+Sending msg to daemon: Compile:/tmp/pash_6uBz1kT//pash_32337502713| Variable File:/tmp/pash_6uBz1kT//pash_121713143322370| Input IR File:/tmp/pash_6uBz1kT/tmp4hefwros
+Daemon:  Received data: Compile:/tmp/pash_6uBz1kT//pash_32337502713| Variable File:/tmp/pash_6uBz1kT//pash_121713143322370| Input IR File:/tmp/pash_6uBz1kT/tmp4hefwros
+
+Daemon:  Reading variables from: /tmp/pash_6uBz1kT//pash_121713143322370
+Daemon:  Variable Reading time: 0.012  ms
+Daemon:  Variable Tokenizing time: 3.471  ms
+Daemon:  Variable Loading time: 3.823  ms
+Daemon:  Selected width: 16
+Daemon:  Retrieving candidate DF region: /tmp/pash_6uBz1kT/tmp4hefwros ... Daemon:  Done!
+Daemon:  Var: IN_PRE value: /opt/pash/evaluation/benchmarks/unix50/input/small
+Daemon:  caruca command to categorize: export
+Daemon:  caruca class: side-effectful found for: export ['IN_PRE=/opt/pash/evaluation/benchmarks/unix50/input/small']
+Daemon:  class: side-effectful found for: export
+Daemon:  caruca err 
+Daemon:  Compilation time: 0.569  ms
+Daemon:  Optimization time: 0.001  ms
+Daemon:  WARNING: Exception caught: Script failed to compile!
+Daemon:  Daemon Compile time: 0.964  ms
+Daemon:  Unsafe running: False
+Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
+Daemon:  Request handling time: 5.004  ms
+Got response from daemon: ERROR: 1 failed to compile
+648536: (2) Compiler exited with code: 1
+648536: (2) Traps set: 
+Sending msg to daemon: Exit:1|Time:
+Daemon:  Received data: Exit:1|Time:
+
+Daemon:  Time part is: Time:
+
+Daemon:  Process: 1 exited. Exec time was: None
+Daemon:  The following process exited: 1
+Got response from daemon: 
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+648536: (3) Reverted to BaSh set state: hBc
+648536: (3) Reverted to BaSh input arguments: 
+648536: (4) Restoring previous exit code: 0
+648536: (4) Will execute script in /tmp/pash_6uBz1kT/tmpk851a7pa:
+export IN_PRE=${IN_PRE:-$PASH_TOP/evaluation/benchmarks/unix50/input}
+648536: (5) BaSh script exited with ec: 0
+648536: (5) Writing current BaSh set state to: /tmp/pash_6uBz1kT//pash_rFJjc7Sugk
+648536: (5) Current BaSh shell: hBc
+From set: hBc
+To set: huBc
+To add: u
+To remove: 
+648536: (5) Reverted to PaSh set state to: huBc
+Writing vars to: /tmp/pash_6uBz1kT//pash_Tk26bBYFJY
+Execution time: 14.941  ms
+648536: (7) Recovering BaSh variables from: /tmp/pash_6uBz1kT//pash_Tk26bBYFJY
+/dev/fd/63: line 5: FUNCNAME: variable may not be assigned value
+/dev/fd/63: line 36: declare: PPID: readonly variable
+/dev/fd/63: line 48: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 51: declare: UID: readonly variable
+648536: (7) Reading current BaSh set state from: /tmp/pash_6uBz1kT//pash_rFJjc7Sugk
+648536: (7) Current BaSh set state: hBc
+648536: (7) Arguments (might) have been updated to be: 
+648536: (7) Current PaSh set state: huBc
+From set: huBc
+To set: hBc
+To add: 
+To remove: u
+648536: (7) Reverted to BaSh set state before exiting: hBc
+648536: (7) Reverting last BaSh exit code: 0
+PaSh Preprocessor:  ----------------------------------------
+Sending msg to daemon: Done
+Daemon:  Received data: Done
+
+Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
+Daemon:  SocketManager: Closed
+Daemon:  PaSh daemon is shutting down...
+Daemon:  PaSh daemon shut down successfully...
+Got response from daemon: All finished
