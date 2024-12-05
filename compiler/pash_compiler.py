@@ -55,6 +55,7 @@ def main_body():
         config.load_config(args.config_path)
 
     runtime_config = config.config["distr_planner"]
+    config_parallelization_success = False
 
     ## Read any shell variables files if present
     vars_dict = env_vars_util.read_vars_file(args.var_file, config.BASH_VERSION)
@@ -94,6 +95,8 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
         ret = compile_optimize_output_script(
             ir_filename, compiled_script_file, args, compiler_config
         )
+        if ret is None:
+            log("[PaSh Info] No parallelization opportunities detected for this region.")
     except ExpansionError as e: 
         log("WARNING: Exception caught because some region(s) are not expandable and therefore unparallelizable:", e) 
         raise NotAllRegionParallelizableError()
@@ -104,9 +107,9 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     except (AdjLineNotImplementedError, NotImplementedError) as e: 
         log("WARNING: Exception caught because some part is not implemented:", e)
         log(traceback.format_exc())
-    except Exception as e:
-        log("WARNING: Exception caught:", e)
-        log(traceback.format_exc())
+    except Exception:
+        log("[PaSh Warning] Compilation failed due to an unexpected error.", level=0)
+        log(traceback.format_exc(), level=1)
 
     return ret
 
@@ -234,6 +237,8 @@ def optimize_irs(asts_and_irs, args, compiler_config):
         if isinstance(ast_or_ir, IR):
             ## Assert that the graph that was returned from compilation is valid
             assert ast_or_ir.valid()
+            if ast_or_ir.valid():
+                config_parallelization_success = True
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
@@ -279,6 +284,8 @@ def choose_and_apply_parallelizing_transformations(
     graph, fan_out, batch_size, r_split_batch_size
 ):
     parallelizer_map = choose_parallelizing_transformations(graph)
+    if any(parallelizer_mapp.values()):
+        config.parallelization_success = True
     apply_parallelizing_transformations(
         graph, parallelizer_map, fan_out, batch_size, r_split_batch_size
     )
