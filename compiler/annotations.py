@@ -312,16 +312,16 @@ def get_command_from_annotation(command, options, annotation):
     assert(annotation['command'] == command)
 
     cases = annotation['cases']
-    case = find_annotation_case(options, cases)
+    case = find_annotation_case(options, cases, command)
     return case
 
-def find_annotation_case(options, cases):
+def find_annotation_case(options, cases, command):
     for case in cases:
         # log("caruca", case)
         if(predicate_satisfied(options, case['predicate'])):
             return case
 
-    log("caruca: no annotation matched!")
+    log("caruca: no case matched for", command, format_args(options))
     ## Unreachable
     assert(False)
 
