@@ -165,7 +165,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_assignments=com_assignments)
     
     if(not dfg_node.is_at_most_pure()):
-        raise ValueError()
+        raise ValueError("DFG node is not at most pure")
 
     node_id = dfg_node.get_id()
 
