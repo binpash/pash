@@ -107,7 +107,7 @@ class DFGNode:
         return self.inputs[0]
 
     def is_at_most_pure(self):
-        return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
+        return (self.com_category in ["stateless", "pure", "parallelizable_pure", "non-pure"])
 
     def is_parallelizable(self):
         return (self.is_pure_parallelizable() or self.is_stateless())
