@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from shasta.ast_node import *
 import config
 from util import *
