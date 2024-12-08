@@ -1,73 +1,13 @@
 {
-  "command": "wc",
-  "cases": [
-    {
-      "predicate": {
-        "operator": "and",
-        "operands": [
-            {
-                "operator": "exists",
-                "operands": ["-l"]
-            },
-            {
-                "operator": "len_args_eq",
-                "operands": [1]
-            }
-        ]
-      },
-      "class": "non-pure",
-      "inputs": [
-        "stdin"
-      ],
-      "outputs": [
-        "stdout"
-      ],
-      "true_str": "wc -l"
-    },
-    {
-      "predicate": {
-        "operator": "exists",
-        "operands": [
-          "-c"
-        ]
-      },
-      "class": "non-pure",
-      "inputs": [
-        "stdin"
-      ],
-      "outputs": [
-        "stdout"
-      ],
-      "true_str": "wc -c"
-    },
-    {
-      "predicate": {
-        "operator": "exists",
-        "operands": [
-          "-c",
-          "-l"
-        ]
-      },
-      "class": "non-pure",
-      "inputs": [
-        "stdin"
-      ],
-      "outputs": [
-        "stdout"
-      ],
-      "true_str": "wc -c -l"
-    },
-    {
-      "predicate": "default",
-      "class": "non-pure",
-      "inputs": [
-        "stdin"
-      ],
-      "outputs": [
-        "stdout"
-      ],
-      "true_str": "wc"
-    }
-  ],
-  "options": []
+    "command": "wc",
+    "aggregate": "$PASH_TOP/runtime/agg/py/wc.py",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
 }
