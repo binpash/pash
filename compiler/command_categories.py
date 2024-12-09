@@ -168,12 +168,11 @@ def find_command_input_output(command, options):
         return custom_io_fun(options)
 
     ## Find the inputs-outputs of the command in the annotation files (if it exists)
-    command_io_from_annotation = get_command_io_from_annotations(command_string,
-                                                                 options,
-                                                                 config.annotations)
+    command_io_from_annotation = get_command_io_from_annotations(command_string, options, config.annotations)
+
     if (command_io_from_annotation):
-        # log("inputs-outputs found for:", command_string)
-        # log("|--", command_io_from_annotation)
+        log("caruca inputs-outputs found for:", command_string)
+        log("caruca |--", command_io_from_annotation)
         return command_io_from_annotation
 
     return default_input_output(options)
