@@ -33,45 +33,45 @@ PaSh Preprocessor:  daemon_communicates_through_unix_pipes False
 PaSh Preprocessor:  distributed_exec False
 PaSh Preprocessor:  config_path 
 PaSh Preprocessor:  ----------------------------------------
-PaSh Preprocessor:  Preprocessing -- Parsing time: 1.187  ms
-PaSh Preprocessor:  Preprocessing -- PaSh time: 3.46  ms
-PaSh Preprocessor:  Preprocessing -- Unparsing time: 1.38  ms
-PaSh Preprocessor:  Preprocessed script stored in: /tmp/pash_b6yCQ0K/tmp5dpv659q
-PaSh Preprocessor:  Executing: PASH_TMP_PREFIX=/tmp/pash_b6yCQ0K/ pash_shell_name=6_2.sh /usr/bin/env bash +a -c source /tmp/pash_b6yCQ0K/tmp5dpv659q 6_2.sh
-665306: (1) Previous exit status: 0
-665306: (1) Previous set state: hBc
-Writing vars to: /tmp/pash_b6yCQ0K//pash_141261741521737
-665306: (1) Bash variables saved in: /tmp/pash_b6yCQ0K//pash_141261741521737
-665306: (1) Bash set state at start of execution: hBc
+PaSh Preprocessor:  Preprocessing -- Parsing time: 1.165  ms
+PaSh Preprocessor:  Preprocessing -- PaSh time: 2.335  ms
+PaSh Preprocessor:  Preprocessing -- Unparsing time: 1.381  ms
+PaSh Preprocessor:  Preprocessed script stored in: /tmp/pash_T5lqvLc/tmpi5j3csvw
+PaSh Preprocessor:  Executing: PASH_TMP_PREFIX=/tmp/pash_T5lqvLc/ pash_shell_name=6_2.sh /usr/bin/env bash +a -c source /tmp/pash_T5lqvLc/tmpi5j3csvw 6_2.sh
+232899: (1) Previous exit status: 0
+232899: (1) Previous set state: hBc
+Writing vars to: /tmp/pash_T5lqvLc//pash_14441936924662
+232899: (1) Bash variables saved in: /tmp/pash_T5lqvLc//pash_14441936924662
+232899: (1) Bash set state at start of execution: hBc
 From set: hBc
 To set: huB
 To add: u
 To remove: 
-665306: (1) Set state reverted to PaSh-internal set state: huBc
-665306: (2) Before asking the daemon for compilation...
-Sending msg to daemon: Compile:/tmp/pash_b6yCQ0K//pash_82232800818384| Variable File:/tmp/pash_b6yCQ0K//pash_141261741521737| Input IR File:/tmp/pash_b6yCQ0K/tmpay7ia7u0
-Daemon:  Received data: Compile:/tmp/pash_b6yCQ0K//pash_82232800818384| Variable File:/tmp/pash_b6yCQ0K//pash_141261741521737| Input IR File:/tmp/pash_b6yCQ0K/tmpay7ia7u0
+232899: (1) Set state reverted to PaSh-internal set state: huBc
+232899: (2) Before asking the daemon for compilation...
+Sending msg to daemon: Compile:/tmp/pash_T5lqvLc//pash_20376932711765| Variable File:/tmp/pash_T5lqvLc//pash_14441936924662| Input IR File:/tmp/pash_T5lqvLc/tmpvnnun9of
+Daemon:  Received data: Compile:/tmp/pash_T5lqvLc//pash_20376932711765| Variable File:/tmp/pash_T5lqvLc//pash_14441936924662| Input IR File:/tmp/pash_T5lqvLc/tmpvnnun9of
 
-Daemon:  Reading variables from: /tmp/pash_b6yCQ0K//pash_141261741521737
+Daemon:  Reading variables from: /tmp/pash_T5lqvLc//pash_14441936924662
 Daemon:  Variable Reading time: 0.012  ms
-Daemon:  Variable Tokenizing time: 3.569  ms
-Daemon:  Variable Loading time: 3.944  ms
+Daemon:  Variable Tokenizing time: 3.56  ms
+Daemon:  Variable Loading time: 3.941  ms
 Daemon:  Selected width: 16
-Daemon:  Retrieving candidate DF region: /tmp/pash_b6yCQ0K/tmpay7ia7u0 ... Daemon:  Done!
+Daemon:  Retrieving candidate DF region: /tmp/pash_T5lqvLc/tmpvnnun9of ... Daemon:  Done!
 Daemon:  Var: OUT value: /opt/pash/evaluation/benchmarks/nlp/output/6_2/
 Daemon:  caruca command to categorize: mkdir
 Daemon:  caruca class: None found for: mkdir ['-p', '"/opt/pash/evaluation/benchmarks/nlp/output/6_2/"']
-Daemon:  caruca err 
-Daemon:  Compilation time: 0.57  ms
+Daemon:  caruca err DFG node is not at most pure
+Daemon:  Compilation time: 0.518  ms
 Daemon:  Optimization time: 0.001  ms
 Daemon:  WARNING: Exception caught: Script failed to compile!
-Daemon:  Daemon Compile time: 0.979  ms
+Daemon:  Daemon Compile time: 0.945  ms
 Daemon:  Unsafe running: False
 Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
-Daemon:  Request handling time: 5.159  ms
+Daemon:  Request handling time: 5.128  ms
 Got response from daemon: ERROR: 1 failed to compile
-665306: (2) Compiler exited with code: 1
-665306: (2) Traps set: 
+232899: (2) Compiler exited with code: 1
+232899: (2) Traps set: 
 Sending msg to daemon: Exit:1|Time:
 Daemon:  Received data: Exit:1|Time:
 
@@ -84,73 +84,75 @@ From set: huBc
 To set: hBc
 To add: 
 To remove: u
-665306: (3) Reverted to BaSh set state: hBc
-665306: (3) Reverted to BaSh input arguments: 
-665306: (4) Restoring previous exit code: 0
-665306: (4) Will execute script in /tmp/pash_b6yCQ0K/tmp9c1ugndm:
+232899: (3) Reverted to BaSh set state: hBc
+232899: (3) Reverted to BaSh input arguments: 
+232899: (4) Restoring previous exit code: 0
+232899: (4) Will execute script in /tmp/pash_T5lqvLc/tmph54o3rq9:
 mkdir -p "$OUT"
-665306: (5) BaSh script exited with ec: 0
-665306: (5) Writing current BaSh set state to: /tmp/pash_b6yCQ0K//pash_8fPQeM2yoT
-665306: (5) Current BaSh shell: hBc
+232899: (5) BaSh script exited with ec: 0
+232899: (5) Writing current BaSh set state to: /tmp/pash_T5lqvLc//pash_zw91ioFJWf
+232899: (5) Current BaSh shell: hBc
 From set: hBc
 To set: huBc
 To add: u
 To remove: 
-665306: (5) Reverted to PaSh set state to: huBc
-Writing vars to: /tmp/pash_b6yCQ0K//pash_OiETNS40oH
-Execution time: 15.575  ms
-665306: (7) Recovering BaSh variables from: /tmp/pash_b6yCQ0K//pash_OiETNS40oH
+232899: (5) Reverted to PaSh set state to: huBc
+Writing vars to: /tmp/pash_T5lqvLc//pash_vcNKYMpMKU
+Execution time: 15.057  ms
+232899: (7) Recovering BaSh variables from: /tmp/pash_T5lqvLc//pash_vcNKYMpMKU
 /dev/fd/63: line 6: FUNCNAME: variable may not be assigned value
 /dev/fd/63: line 38: declare: PPID: readonly variable
 /dev/fd/63: line 50: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 53: declare: UID: readonly variable
-665306: (7) Reading current BaSh set state from: /tmp/pash_b6yCQ0K//pash_8fPQeM2yoT
-665306: (7) Current BaSh set state: hBc
-665306: (7) Arguments (might) have been updated to be: 
-665306: (7) Current PaSh set state: huBc
+232899: (7) Reading current BaSh set state from: /tmp/pash_T5lqvLc//pash_zw91ioFJWf
+232899: (7) Current BaSh set state: hBc
+232899: (7) Arguments (might) have been updated to be: 
+232899: (7) Current PaSh set state: huBc
 From set: huBc
 To set: hBc
 To add: 
 To remove: u
-665306: (7) Reverted to BaSh set state before exiting: hBc
-665306: (7) Reverting last BaSh exit code: 0
-665306: (1) Previous exit status: 0
-665306: (1) Previous set state: hBc
-Writing vars to: /tmp/pash_b6yCQ0K//pash_467320236943
-665306: (1) Bash variables saved in: /tmp/pash_b6yCQ0K//pash_467320236943
-665306: (1) Bash set state at start of execution: hBc
+232899: (7) Reverted to BaSh set state before exiting: hBc
+232899: (7) Reverting last BaSh exit code: 0
+232899: (1) Previous exit status: 0
+232899: (1) Previous set state: hBc
+Writing vars to: /tmp/pash_T5lqvLc//pash_275212943329077
+232899: (1) Bash variables saved in: /tmp/pash_T5lqvLc//pash_275212943329077
+232899: (1) Bash set state at start of execution: hBc
 From set: hBc
 To set: huB
 To add: u
 To remove: 
-665306: (1) Set state reverted to PaSh-internal set state: huBc
-665306: (2) Before asking the daemon for compilation...
-Sending msg to daemon: Compile:/tmp/pash_b6yCQ0K//pash_18921448319476| Variable File:/tmp/pash_b6yCQ0K//pash_467320236943| Input IR File:/tmp/pash_b6yCQ0K/tmpes4iaurt
-Daemon:  Received data: Compile:/tmp/pash_b6yCQ0K//pash_18921448319476| Variable File:/tmp/pash_b6yCQ0K//pash_467320236943| Input IR File:/tmp/pash_b6yCQ0K/tmpes4iaurt
+232899: (1) Set state reverted to PaSh-internal set state: huBc
+232899: (2) Before asking the daemon for compilation...
+Sending msg to daemon: Compile:/tmp/pash_T5lqvLc//pash_36452835526903| Variable File:/tmp/pash_T5lqvLc//pash_275212943329077| Input IR File:/tmp/pash_T5lqvLc/tmpyeeqnbl9
+Daemon:  Received data: Compile:/tmp/pash_T5lqvLc//pash_36452835526903| Variable File:/tmp/pash_T5lqvLc//pash_275212943329077| Input IR File:/tmp/pash_T5lqvLc/tmpyeeqnbl9
 
-Daemon:  Reading variables from: /tmp/pash_b6yCQ0K//pash_467320236943
-Daemon:  Variable Reading time: 0.015  ms
-Daemon:  Variable Tokenizing time: 4.458  ms
-Daemon:  Variable Loading time: 4.91  ms
+Daemon:  Reading variables from: /tmp/pash_T5lqvLc//pash_275212943329077
+Daemon:  Variable Reading time: 0.024  ms
+Daemon:  Variable Tokenizing time: 4.489  ms
+Daemon:  Variable Loading time: 4.924  ms
 Daemon:  Selected width: 16
-Daemon:  Retrieving candidate DF region: /tmp/pash_b6yCQ0K/tmpes4iaurt ... Daemon:  Done!
+Daemon:  Retrieving candidate DF region: /tmp/pash_T5lqvLc/tmpyeeqnbl9 ... Daemon:  Done!
+Daemon:  caruca inputs-outputs found for: echo
+Daemon:  caruca |-- ([], ['stdout'], [('option', 0)])
 Daemon:  caruca command to categorize: echo
 Daemon:  caruca class: pure found for: echo ['"done"']
 Daemon:  class: pure found for: echo
-Daemon:  Compilation time: 0.445  ms
+Daemon:  Compilation time: 0.537  ms
 Daemon:  Total nodes after optimization: 1
 Daemon:   -- out of which:
 Daemon:  Cat nodes: 0
 Daemon:  Eager nodes: 0
-Daemon:  Optimization time: 0.474  ms
-Daemon:  Backend time: 0.245  ms
-Daemon:  Optimized script saved in: /tmp/pash_b6yCQ0K//pash_18921448319476
-Daemon:  Daemon Compile time: 1.709  ms
+Daemon:  Optimization time: 0.447  ms
+Daemon:  Backend time: 0.237  ms
+Daemon:  Optimized script saved in: /tmp/pash_T5lqvLc//pash_36452835526903
+Daemon:  Daemon Compile time: 1.794  ms
 Daemon:  Unsafe running: False
-Daemon:  Request handling time: 6.84  ms
-Got response from daemon: OK: 2 /tmp/pash_b6yCQ0K//pash_18921448319476 /tmp/pash_b6yCQ0K//pash_467320236943 /tmp/pash_b6yCQ0K/tmpes4iaurt
-665306: (2) Compiler exited with code: 0
-665306: (2) Traps set: 
+Daemon:  Request handling time: 6.956  ms
+Got response from daemon: OK: 2 /tmp/pash_T5lqvLc//pash_36452835526903 /tmp/pash_T5lqvLc//pash_275212943329077 /tmp/pash_T5lqvLc/tmpyeeqnbl9
+232899: (2) Compiler exited with code: 0
+232899: (2) Traps set: 
 Sending msg to daemon: Exit:2|Time:
 Daemon:  Received data: Exit:2|Time:
 
@@ -163,10 +165,10 @@ From set: huBc
 To set: hBc
 To add: 
 To remove: u
-665306: (3) Reverted to BaSh set state: hBc
-665306: (3) Reverted to BaSh input arguments: 
-665306: (4) Restoring previous exit code: 0
-665306: (4) Will execute script in /tmp/pash_b6yCQ0K//pash_18921448319476:
+232899: (3) Reverted to BaSh set state: hBc
+232899: (3) Reverted to BaSh input arguments: 
+232899: (4) Restoring previous exit code: 0
+232899: (4) Will execute script in /tmp/pash_T5lqvLc//pash_36452835526903:
 rm_pash_fifos() {
 :
 }
@@ -181,66 +183,68 @@ pids_to_kill="${!} ${pids_to_kill}"
 source /opt/pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!} 2>>pash_logs/6_2.pash.log
 rm_pash_fifos
 ( exit "${internal_exec_status}" )
-665306: (5) BaSh script exited with ec: 0
-665306: (5) Writing current BaSh set state to: /tmp/pash_b6yCQ0K//pash_iFDwjMf1Fm
-665306: (5) Current BaSh shell: hBc
+232899: (5) BaSh script exited with ec: 0
+232899: (5) Writing current BaSh set state to: /tmp/pash_T5lqvLc//pash_WnMXA97kJI
+232899: (5) Current BaSh shell: hBc
 From set: hBc
 To set: huBc
 To add: u
 To remove: 
-665306: (5) Reverted to PaSh set state to: huBc
-Writing vars to: /tmp/pash_b6yCQ0K//pash_zLXwTeUcAT
-Execution time: 15.864  ms
-665306: (7) Recovering BaSh variables from: /tmp/pash_b6yCQ0K//pash_zLXwTeUcAT
+232899: (5) Reverted to PaSh set state to: huBc
+Writing vars to: /tmp/pash_T5lqvLc//pash_ulENWcdzuP
+Execution time: 15.301  ms
+232899: (7) Recovering BaSh variables from: /tmp/pash_T5lqvLc//pash_ulENWcdzuP
 /dev/fd/63: line 7: FUNCNAME: variable may not be assigned value
 /dev/fd/63: line 39: declare: PPID: readonly variable
 /dev/fd/63: line 51: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 54: declare: UID: readonly variable
-665306: (7) Reading current BaSh set state from: /tmp/pash_b6yCQ0K//pash_iFDwjMf1Fm
-665306: (7) Current BaSh set state: hBc
-665306: (7) Arguments (might) have been updated to be: 
-665306: (7) Current PaSh set state: huBc
+232899: (7) Reading current BaSh set state from: /tmp/pash_T5lqvLc//pash_WnMXA97kJI
+232899: (7) Current BaSh set state: hBc
+232899: (7) Arguments (might) have been updated to be: 
+232899: (7) Current PaSh set state: huBc
 From set: huBc
 To set: hBc
 To add: 
 To remove: u
-665306: (7) Reverted to BaSh set state before exiting: hBc
-665306: (7) Reverting last BaSh exit code: 0
-665306: (1) Previous exit status: 0
-665306: (1) Previous set state: hBc
-Writing vars to: /tmp/pash_b6yCQ0K//pash_210231221519767
-665306: (1) Bash variables saved in: /tmp/pash_b6yCQ0K//pash_210231221519767
-665306: (1) Bash set state at start of execution: hBc
+232899: (7) Reverted to BaSh set state before exiting: hBc
+232899: (7) Reverting last BaSh exit code: 0
+232899: (1) Previous exit status: 0
+232899: (1) Previous set state: hBc
+Writing vars to: /tmp/pash_T5lqvLc//pash_47092076925703
+232899: (1) Bash variables saved in: /tmp/pash_T5lqvLc//pash_47092076925703
+232899: (1) Bash set state at start of execution: hBc
 From set: hBc
 To set: huB
 To add: u
 To remove: 
-665306: (1) Set state reverted to PaSh-internal set state: huBc
-665306: (2) Before asking the daemon for compilation...
-Sending msg to daemon: Compile:/tmp/pash_b6yCQ0K//pash_1453188847133| Variable File:/tmp/pash_b6yCQ0K//pash_210231221519767| Input IR File:/tmp/pash_b6yCQ0K/tmpwhcmktam
-Daemon:  Received data: Compile:/tmp/pash_b6yCQ0K//pash_1453188847133| Variable File:/tmp/pash_b6yCQ0K//pash_210231221519767| Input IR File:/tmp/pash_b6yCQ0K/tmpwhcmktam
+232899: (1) Set state reverted to PaSh-internal set state: huBc
+232899: (2) Before asking the daemon for compilation...
+Sending msg to daemon: Compile:/tmp/pash_T5lqvLc//pash_105142796526934| Variable File:/tmp/pash_T5lqvLc//pash_47092076925703| Input IR File:/tmp/pash_T5lqvLc/tmp0lh9z7eg
+Daemon:  Received data: Compile:/tmp/pash_T5lqvLc//pash_105142796526934| Variable File:/tmp/pash_T5lqvLc//pash_47092076925703| Input IR File:/tmp/pash_T5lqvLc/tmp0lh9z7eg
 
-Daemon:  Reading variables from: /tmp/pash_b6yCQ0K//pash_210231221519767
-Daemon:  Variable Reading time: 0.013  ms
-Daemon:  Variable Tokenizing time: 4.549  ms
-Daemon:  Variable Loading time: 4.964  ms
+Daemon:  Reading variables from: /tmp/pash_T5lqvLc//pash_47092076925703
+Daemon:  Variable Reading time: 0.014  ms
+Daemon:  Variable Tokenizing time: 4.554  ms
+Daemon:  Variable Loading time: 4.963  ms
 Daemon:  Selected width: 16
-Daemon:  Retrieving candidate DF region: /tmp/pash_b6yCQ0K/tmpwhcmktam ... Daemon:  Done!
+Daemon:  Retrieving candidate DF region: /tmp/pash_T5lqvLc/tmp0lh9z7eg ... Daemon:  Done!
 Daemon:  Var: OUT value: /opt/pash/evaluation/benchmarks/nlp/output/6_2/
+Daemon:  caruca inputs-outputs found for: rm
+Daemon:  caruca |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
 Daemon:  caruca command to categorize: rm
 Daemon:  caruca class: side-effectful found for: rm ['-rf', '"/opt/pash/evaluation/benchmarks/nlp/output/6_2/"']
 Daemon:  class: side-effectful found for: rm
-Daemon:  caruca err 
-Daemon:  Compilation time: 0.561  ms
+Daemon:  caruca err DFG node is not at most pure
+Daemon:  Compilation time: 0.683  ms
 Daemon:  Optimization time: 0.001  ms
 Daemon:  WARNING: Exception caught: Script failed to compile!
-Daemon:  Daemon Compile time: 0.971  ms
+Daemon:  Daemon Compile time: 1.113  ms
 Daemon:  Unsafe running: False
 Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
-Daemon:  Request handling time: 6.186  ms
+Daemon:  Request handling time: 6.336  ms
 Got response from daemon: ERROR: 3 failed to compile
-665306: (2) Compiler exited with code: 1
-665306: (2) Traps set: 
+232899: (2) Compiler exited with code: 1
+232899: (2) Traps set: 
 Sending msg to daemon: Exit:3|Time:
 Daemon:  Received data: Exit:3|Time:
 
@@ -253,42 +257,42 @@ From set: huBc
 To set: hBc
 To add: 
 To remove: u
-665306: (3) Reverted to BaSh set state: hBc
-665306: (3) Reverted to BaSh input arguments: 
-665306: (4) Restoring previous exit code: 0
-665306: (4) Will execute script in /tmp/pash_b6yCQ0K/tmp0l5b9h84:
+232899: (3) Reverted to BaSh set state: hBc
+232899: (3) Reverted to BaSh input arguments: 
+232899: (4) Restoring previous exit code: 0
+232899: (4) Will execute script in /tmp/pash_T5lqvLc/tmpssynpnpf:
 rm -rf "${OUT}"
-665306: (5) BaSh script exited with ec: 0
-665306: (5) Writing current BaSh set state to: /tmp/pash_b6yCQ0K//pash_4fAGdnE07g
-665306: (5) Current BaSh shell: hBc
+232899: (5) BaSh script exited with ec: 0
+232899: (5) Writing current BaSh set state to: /tmp/pash_T5lqvLc//pash_dcwc0c6yxV
+232899: (5) Current BaSh shell: hBc
 From set: hBc
 To set: huBc
 To add: u
 To remove: 
-665306: (5) Reverted to PaSh set state to: huBc
-Writing vars to: /tmp/pash_b6yCQ0K//pash_sZjsFfwKAt
-Execution time: 15.872  ms
-665306: (7) Recovering BaSh variables from: /tmp/pash_b6yCQ0K//pash_sZjsFfwKAt
+232899: (5) Reverted to PaSh set state to: huBc
+Writing vars to: /tmp/pash_T5lqvLc//pash_sGPXF2j4dS
+Execution time: 15.017  ms
+232899: (7) Recovering BaSh variables from: /tmp/pash_T5lqvLc//pash_sGPXF2j4dS
 /dev/fd/63: line 7: FUNCNAME: variable may not be assigned value
 /dev/fd/63: line 39: declare: PPID: readonly variable
 /dev/fd/63: line 51: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 54: declare: UID: readonly variable
-665306: (7) Reading current BaSh set state from: /tmp/pash_b6yCQ0K//pash_4fAGdnE07g
-665306: (7) Current BaSh set state: hBc
-665306: (7) Arguments (might) have been updated to be: 
-665306: (7) Current PaSh set state: huBc
+232899: (7) Reading current BaSh set state from: /tmp/pash_T5lqvLc//pash_dcwc0c6yxV
+232899: (7) Current BaSh set state: hBc
+232899: (7) Arguments (might) have been updated to be: 
+232899: (7) Current PaSh set state: huBc
 From set: huBc
 To set: hBc
 To add: 
 To remove: u
-665306: (7) Reverted to BaSh set state before exiting: hBc
-665306: (7) Reverting last BaSh exit code: 0
+232899: (7) Reverted to BaSh set state before exiting: hBc
+232899: (7) Reverting last BaSh exit code: 0
 PaSh Preprocessor:  ----------------------------------------
 Sending msg to daemon: Done
 Daemon:  Received data: Done
 
 Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
 Daemon:  SocketManager: Closed
-Got response from daemon: All finished
 Daemon:  PaSh daemon is shutting down...
 Daemon:  PaSh daemon shut down successfully...
+Got response from daemon: All finished

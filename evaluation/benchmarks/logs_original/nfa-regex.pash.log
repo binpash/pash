@@ -33,55 +33,61 @@ PaSh Preprocessor:  daemon_communicates_through_unix_pipes False
 PaSh Preprocessor:  distributed_exec False
 PaSh Preprocessor:  config_path 
 PaSh Preprocessor:  ----------------------------------------
-PaSh Preprocessor:  Preprocessing -- Parsing time: 2.453  ms
-PaSh Preprocessor:  Preprocessing -- PaSh time: 0.899  ms
-PaSh Preprocessor:  Preprocessing -- Unparsing time: 0.126  ms
-PaSh Preprocessor:  Preprocessed script stored in: /tmp/pash_cObnSAH/tmpwy50f88p
-PaSh Preprocessor:  Executing: PASH_TMP_PREFIX=/tmp/pash_cObnSAH/ pash_shell_name=nfa-regex.sh /usr/bin/env bash +a -c source /tmp/pash_cObnSAH/tmpwy50f88p nfa-regex.sh
-612871: (1) Previous exit status: 0
-612871: (1) Previous set state: hBc
-Writing vars to: /tmp/pash_cObnSAH//pash_26877245646759
-612871: (1) Bash variables saved in: /tmp/pash_cObnSAH//pash_26877245646759
-612871: (1) Bash set state at start of execution: hBc
+PaSh Preprocessor:  Preprocessing -- Parsing time: 1.845  ms
+PaSh Preprocessor:  Preprocessing -- PaSh time: 0.604  ms
+PaSh Preprocessor:  Preprocessing -- Unparsing time: 0.143  ms
+PaSh Preprocessor:  Preprocessed script stored in: /tmp/pash_6JF6CKt/tmptvg8nmtm
+PaSh Preprocessor:  Executing: PASH_TMP_PREFIX=/tmp/pash_6JF6CKt/ pash_shell_name=nfa-regex.sh /usr/bin/env bash +a -c source /tmp/pash_6JF6CKt/tmptvg8nmtm nfa-regex.sh
+180467: (1) Previous exit status: 0
+180467: (1) Previous set state: hBc
+Writing vars to: /tmp/pash_6JF6CKt//pash_280271777224557
+180467: (1) Bash variables saved in: /tmp/pash_6JF6CKt//pash_280271777224557
+180467: (1) Bash set state at start of execution: hBc
 From set: hBc
 To set: huB
 To add: u
 To remove: 
-612871: (1) Set state reverted to PaSh-internal set state: huBc
-612871: (2) Before asking the daemon for compilation...
-Sending msg to daemon: Compile:/tmp/pash_cObnSAH//pash_3108579029411| Variable File:/tmp/pash_cObnSAH//pash_26877245646759| Input IR File:/tmp/pash_cObnSAH/tmpkw3s2ua_
-Daemon:  Received data: Compile:/tmp/pash_cObnSAH//pash_3108579029411| Variable File:/tmp/pash_cObnSAH//pash_26877245646759| Input IR File:/tmp/pash_cObnSAH/tmpkw3s2ua_
+180467: (1) Set state reverted to PaSh-internal set state: huBc
+180467: (2) Before asking the daemon for compilation...
+Sending msg to daemon: Compile:/tmp/pash_6JF6CKt//pash_171972049317774| Variable File:/tmp/pash_6JF6CKt//pash_280271777224557| Input IR File:/tmp/pash_6JF6CKt/tmp15xagubu
+Daemon:  Received data: Compile:/tmp/pash_6JF6CKt//pash_171972049317774| Variable File:/tmp/pash_6JF6CKt//pash_280271777224557| Input IR File:/tmp/pash_6JF6CKt/tmp15xagubu
 
-Daemon:  Reading variables from: /tmp/pash_cObnSAH//pash_26877245646759
-Daemon:  Variable Reading time: 0.034  ms
-Daemon:  Variable Tokenizing time: 3.483  ms
-Daemon:  Variable Loading time: 3.86  ms
+Daemon:  Reading variables from: /tmp/pash_6JF6CKt//pash_280271777224557
+Daemon:  Variable Reading time: 0.027  ms
+Daemon:  Variable Tokenizing time: 3.652  ms
+Daemon:  Variable Loading time: 4.126  ms
 Daemon:  Selected width: 16
-Daemon:  Retrieving candidate DF region: /tmp/pash_cObnSAH/tmpkw3s2ua_ ... Daemon:  Done!
+Daemon:  Retrieving candidate DF region: /tmp/pash_6JF6CKt/tmp15xagubu ... Daemon:  Done!
 Daemon:  Var: IN value: /opt/pash/evaluation/benchmarks/oneliners/input/small/100M.txt
+Daemon:  caruca inputs-outputs found for: cat
+Daemon:  caruca |-- ([('option', 0)], ['stdout'], [])
 Daemon:  caruca command to categorize: cat
 Daemon:  caruca class: stateless found for: cat ['/opt/pash/evaluation/benchmarks/oneliners/input/small/100M.txt']
 Daemon:  class: stateless found for: cat
+Daemon:  caruca inputs-outputs found for: tr
+Daemon:  caruca |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
 Daemon:  caruca command to categorize: tr
 Daemon:  caruca: Overriding standard category for: tr
-Daemon:  caruca class: stateless found for: tr ['A-Z', 'a-z']
+Daemon:  caruca (custom) class: stateless found for: tr ['A-Z', 'a-z']
+Daemon:  caruca inputs-outputs found for: grep
+Daemon:  caruca |-- (['stdin'], ['stdout'], [('option', 0)])
 Daemon:  caruca command to categorize: grep
 Daemon:  caruca class: stateless found for: grep ['"\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4"']
 Daemon:  class: stateless found for: grep
-Daemon:  Compilation time: 2.666  ms
+Daemon:  Compilation time: 3.213  ms
 Daemon:  Total nodes after optimization: 66
 Daemon:   -- out of which:
 Daemon:  Cat nodes: 2
 Daemon:  Eager nodes: 31
-Daemon:  Optimization time: 5.518  ms
-Daemon:  Backend time: 17.704  ms
-Daemon:  Optimized script saved in: /tmp/pash_cObnSAH//pash_3108579029411
-Daemon:  Daemon Compile time: 27.11  ms
+Daemon:  Optimization time: 5.757  ms
+Daemon:  Backend time: 17.473  ms
+Daemon:  Optimized script saved in: /tmp/pash_6JF6CKt//pash_171972049317774
+Daemon:  Daemon Compile time: 27.509  ms
 Daemon:  Unsafe running: False
-Daemon:  Request handling time: 31.37  ms
-Got response from daemon: OK: 1 /tmp/pash_cObnSAH//pash_3108579029411 /tmp/pash_cObnSAH//pash_26877245646759 /tmp/pash_cObnSAH/tmpkw3s2ua_
-612871: (2) Compiler exited with code: 0
-612871: (2) Traps set: 
+Daemon:  Request handling time: 32.041  ms
+Got response from daemon: OK: 1 /tmp/pash_6JF6CKt//pash_171972049317774 /tmp/pash_6JF6CKt//pash_280271777224557 /tmp/pash_6JF6CKt/tmp15xagubu
+180467: (2) Compiler exited with code: 0
+180467: (2) Traps set: 
 Sending msg to daemon: Exit:1|Time:
 Daemon:  Received data: Exit:1|Time:
 
@@ -94,347 +100,347 @@ From set: huBc
 To set: hBc
 To add: 
 To remove: u
-612871: (3) Reverted to BaSh set state: hBc
-612871: (3) Reverted to BaSh input arguments: 
-612871: (4) Restoring previous exit code: 0
-612871: (4) Will execute script in /tmp/pash_cObnSAH//pash_3108579029411:
+180467: (3) Reverted to BaSh set state: hBc
+180467: (3) Reverted to BaSh input arguments: 
+180467: (4) Restoring previous exit code: 0
+180467: (4) Will execute script in /tmp/pash_6JF6CKt//pash_171972049317774:
 rm_pash_fifos() {
-{ rm -f "/tmp/pash_cObnSAH/0f92676555be4fa485fb7acf9387db97/#fifo2" ; } 
- { { rm -f "/tmp/pash_cObnSAH/0f92676555be4fa485fb7acf9387db97/#fifo4" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo7" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo8" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo9" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo10" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo11" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo12" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo13" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo14" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo15" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo16" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo17" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo18" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo19" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo20" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo21" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo22" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo23" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo24" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo25" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo26" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo27" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo28" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo29" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo30" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo31" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo32" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo33" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo34" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo35" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo36" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo37" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo38" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo39" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo40" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo41" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo42" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo43" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo44" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo45" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo46" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo47" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo48" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo49" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo50" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo51" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo52" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo53" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo54" ; } 
- { { rm -f "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo55" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo56" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo57" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo58" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo59" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo60" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo61" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo62" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo63" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo64" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo65" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo66" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo67" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo68" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo69" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo70" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo71" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo72" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo73" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo74" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo75" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo76" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo77" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo78" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo79" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo80" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo81" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo82" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo83" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo84" ; } 
- { { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo85" ; } 
- { rm -f "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo86" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+{ rm -f "/tmp/pash_6JF6CKt/f71aaa64e780419a99092c8c75ca8e91/#fifo2" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/f71aaa64e780419a99092c8c75ca8e91/#fifo4" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo7" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo8" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo9" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo10" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo11" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo12" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo13" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo14" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo15" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo16" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo17" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo18" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo19" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo20" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo21" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo22" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo23" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo24" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo25" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo26" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo27" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo28" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo29" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo30" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo31" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo32" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo33" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo34" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo35" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo36" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo37" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo38" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo39" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo40" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo41" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo42" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo43" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo44" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo45" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo46" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo47" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo48" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo49" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo50" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo51" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo52" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo53" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo54" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo55" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo56" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo57" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo58" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo59" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo60" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo61" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo62" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo63" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo64" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo65" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo66" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo67" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo68" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo69" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo70" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo71" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo72" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo73" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo74" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo75" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo76" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo77" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo78" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo79" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo80" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo81" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo82" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo83" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo84" ; } 
+ { { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo85" ; } 
+ { rm -f "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo86" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
 }
 mkfifo_pash_fifos() {
-{ mkfifo "/tmp/pash_cObnSAH/0f92676555be4fa485fb7acf9387db97/#fifo2" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/0f92676555be4fa485fb7acf9387db97/#fifo4" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo7" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo8" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo9" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo10" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo11" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo12" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo13" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo14" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo15" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo16" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo17" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo18" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo19" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo20" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo21" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo22" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo23" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo24" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo25" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo26" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo27" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo28" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo29" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo30" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo31" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo32" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo33" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo34" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo35" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo36" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo37" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo38" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo39" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo40" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo41" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo42" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo43" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo44" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo45" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo46" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo47" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo48" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo49" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo50" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo51" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo52" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo53" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo54" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo55" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo56" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo57" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo58" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo59" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo60" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo61" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo62" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo63" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo64" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo65" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo66" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo67" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo68" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo69" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo70" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo71" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo72" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo73" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo74" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo75" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo76" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo77" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo78" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo79" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo80" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo81" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo82" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo83" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo84" ; } 
- { { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo85" ; } 
- { mkfifo "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo86" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+{ mkfifo "/tmp/pash_6JF6CKt/f71aaa64e780419a99092c8c75ca8e91/#fifo2" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/f71aaa64e780419a99092c8c75ca8e91/#fifo4" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo7" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo8" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo9" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo10" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo11" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo12" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo13" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo14" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo15" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo16" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo17" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo18" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo19" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo20" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo21" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo22" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo23" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo24" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo25" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo26" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo27" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo28" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo29" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo30" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo31" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo32" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo33" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo34" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo35" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo36" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo37" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo38" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo39" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo40" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo41" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo42" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo43" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo44" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo45" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo46" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo47" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo48" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo49" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo50" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo51" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo52" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo53" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo54" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo55" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo56" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo57" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo58" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo59" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo60" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo61" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo62" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo63" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo64" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo65" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo66" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo67" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo68" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo69" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo70" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo71" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo72" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo73" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo74" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo75" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo76" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo77" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo78" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo79" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo80" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo81" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo82" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo83" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo84" ; } 
+ { { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo85" ; } 
+ { mkfifo "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo86" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
 }
 rm_pash_fifos
 mkfifo_pash_fifos
 pids_to_kill=""
-{ cat /opt/pash/evaluation/benchmarks/oneliners/input/small/100M.txt >"/tmp/pash_cObnSAH/0f92676555be4fa485fb7acf9387db97/#fifo2" & }
+{ cat /opt/pash/evaluation/benchmarks/oneliners/input/small/100M.txt >"/tmp/pash_6JF6CKt/f71aaa64e780419a99092c8c75ca8e91/#fifo2" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/auto-split.sh "/tmp/pash_cObnSAH/0f92676555be4fa485fb7acf9387db97/#fifo2" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo7" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo8" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo9" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo10" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo11" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo12" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo13" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo14" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo15" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo16" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo17" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo18" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo19" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo20" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo21" "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo22" & }
+{ /opt/pash/runtime/auto-split.sh "/tmp/pash_6JF6CKt/f71aaa64e780419a99092c8c75ca8e91/#fifo2" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo7" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo8" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo9" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo10" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo11" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo12" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo13" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo14" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo15" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo16" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo17" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo18" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo19" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo20" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo21" "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo22" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo56" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo24" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo56" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo24" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo57" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo25" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo57" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo25" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo58" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo26" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo58" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo26" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo59" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo27" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo59" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo27" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo60" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo28" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo60" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo28" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo61" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo29" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo61" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo29" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo62" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo30" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo62" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo30" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo63" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo31" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo63" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo31" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo64" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo32" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo64" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo32" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo65" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo33" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo65" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo33" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo66" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo34" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo66" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo34" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo67" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo35" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo67" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo35" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo68" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo36" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo68" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo36" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo69" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo37" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo69" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo37" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo70" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo38" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo70" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo38" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ tr A-Z a-z <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo22" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo39" & }
+{ tr A-Z a-z <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo22" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo39" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo24" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo40" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo24" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo40" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo25" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo41" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo25" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo41" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo26" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo42" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo26" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo42" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo27" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo43" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo27" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo43" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo28" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo44" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo28" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo44" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo29" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo45" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo29" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo45" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo30" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo46" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo30" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo46" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo31" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo47" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo31" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo47" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo32" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo48" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo32" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo48" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo33" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo49" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo33" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo49" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo34" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo50" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo34" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo50" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo35" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo51" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo35" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo51" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo36" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo52" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo36" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo52" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo37" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo53" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo37" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo53" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo38" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo54" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo38" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo54" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo39" >"/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo55" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo39" >"/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo55" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo7" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo56" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_1 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo7" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo56" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_1 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo8" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo57" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_2 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo8" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo57" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_2 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo9" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo58" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_3 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo9" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo58" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_3 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo10" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo59" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_4 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo10" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo59" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_4 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo11" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo60" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_5 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo11" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo60" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_5 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo12" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo61" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_6 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo12" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo61" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_6 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo13" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo62" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_7 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo13" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo62" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_7 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo14" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo63" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_8 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo14" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo63" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_8 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo15" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo64" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_9 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo15" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo64" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_9 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo16" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo65" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_10 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo16" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo65" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_10 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo17" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo66" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_11 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo17" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo66" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_11 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo18" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo67" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_12 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo18" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo67" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_12 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo19" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo68" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_13 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo19" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo68" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_13 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo20" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo69" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_14 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo20" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo69" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_14 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo21" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo70" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_15 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo21" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo70" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_15 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo40" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo71" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_16 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo40" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo71" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_16 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo41" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo72" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_17 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo41" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo72" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_17 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo42" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo73" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_18 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo42" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo73" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_18 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo43" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo74" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_19 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo43" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo74" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_19 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo44" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo75" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_20 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo44" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo75" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_20 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo45" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo76" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_21 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo45" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo76" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_21 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo46" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo77" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_22 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo46" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo77" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_22 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo47" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo78" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_23 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo47" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo78" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_23 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo48" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo79" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_24 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo48" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo79" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_24 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo49" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo80" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_25 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo49" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo80" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_25 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo50" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo81" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_26 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo50" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo81" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_26 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo51" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo82" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_27 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo51" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo82" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_27 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo52" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo83" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_28 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo52" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo83" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_28 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo53" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo84" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_29 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo53" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo84" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_29 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo54" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo85" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_30 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo54" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo85" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_30 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pash/runtime/eager.sh "/tmp/pash_cObnSAH/ea298fca25284d5498658a3c8f2ce368/#fifo55" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo86" /tmp/pash_cObnSAH/ea05b3575d5841b4b17e7965d78ddf2e/pash_eager_intermediate_31 & }
+{ /opt/pash/runtime/eager.sh "/tmp/pash_6JF6CKt/1ca7bcf418ea43c48fd47da8a400e2ad/#fifo55" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo86" /tmp/pash_6JF6CKt/347d397f01774239a5e1d782b9e33abf/pash_eager_intermediate_31 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ cat "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo71" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo72" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo73" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo74" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo75" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo76" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo77" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo78" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo79" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo80" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo81" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo82" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo83" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo84" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo85" "/tmp/pash_cObnSAH/1d3f22d217784e2784a7bd1e63dbaa39/#fifo86" & }
+{ cat "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo71" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo72" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo73" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo74" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo75" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo76" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo77" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo78" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo79" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo80" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo81" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo82" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo83" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo84" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo85" "/tmp/pash_6JF6CKt/9dcd141779b44d2caabaa2c4976e6e8d/#fifo86" & }
 pids_to_kill="${!} ${pids_to_kill}"
 source /opt/pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!} 2>>pash_logs/nfa-regex.pash.log
 rm_pash_fifos
 ( exit "${internal_exec_status}" )
-612871: (5) BaSh script exited with ec: 0
-612871: (5) Writing current BaSh set state to: /tmp/pash_cObnSAH//pash_Cg2veeVDP1
-612871: (5) Current BaSh shell: hBc
+180467: (5) BaSh script exited with ec: 0
+180467: (5) Writing current BaSh set state to: /tmp/pash_6JF6CKt//pash_LFHGLnkJIM
+180467: (5) Current BaSh shell: hBc
 From set: hBc
 To set: huBc
 To add: u
 To remove: 
-612871: (5) Reverted to PaSh set state to: huBc
-Writing vars to: /tmp/pash_cObnSAH//pash_7ebRVtivYx
-Execution time: 685.729  ms
-612871: (7) Recovering BaSh variables from: /tmp/pash_cObnSAH//pash_7ebRVtivYx
+180467: (5) Reverted to PaSh set state to: huBc
+Writing vars to: /tmp/pash_6JF6CKt//pash_9jxPHBsNQ7
+Execution time: 642.236  ms
+180467: (7) Recovering BaSh variables from: /tmp/pash_6JF6CKt//pash_9jxPHBsNQ7
 /dev/fd/63: line 5: FUNCNAME: variable may not be assigned value
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 48: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 51: declare: UID: readonly variable
-612871: (7) Reading current BaSh set state from: /tmp/pash_cObnSAH//pash_Cg2veeVDP1
-612871: (7) Current BaSh set state: hBc
-612871: (7) Arguments (might) have been updated to be: 
-612871: (7) Current PaSh set state: huBc
+180467: (7) Reading current BaSh set state from: /tmp/pash_6JF6CKt//pash_LFHGLnkJIM
+180467: (7) Current BaSh set state: hBc
+180467: (7) Arguments (might) have been updated to be: 
+180467: (7) Current PaSh set state: huBc
 From set: huBc
 To set: hBc
 To add: 
 To remove: u
-612871: (7) Reverted to BaSh set state before exiting: hBc
-612871: (7) Reverting last BaSh exit code: 0
+180467: (7) Reverted to BaSh set state before exiting: hBc
+180467: (7) Reverting last BaSh exit code: 0
 PaSh Preprocessor:  ----------------------------------------
 Sending msg to daemon: Done
 Daemon:  Received data: Done
 
 Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
 Daemon:  SocketManager: Closed
+Got response from daemon: All finished
 Daemon:  PaSh daemon is shutting down...
 Daemon:  PaSh daemon shut down successfully...
-Got response from daemon: All finished
