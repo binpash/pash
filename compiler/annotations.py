@@ -216,8 +216,8 @@ def interpret_io(io, options, ann_options):
         return (["stdin"], [])
     elif(io == "stdout"):
         return (["stdout"], [])
-    else:
-        assert(io.startswith("args"))
+    elif io.startswith("args"):
+        # assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
 
         # log("caruca", io, options)
@@ -254,6 +254,7 @@ def interpret_io(io, options, ann_options):
             ##       Command <-> DFGNode is not a bijection at the moment.
             io_list, options_to_remove = handle_stdin_hyphen(io_list, options)
         return (io_list, options_to_remove)
+    return ([], [])
 
 def handle_stdin_hyphen(io_list, options):
     options_to_remove = []
