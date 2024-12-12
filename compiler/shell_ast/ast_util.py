@@ -231,33 +231,42 @@ def make_increment_var(var_name: str):
     node = make_command([], assignments=assignments)
     return node
 
+def make_echo_string_to_argument(string):
+    return [CArgChar(ord(char)) for char in string]
 
 def make_echo_ast(argument, var_file_path):
     nodes = []
     ## Source variables if present
-    if not var_file_path is None:
-        arguments = [string_to_argument("source"), string_to_argument(var_file_path)]
+    if(not var_file_path is None):
+        arguments = [make_echo_string_to_argument("source"), make_echo_string_to_argument(var_file_path)]
 
         line_number = 0
-        node = make_kv("Command", [line_number, [], arguments, []])
+        # node = make_kv('Command', [line_number, [], arguments, []])
+        node = CommandNode(line_number, [], arguments, [])
         nodes.append(node)
 
     ## Reset the exit status
-    variable_arg = make_kv("V", ["Normal", "false", "pash_previous_exit_status", []])
-    arguments = [string_to_argument("exit"), [variable_arg]]
-    exit_node = make_kv("Command", [0, [], arguments, []])
-    node = make_kv("Subshell", [0, exit_node, []])
+    # variable_arg = make_kv('V', ['Normal', "false", 'pash_previous_exit_status', []])
+    variable_arg = VArgChar('Normal', False, 'pash_previous_exit_status', [])
+    arguments = [make_echo_string_to_argument("exit"), [variable_arg]]
+    # exit_node = make_kv('Command', [0, [], arguments, []])
+    exit_node = CommandNode(0, [], arguments, [])
+    # node = make_kv('Subshell', [0, exit_node, []])
+    node = SubshellNode(0, exit_node, [])
     nodes.append(node)
 
     ## Reset the input arguments
-    variable_arg = make_kv("V", ["Normal", "false", "pash_input_args", []])
-    arguments = [string_to_argument("set"), string_to_argument("--"), [variable_arg]]
-    set_node = make_kv("Command", [0, [], arguments, []])
+    # variable_arg = make_kv('V', ['Normal', "false", 'pash_input_args', []])
+    variable_arg = VArgChar('Normal', False, 'pash_input_args', [])
+    arguments = [make_echo_string_to_argument("set"), make_echo_string_to_argument("--"), [variable_arg]]
+    # set_node = make_kv('Command', [0, [], arguments, []])
+    set_node = CommandNode(0, [], arguments, [])
     nodes.append(set_node)
 
-    arguments = [string_to_argument("echo"), string_to_argument("-n"), argument]
+    arguments = [make_echo_string_to_argument("echo"), make_echo_string_to_argument("-n"), argument]
 
     line_number = 0
-    node = make_kv("Command", [line_number, [], arguments, []])
+    # node = make_kv('Command', [line_number, [], arguments, []])
+    node = CommandNode(line_number, [], arguments, [])
     nodes.append(node)
     return nodes

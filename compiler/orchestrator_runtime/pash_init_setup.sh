@@ -41,6 +41,9 @@ do
     # if [ "--output_time" == "$item" ]; then
     #     pash_output_time_flag=1
     # fi
+    if [ "--bash" == "$item" ]; then
+        export pash_shell="bash"
+    fi
     if [ "--version" == "$item" ]; then
         export show_version=1
     fi
