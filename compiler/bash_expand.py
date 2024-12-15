@@ -31,7 +31,7 @@ def init_bash_mirror_subprocess() -> pexpect.spawn:
     if (config.pash_args.debug >= 1):
         _, file_to_save_output = ptempfile()
         log("bash mirror log saved in:", file_to_save_output)
-        fout = open(file_to_save_output, "w")
+        fout = open(file_to_save_output, "w", encoding="utf-8")
         p.logfile = fout
     return p
     

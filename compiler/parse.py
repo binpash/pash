@@ -82,7 +82,7 @@ def from_ast_objects_to_shell(asts):
 
 def from_ast_objects_to_shell_file(asts, new_shell_filename):
     script = from_ast_objects_to_shell(asts)
-    with open(new_shell_filename, "w") as new_shell_file:
+    with open(new_shell_filename, "w", encoding="utf-8") as new_shell_file:
         new_shell_file.write(script)
 
 
