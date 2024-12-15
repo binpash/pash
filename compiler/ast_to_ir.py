@@ -8,9 +8,9 @@ from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
 
-BASH_MODE = os.environ.get('pash_shell') == 'bash'
-
 from custom_error import *
+
+BASH_MODE = os.environ.get("pash_shell") == "bash"
 
 ## TODO: Separate the ir stuff to the bare minimum and
 ##       try to move this to the shell_ast folder.
@@ -339,107 +339,167 @@ def compile_node_for(ast_node, fileIdGen, config):
     )
     return compiled_ast
 
+
 def compile_node_not(ast_node, fileIdGen, config):
     ast_node: NotNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                           [compile_node(ast_node.body, fileIdGen, config)])
-    return compiled_ast                        
+    compiled_ast = make_kv(
+        type(ast_node).NodeName, [compile_node(ast_node.body, fileIdGen, config)]
+    )
+    return compiled_ast
+
 
 def compile_node_defun(ast_node, fileIdGen, config):
     ast_node: DefunNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                           [ast_node.line_number,
-                            compile_command_argument(ast_node.name),
-                            compile_node(ast_node.body, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.name),
+            compile_node(ast_node.body, fileIdGen, config),
+        ],
+    )
     return compiled_ast
+
 
 def compile_node_while(ast_node, fileIdGen, config):
     ast_node: WhileNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [compile_node(ast_node.test, fileIdGen, config),
-                             compile_node(ast_node.body, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            compile_node(ast_node.test, fileIdGen, config),
+            compile_node(ast_node.body, fileIdGen, config),
+        ],
+    )
     return compiled_ast
+
 
 def compile_node_if(ast_node, fileIdGen, config):
     ast_node: IfNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [compile_node(ast_node.cond, fileIdGen, config),
-                             compile_node(ast_node.then_b, fileIdGen, config),
-                             compile_node(ast_node.else_b, fileIdGen, config) if ast_node.else_b else None])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            compile_node(ast_node.cond, fileIdGen, config),
+            compile_node(ast_node.then_b, fileIdGen, config),
+            (
+                compile_node(ast_node.else_b, fileIdGen, config)
+                if ast_node.else_b
+                else None
+            ),
+        ],
+    )
     return compiled_ast
 
+
 def compile_command_cases(cases, fileIdGen, config):
-    compiled_cases = [[compile_command_argument(case["cpattern"], fileIdGen, config),
-                       compile_node(case["cbody"], fileIdGen, config)]
-                      for case in cases]
+    compiled_cases = [
+        [
+            compile_command_argument(case["cpattern"], fileIdGen, config),
+            compile_node(case["cbody"], fileIdGen, config),
+        ]
+        for case in cases
+    ]
     return compiled_cases
+
 
 def compile_node_case(ast_node, fileIdGen, config):
     ast_node: CaseNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [ast_node.line_number,
-                             compile_command_argument(ast_node.argument, fileIdGen, config),
-                             compile_command_cases(ast_node.cases, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.argument, fileIdGen, config),
+            compile_command_cases(ast_node.cases, fileIdGen, config),
+        ],
+    )
     return compiled_ast
 
 
 def compile_node_select(ast_node, fileIdGen, config):
     ast_node: SelectNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [ast_node.line_number,
-                             compile_command_argument(ast_node.variable, fileIdGen, config),
-                             compile_node(ast_node.body, fileIdGen, config),
-                             compile_command_arguments(ast_node.map_list, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.variable, fileIdGen, config),
+            compile_node(ast_node.body, fileIdGen, config),
+            compile_command_arguments(ast_node.map_list, fileIdGen, config),
+        ],
+    )
     return compiled_ast
 
 
 def compile_node_arith(ast_node, fileIdGen, config):
     ast_node: ArithNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                           [ast_node.line_number,
-                            compile_command_arguments(ast_node.argument, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_arguments(ast_node.argument, fileIdGen, config),
+        ],
+    )
     return compiled_ast
 
 
 def compile_node_cond(ast_node, fileIdGen, config):
     ast_node: CondNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [ast_node.line_number,
-                             ast_node.cond_type,
-                             compile_command_argument(ast_node.op, fileIdGen, config) if ast_node.op else None,
-                             compile_node(ast_node.left, fileIdGen, config) if ast_node.left else None,
-                             compile_node(ast_node.right, fileIdGen, config) if ast_node.right else None,
-                             ast_node.invert_return])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            ast_node.cond_type,
+            (
+                compile_command_argument(ast_node.op, fileIdGen, config)
+                if ast_node.op
+                else None
+            ),
+            compile_node(ast_node.left, fileIdGen, config) if ast_node.left else None,
+            compile_node(ast_node.right, fileIdGen, config) if ast_node.right else None,
+            ast_node.invert_return,
+        ],
+    )
     return compiled_ast
+
 
 def compile_node_arith_for(ast_node, fileIdGen, config):
     ast_node: ArithForNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                           [ast_node.line_number,
-                            compile_command_argument(ast_node.init, fileIdGen, config),
-                            compile_command_argument(ast_node.cond, fileIdGen, config),
-                            compile_command_argument(ast_node.step, fileIdGen, config),
-                            compile_node(ast_node.action, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.init, fileIdGen, config),
+            compile_command_argument(ast_node.cond, fileIdGen, config),
+            compile_command_argument(ast_node.step, fileIdGen, config),
+            compile_node(ast_node.action, fileIdGen, config),
+        ],
+    )
     return compiled_ast
+
 
 def compile_node_coproc(ast_node, fileIdGen, config):
     ast_node: CoprocNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [compile_command_argument(ast_node.name, fileIdGen, config),
-                             compile_node(ast_node.body, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            compile_command_argument(ast_node.name, fileIdGen, config),
+            compile_node(ast_node.body, fileIdGen, config),
+        ],
+    )
     return compiled_ast
+
 
 def compile_node_time(ast_node, fileIdGen, config):
     ast_node: TimeNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [compile_node(ast_node.command, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName, [compile_node(ast_node.command, fileIdGen, config)]
+    )
     return compiled_ast
 
 
 def compile_node_group(ast_node, fileIdGen, config):
     ast_node: GroupNode = ast_node
-    compiled_ast = make_kv(type(ast_node).NodeName,
-                            [compile_node(ast_node.body, fileIdGen, config)])
+    compiled_ast = make_kv(
+        type(ast_node).NodeName, [compile_node(ast_node.body, fileIdGen, config)]
+    )
     return compiled_ast
 
 
@@ -498,14 +558,14 @@ def naive_expand(argument, config):
 
     # if we've already expanded this argument, don't do it again
     for c in argument:
-        if c.NodeName == 'E':
+        if c.NodeName == "E":
             return argument
 
     # this argument is quoted
     q_mode = False
-    if argument[0].char == ord('\'') and argument[-1].char == ord('\''):
+    if argument[0].char == ord("'") and argument[-1].char == ord("'"):
         q_mode = True
-    
+
     ## Create an AST node that "echo"s the argument
     echo_asts = make_echo_ast(argument, config["shell_variables_file_path"])
 
@@ -516,13 +576,33 @@ def naive_expand(argument, config):
     log("Argument:", argument, "was expanded to:", expanded_string)
 
     ## Parse the expanded string back to an arg_char
-    chars_to_escape_when_no_quotes = [ord(c) for c in ['\\', '*', '?', '[', ']', '#', '<', '>', '~', ' ']]
+    special_chars = [
+        "\\",
+        "*",
+        "?",
+        "[",
+        "]",
+        "#",
+        "<",
+        ">",
+        "~",
+        " ",
+    ]
+    chars_to_escape_when_no_quotes = [ord(c) for c in special_chars]
     expanded_arguments = parse_string_to_arguments(expanded_string)
     # we need to escape some characters if the argument is not quoted
-    expanded_arguments = [EArgChar(arg[1]) if arg[1] in chars_to_escape_when_no_quotes \
-                          else CArgChar(arg[1]) for arg in expanded_arguments[0]]
+    expanded_arguments = [
+        (
+            EArgChar(arg[1])
+            if arg[1] in chars_to_escape_when_no_quotes
+            else CArgChar(arg[1])
+        )
+        for arg in expanded_arguments[0]
+    ]
     # if we've identified that the argument is quoted, we need to wrap it in quotes
-    expanded_arguments = [QArgChar(expanded_arguments)] if q_mode else expanded_arguments
+    expanded_arguments = (
+        [QArgChar(expanded_arguments)] if q_mode else expanded_arguments
+    )
 
     ## TODO: Handle any errors
     # log(expanded_arg_char)

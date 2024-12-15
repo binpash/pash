@@ -48,8 +48,10 @@ def preprocess_and_execute_asts(
     ## Write the new shell script to a file to execute
     fname = ptempfile()
     log("Preprocessed script stored in:", fname)
-    with open(fname, 'wb') as new_shell_file:
-        preprocessed_shell_script = preprocessed_shell_script.encode('utf-8', errors='replace')
+    with open(fname, "wb") as new_shell_file:
+        preprocessed_shell_script = preprocessed_shell_script.encode(
+            "utf-8", errors="replace"
+        )
         new_shell_file.write(preprocessed_shell_script)
 
     ## 4. Execute the preprocessed version of the input script

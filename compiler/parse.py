@@ -18,13 +18,17 @@ import libbash
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
 
+
 def parse_shell_to_asts(input_script_path, bash_mode=False):
     if bash_mode:
         return parse_shell_to_asts_bash(input_script_path)
     else:
         return parse_shell_to_asts_dash(input_script_path)
 
+
 INITIALIZE_LIBDASH = True
+
+
 def parse_shell_to_asts_dash(input_script_path):
     global INITIALIZE_LIBDASH
     try:
@@ -48,19 +52,33 @@ def parse_shell_to_asts_dash(input_script_path):
         log("Parsing error!", e)
         sys.exit(1)
 
+
 def parse_shell_to_asts_bash(input_script_path):
     try:
         new_ast_objects = libbash.bash_to_ast(input_script_path, with_linno_info=True)
 
         ## convert the libbash AST to a shasta AST
         typed_ast_objects = []
-        for untyped_ast, original_text, linno_before, linno_after, in new_ast_objects:
+        for (
+            untyped_ast,
+            original_text,
+            linno_before,
+            linno_after,
+        ) in new_ast_objects:
             typed_ast = bash_to_shasta_ast(untyped_ast)
-            typed_ast_objects.append((typed_ast, original_text.decode('utf-8', errors='replace'), linno_before, linno_after))
+            typed_ast_objects.append(
+                (
+                    typed_ast,
+                    original_text.decode("utf-8", errors="replace"),
+                    linno_before,
+                    linno_after,
+                )
+            )
         return typed_ast_objects
     except RuntimeError as e:
         log("Parsing error!", e)
         sys.exit(1)
+
 
 def parse_shell_to_asts_interactive(input_script_path: str):
     return libdash.parser.parse(input_script_path)
@@ -74,10 +92,12 @@ def from_ast_objects_to_shell(asts):
             shell_list.append(ast.text)
         else:
             shell_list.append(ast.pretty())
-    
-    shell_list = [x.decode('utf-8', errors='replace') if isinstance(x, bytes) else x for x in shell_list]
+
+    shell_list = [
+        x.decode("utf-8", errors="replace") if isinstance(x, bytes) else x
+        for x in shell_list
+    ]
     return "\n".join(shell_list) + "\n"
-        
 
 
 def from_ast_objects_to_shell_file(asts, new_shell_filename):

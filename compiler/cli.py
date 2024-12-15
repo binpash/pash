@@ -250,9 +250,11 @@ class RunnerParser(BaseParser):
             help="(experimental) prints commands and their arguments as they execute",
             action="store_true",
         )
-        self.add_argument( "--bash",
-                            help="(experimental) interpret the input as a bash script file",
-                            action="store_true")
+        self.add_argument(
+            "--bash",
+            help="(experimental) interpret the input as a bash script file",
+            action="store_true",
+        )
 
         self.set_defaults(preprocess_mode="pash")
 
