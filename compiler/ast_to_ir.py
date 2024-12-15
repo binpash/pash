@@ -73,6 +73,7 @@ compile_cases = {
             ast_node, fileIdGen, config
         )
     ),
+    # Bash only:
     "Not": (
         lambda fileIdGen, config: lambda ast_node: compile_node_not(
             ast_node, fileIdGen, config
@@ -339,6 +340,7 @@ def compile_node_for(ast_node, fileIdGen, config):
     )
     return compiled_ast
 
+# Bash only:
 
 def compile_node_not(ast_node, fileIdGen, config):
     ast_node: NotNode = ast_node
@@ -616,6 +618,7 @@ def naive_expand(argument, config):
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
 def expand_command_argument_bash(argument, config):
     new_arguments = [argument]
+    # TODO: Create a reliable heuristic for bash argument expansion
     if True or should_expand_argument(argument):
         new_arguments = naive_expand(argument, config)
     return new_arguments
