@@ -1,0 +1,1 @@
+select x in a b c d; do echo $x; break; done

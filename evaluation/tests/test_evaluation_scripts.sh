@@ -9,6 +9,10 @@ export PASH_LOG=1
 ## Determines whether the experimental pash flags will be tested. 
 ## By default they are not.
 export EXPERIMENTAL=0
+test_mode=${1:-dash}
+if [ "$test_mode" = "bash" ]; then
+    echo "Running in bash mode"
+fi
 for item in $@
 do
     if [ "--debug" == "$item" ] || [ "-d" == "$item" ]; then
@@ -96,12 +100,21 @@ pipeline_microbenchmarks=(
 execute_pash_and_check_diff() {
     TIMEFORMAT="%3R" # %3U %3S"
     if [ "$DEBUG" -eq 1 ]; then
-        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
-        diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
+        if [ "$test_mode" == "bash" ]; then
+            { time "$PASH_TOP/pa.sh --bash" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
+            diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
+        else
+            { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
+            diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
+        fi
     else
-
-        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
-        b=$(cat "$pash_time"); 
+        if [ test_mode == "bash" ]; then
+            { time "$PASH_TOP/pa.sh --bash" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
+            b=$(cat "$pash_time"); 
+        else 
+            { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
+            b=$(cat "$pash_time"); 
+        fi
         test_diff_ec=$(cmp -s "$seq_output" "$pash_output" && echo 0 || echo 1)
         # differ
         script=$(basename $script_to_execute)
@@ -179,6 +192,9 @@ execute_tests() {
                 export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
                 export script_conf=${microbenchmark}_${n_in}
                 echo '' > "${pash_time}"
+                if [ "$test_mode" == "bash" ]; then
+                    echo "Running in bash mode confirmed"
+                fi
                 # do we need to write the PaSh output ?
                 cat $stdin_redir |
                     execute_pash_and_check_diff -d $PASH_LOG $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute                 
