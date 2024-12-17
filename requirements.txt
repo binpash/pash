@@ -3,5 +3,5 @@ libdash
 pash-annotations==0.2.2
 shasta>=0.2.0
 pexpect
-libbash
+libbash>=0.1.14
 sh-expand>=0.1.6
