@@ -7,7 +7,6 @@ from uuid import uuid4
 sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
 import definitions.ir.nodes.serverless_remote_pipe as serverless_remote_pipe
 import definitions.ir.nodes.serverless_lambda_invoke as serverless_lambda_invoke
-from definitions.ir.nodes.r_merge import RMerge
 from dspash.ir_helper import split_ir
 from ir_to_ast import to_shell
 from ir import *
@@ -46,6 +45,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     subgraph_to_invocation_node = {} # subgraph -> the invocation node invoking this subgraph
     subgraphs_not_having_upstream = set(subgraphs)
     subgraph_stun_lib_args = {}
+    key_to_sender_receiver = {}
 
     # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
@@ -75,6 +75,12 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             # Add remote-write node at the end of the subgraph
             if (not last_subgraph):
                 # arg = send_rdvkey_0_1_input-fifoname
+                    
+                if str(communication_key) not in key_to_sender_receiver:
+                    key_to_sender_receiver[str(communication_key)] = [subgraph, None]
+                else:
+                    key_to_sender_receiver[str(communication_key)][1] = subgraph
+
                 arg = "send*"+str(communication_key)+"*0*1*"+config.PASH_TMP_PREFIX+str(ephemeral_edge)
                 if subgraph not in subgraph_stun_lib_args:
                     subgraph_stun_lib_args[subgraph] = []
@@ -111,13 +117,20 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
             if (not matching_subgraph is main_graph):
-                if not args.no_eager:
-                    pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
                 # arg = recv_rdvkey_1_0_output-fifoname
                 arg = "recv*"+str(communication_key)+"*1*0*"+config.PASH_TMP_PREFIX+str(new_edge)
                 if matching_subgraph not in subgraph_stun_lib_args:
                     subgraph_stun_lib_args[matching_subgraph] = []
                 subgraph_stun_lib_args[matching_subgraph].append(arg)
+
+                if str(communication_key) not in key_to_sender_receiver:
+                    key_to_sender_receiver[str(communication_key)] = [None, matching_subgraph]
+                else:
+                    key_to_sender_receiver[str(communication_key)][1] = matching_subgraph
+
+                if not args.no_eager:
+                    pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
+
             else:
                 remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=new_edge.get_ident(),
                                                                                 is_remote_read=True,
@@ -156,8 +169,31 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     subgraph_script_id_pairs[main_graph] = main_graph_script_id
 
     for subgraph, stun_lib_args in subgraph_stun_lib_args.items():
-        stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(stun_lib_args)
-        subgraph.add_node(stun_lib)
+        # stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(stun_lib_args)
+        # subgraph.add_node(stun_lib)
+
+        args_lists = [[]]
+        peer_lists = [set()]
+        for arg in stun_lib_args:
+            key = arg.split("*")[1]
+            sender, receiver = key_to_sender_receiver[key]
+            if "send" in arg:
+                peer = receiver
+            else:
+                peer = sender
+            added = False
+            for i in range(len(args_lists)):
+                if peer not in peer_lists[i]:
+                    args_lists[i].append(arg)
+                    peer_lists[i].add(peer)
+                    added = True
+                    break
+            if not added:
+                args_lists.append([arg])
+                peer_lists.append({peer})
+        for args_list in args_lists:
+            stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(args_list)
+            subgraph.add_node(stun_lib)
 
     if args.sls_instance == "hybrid":
         log("[Serverless Manager] Hybrid instance selected, running non-parallized subgraphs on ec2")
