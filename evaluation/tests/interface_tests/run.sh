@@ -3,8 +3,19 @@
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 # time: print real in seconds, to simplify parsing
 
+# are we running in bash mode?
+test_mode=${1:-dash}
+if [ "$test_mode" = "bash" ]; then
+    echo "Running in bash mode"
+fi
+
 bash="bash"
-pash="$PASH_TOP/pa.sh --profile_driven"
+if [ "$test_mode" = "bash" ]; then
+    echo "Running in bash mode confirmed"
+    pash="$PASH_TOP/pa.sh --parallel_pipelines --bash"
+else
+    pash="$PASH_TOP/pa.sh --parallel_pipelines"
+fi
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
@@ -328,7 +339,7 @@ test_IFS()
 }
 
 ## We run all tests composed with && to exit on the first that fails
-if [ "$#" -eq 0 ]; then
+if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test1
     run_test test2
     run_test test3

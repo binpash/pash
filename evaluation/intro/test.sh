@@ -3,9 +3,20 @@
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
+# are we running in bash mode?
+test_mode=${1:-dash}
+if [ "$test_mode" = "bash" ]; then
+    echo "Running in bash mode"
+fi
+
 ## TODO: Make the compiler work too.
 bash="bash"
-pash="$PASH_TOP/pa.sh -w 2"
+if [ "$test_mode" = "bash" ]; then
+    echo "Running in bash mode confirmed"
+    pash="$PASH_TOP/pa.sh -w 2 --bash"
+else
+    pash="$PASH_TOP/pa.sh -w 2"
+fi
 
 output_dir="$PASH_TOP/evaluation/intro/output"
 rm -rf "$output_dir"

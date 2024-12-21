@@ -49,7 +49,7 @@ def save_df_region(
 
     # Save df_region as text in its own file
     df_region_path = f"{partial_order_directory()}/{df_region_id}"
-    with open(df_region_path, "w") as f:
+    with open(df_region_path, "w", encoding="utf-8") as f:
         f.write(text_to_output)
 
     ## Save the edges in the partial order state
