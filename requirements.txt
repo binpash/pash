@@ -1,7 +1,7 @@
 graphviz
 libdash
 pash-annotations==0.2.2
-shasta>=0.2.0
+shasta~=0.2.0
 pexpect
-libbash>=0.1.14
+libbash~=0.1.14
 sh-expand>=0.1.6
