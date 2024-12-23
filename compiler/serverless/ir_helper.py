@@ -1,3 +1,6 @@
+# splitter, merger: change key to key_v0, fifo in the pashlib to fifo_v0, for each pashlib, know the downstream script id, add command
+# lambda: change key to key_v${version}
+
 import argparse
 from copy import deepcopy
 from typing import Dict, List, Tuple
@@ -7,6 +10,8 @@ from uuid import uuid4
 sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
 import definitions.ir.nodes.serverless_remote_pipe as serverless_remote_pipe
 import definitions.ir.nodes.serverless_lambda_invoke as serverless_lambda_invoke
+from definitions.ir.nodes.r_wrap import RWrap
+from definitions.ir.nodes.r_split import RSplit
 from dspash.ir_helper import split_ir
 from ir_to_ast import to_shell
 from ir import *
@@ -20,7 +25,7 @@ def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
     graph.add_edge(stdout)
     return stdout
 
-def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace):
+def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace, recover: bool = False):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
         read/write nodes for data movement and lambda invocation nodes to trigger
         downstream processing. This function also produces graph that should run in
@@ -46,6 +51,8 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     subgraphs_not_having_upstream = set(subgraphs)
     subgraph_stun_lib_args = {}
     key_to_sender_receiver = {}
+    key_to_data_type = {} # batch or line
+    eager_edges = []
 
     # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
@@ -75,7 +82,16 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             # Add remote-write node at the end of the subgraph
             if (not last_subgraph):
                 # arg = send_rdvkey_0_1_input-fifoname
-                    
+                out_node = subgraph.get_node(sink_nodes[0])
+                # print(out_node)
+                key_to_data_type[str(communication_key)] = "line"
+                if isinstance(out_node, RWrap):
+                    key_to_data_type[str(communication_key)] = "batch"
+                if isinstance(out_node, RSplit):
+                    key_to_data_type[str(communication_key)] = "batch"
+                    for flag in out_node.cmd_invocation_with_io_vars.flag_option_list:
+                        if flag.get_name() == "-r":
+                            key_to_data_type[str(communication_key)] = "line"
                 if str(communication_key) not in key_to_sender_receiver:
                     key_to_sender_receiver[str(communication_key)] = [subgraph, None]
                 else:
@@ -129,7 +145,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     key_to_sender_receiver[str(communication_key)][1] = matching_subgraph
 
                 if not args.no_eager:
-                    pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
+                    if recover:
+                        eager_edges.append((new_edge, matching_subgraph))
+                    else:
+                        pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
 
             else:
                 remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=new_edge.get_ident(),
@@ -168,6 +187,82 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     main_graph_script_id = uuid4()
     subgraph_script_id_pairs[main_graph] = main_graph_script_id
 
+    fifo_to_be_renamed = {}
+    if recover:
+        subgraph_types = {}
+        lambda_upstream_downstream = {} #?
+        for subgraph, args in subgraph_stun_lib_args.items():
+            send_count = recv_count = 0
+            for arg in args:
+                if "send" in arg:
+                    send_count += 1
+                else:
+                    recv_count += 1
+            if send_count == 1 and recv_count == 1:
+                subgraph_types[subgraph] = "lambda"
+                sender_key = ""
+                recver_key = ""
+                for arg in args:
+                    if "send" in arg:
+                        sender_key = arg.split("*")[1]
+                    else:
+                        recver_key = arg.split("*")[1]
+                downstream_subgraph = key_to_sender_receiver[sender_key][1]
+                upstream_subgraph = key_to_sender_receiver[recver_key][0]
+                lambda_upstream_downstream[subgraph] = (upstream_subgraph, downstream_subgraph)
+            elif send_count > 1 and recv_count > 1:
+                subgraph_types[subgraph] = "splitter_merger"
+            elif send_count > 1:
+                subgraph_types[subgraph] = "splitter"
+            elif recv_count > 1:
+                subgraph_types[subgraph] = "merger"
+            else:
+                subgraph_types[subgraph] = "unknown"
+
+        # add eager for all non-lambda
+        for edge, subgraph in eager_edges:
+            if subgraph_types[subgraph] != "lambda":
+                pash_compiler.add_eager(edge.get_ident(), subgraph, file_id_gen)
+        
+        # add ingate outgate
+        for subgraph, stun_lib_args in subgraph_stun_lib_args.items():
+            if subgraph_types[subgraph] == "lambda":
+                # change all key to key_v${version}
+                for i in range(len(stun_lib_args)):
+                    key = stun_lib_args[i].split("*")[1]
+                    stun_lib_args[i] = stun_lib_args[i].replace(key, key+"_v0")
+            else:
+                # for all send, change key to key_v0, change fifo to fifo_v0
+                for i in range(len(stun_lib_args)):
+                    key = stun_lib_args[i].split("*")[1]
+                    stun_lib_args[i] = stun_lib_args[i].replace(key, key+"_v0")
+                    fifo = stun_lib_args[i].split("*")[4]
+                    stun_lib_args[i] = stun_lib_args[i].replace(fifo, fifo+"_v0")
+                    # fifo_to_be_renamed.add(fifo)
+                    if "send" in stun_lib_args[i]:
+                        receiver = key_to_sender_receiver[key][1]
+                        receiver_script_id = subgraph_script_id_pairs[receiver]
+                        outgate_args = [fifo, fifo, key, "900", str(receiver_script_id)]
+                        outgate = serverless_remote_pipe.make_serverless_outgate(key_to_data_type[key], outgate_args)
+                        subgraph.add_node(outgate)
+                        new_fid = file_id_gen.next_ephemeral_file_id()
+                        subgraph.add_edge(new_fid)
+                        if subgraph not in fifo_to_be_renamed:
+                            fifo_to_be_renamed[subgraph] = set()
+                        fifo_to_be_renamed[subgraph].add((str(config.PASH_TMP_PREFIX)+str((new_fid.get_fifo_suffix())), fifo+"_v0"))
+                    else:
+                        sender = key_to_sender_receiver[key][0]
+                        sender_script_id = subgraph_script_id_pairs[sender]
+                        ingate_args = [fifo, key, fifo, str(sender_script_id)]
+                        ingate = serverless_remote_pipe.make_serverless_ingate(key_to_data_type[key], ingate_args)
+                        subgraph.add_node(ingate)
+                        new_fid = file_id_gen.next_ephemeral_file_id()
+                        subgraph.add_edge(new_fid)
+                        if subgraph not in fifo_to_be_renamed:
+                            fifo_to_be_renamed[subgraph] = set()
+                        fifo_to_be_renamed[subgraph].add((str(config.PASH_TMP_PREFIX)+str((new_fid.get_fifo_suffix())), fifo+"_v0"))
+            subgraph_stun_lib_args[subgraph] = stun_lib_args
+
     for subgraph, stun_lib_args in subgraph_stun_lib_args.items():
         # stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(stun_lib_args)
         # subgraph.add_node(stun_lib)
@@ -175,7 +270,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         args_lists = [[]]
         peer_lists = [set()]
         for arg in stun_lib_args:
-            key = arg.split("*")[1]
+            if recover:
+                key = arg.split("*")[1].split("_v")[0]
+            else:
+                key = arg.split("*")[1]
             sender, receiver = key_to_sender_receiver[key]
             if "send" in arg:
                 peer = receiver
@@ -195,36 +293,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(args_list)
             subgraph.add_node(stun_lib)
 
-    if args.sls_instance == "hybrid":
-        log("[Serverless Manager] Hybrid instance selected, running non-parallized subgraphs on ec2")
-        # level order traversal
-        cur_level = list(subgraphs_not_having_upstream)
-        next_level = []
-        levels = []
-        visited = deepcopy(subgraphs_not_having_upstream)
-        levels.append([item for item in cur_level])
-        while cur_level:
-            subgraph = cur_level.pop(0)
-            for downstream_subgraph in subgraph_to_downstream_subgraphs.get(subgraph, []):
-                if downstream_subgraph not in visited:
-                    next_level.append(downstream_subgraph)
-                    visited.add(downstream_subgraph)
-            if not cur_level:
-                cur_level = next_level
-                next_level = []
-                levels.append([item for item in cur_level])
-        for level in levels:
-            if len(level) == 1:
-                # only one subgraph in this level, need to make it run on ec2
-                subgraph = level[0]
-                if subgraph in subgraph_to_invocation_node:
-                    incovation_node = subgraph_to_invocation_node[subgraph]
-                    incovation_node.change_instance("ec2")
-
-    return main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id
+    return main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_renamed
 
 
-def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse.Namespace, declared_functions_filename) -> Tuple[str, str, Dict[str, str]]:
+def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse.Namespace, declared_functions_filename, recover: bool = False) -> Tuple[str, str, Dict[str, str]]:
     """
     Reads the complete ir from filename and splits it
     into subgraphs where ony the first subgraph represent a continues
@@ -244,7 +316,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     """
     # split IR
     subgraphs, mapping = split_ir(ir)
-    main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id = add_nodes_to_subgraphs(subgraphs, ir.get_file_id_gen(), mapping, args)
+    main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_replaced = add_nodes_to_subgraphs(subgraphs, ir.get_file_id_gen(), mapping, args, recover=recover)
 
     # read the declared functions
     declared_functions = ""
@@ -267,8 +339,12 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         export_path = "export PATH=$PATH:runtime\n"
         export_rust_trace = "export RUST_BACKTRACE=1\n"
         export_lib_path = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib\n"
-        script = export_path+export_lib_path+export_rust_trace+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
+        add_version = "version=$2\n"
+        script = export_path+export_lib_path+export_rust_trace+add_version+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
         # generate scripts
+        if recover and subgraph in fifo_to_be_replaced:
+            for new_fifo, recover_fifo in fifo_to_be_replaced[subgraph]:
+                script = script.replace(new_fifo, recover_fifo)
         script_name = os.path.join(config.PASH_TMP_PREFIX, str(id_))
         script_id_to_script[str(id_)] = script
         with open (script_name, "w") as f:
