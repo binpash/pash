@@ -3,20 +3,9 @@
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
-# are we running in bash mode?
-test_mode=${1:-dash}
-if [ "$test_mode" = "bash" ]; then
-    echo "Running in bash mode"
-fi
-
-## TODO: Make the compiler work too.
 bash="bash"
-if [ "$test_mode" = "bash" ]; then
-    echo "Running in bash mode confirmed"
-    pash="$PASH_TOP/pa.sh -w 2 --bash"
-else
-    pash="$PASH_TOP/pa.sh -w 2"
-fi
+pash="$PASH_TOP/pa.sh -w 2"
+pash_with_bash="$PASH_TOP/pa.sh -w 2 --bash"
 
 output_dir="$PASH_TOP/evaluation/intro/output"
 rm -rf "$output_dir"
@@ -45,6 +34,22 @@ run_test()
         echo "$test are not identical" >> $output_dir/result_status
         echo -e '\t\tFAIL'
         return 1
+    fi
+    TIMEFORMAT="%3R"
+    { time $pash_with_bash "$test" > "$output_dir/$test.pash_bash.out"; } 2> >(tee -a $output_dir/results.time_pash_bash)
+    test_pash_bash_ec=$?
+    diff "$output_dir/$test.bash.out" "$output_dir/$test.pash_bash.out"
+    test_diff_bash_ec=$?
+    if [ $test_diff_bash_ec -ne 0 ]; then
+        echo -n "$test output mismatch"
+    fi
+    if [ $test_bash_ec -ne $test_pash_bash_ec ]; then
+        echo -n "$test exit code mismatch"
+    fi
+    if [ $test_diff_bash_ec -ne 0 ] || [ $test_bash_ec -ne $test_pash_bash_ec ]; then
+        echo "$test are not identical" >> $output_dir/result_status
+        echo -e '\t\tFAIL'
+        return 1
     else
         echo "$test are identical" >> $output_dir/result_status
         echo -e '\t\tOK'
@@ -62,7 +67,6 @@ elif [ -e /etc/os-release ] ; then
 fi
 
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
-# now do different things depending on distro
 case "$distro" in
     freebsd*)  
         # change sed to gsed

@@ -9,10 +9,9 @@ export PASH_LOG=1
 ## Determines whether the experimental pash flags will be tested. 
 ## By default they are not.
 export EXPERIMENTAL=0
-test_mode=${1:-dash}
-if [ "$test_mode" = "bash" ]; then
-    echo "Running in bash mode"
-fi
+
+SHELL_CONF=()
+
 for item in $@
 do
     if [ "--debug" == "$item" ] || [ "-d" == "$item" ]; then
@@ -24,7 +23,17 @@ do
     if [ "--experimental" == "$item" ]; then
         export EXPERIMENTAL=1
     fi
+    if [ "--bash" == "$item" ]; then
+        SHELL_CONF+=("--bash")
+    fi
+    if [ "--dash" == "$item" ]; then
+        SHELL_CONF+=("")
+    fi
 done
+
+if [[ "${#SHELL_CONF[@]}" == 0 ]]; then
+    SHELL_CONF+=("--bash" "")
+fi
 
 microbenchmarks_dir="${PASH_TOP}/evaluation/tests"
 intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary"
@@ -49,16 +58,19 @@ n_inputs=(
     8
 )
 
+configurations=()
+flags=("")
 if [ "$EXPERIMENTAL" -eq 1 ]; then
-    configurations=(
-        ""
-    )
-else
-    configurations=(
+    flags=(
         "--profile_driven"
     )
 fi
 
+for conf in "${SHELL_CONF[@]}"; do
+    for flag in "${flags[@]}"; do
+        configurations+=("$conf $flag")
+    done
+done
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
 script_microbenchmarks=(
@@ -100,31 +112,21 @@ pipeline_microbenchmarks=(
 execute_pash_and_check_diff() {
     TIMEFORMAT="%3R" # %3U %3S"
     if [ "$DEBUG" -eq 1 ]; then
-        if [ "$test_mode" == "bash" ]; then
-            { time "$PASH_TOP/pa.sh --bash" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
-            diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
-        else
-            { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
-            diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
-        fi
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
+        diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
-        if [ test_mode == "bash" ]; then
-            { time "$PASH_TOP/pa.sh --bash" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
-            b=$(cat "$pash_time"); 
-        else 
-            { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
-            b=$(cat "$pash_time"); 
-        fi
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
+        b="$(cat "$pash_time")";
         test_diff_ec=$(cmp -s "$seq_output" "$pash_output" && echo 0 || echo 1)
         # differ
         script=$(basename $script_to_execute)
         if [ $test_diff_ec -ne 0 ]; then
             c=$(diff -s "$seq_output" "$pash_output" | head)
             echo "$c$b" > "${pash_time}"
-            echo "$script are not identical" >> $test_results_dir/result_status
+            echo "$script are not identical with flags $@" >> $test_results_dir/result_status
         else
             echo "Files $seq_output and $pash_output are identical" > "${pash_time}"
-            echo "$script are identical" >> $test_results_dir/result_status
+            echo "$script are identical with flags $@" >> $test_results_dir/result_status
         fi
 
     fi
@@ -192,9 +194,6 @@ execute_tests() {
                 export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
                 export script_conf=${microbenchmark}_${n_in}
                 echo '' > "${pash_time}"
-                if [ "$test_mode" == "bash" ]; then
-                    echo "Running in bash mode confirmed"
-                fi
                 # do we need to write the PaSh output ?
                 cat $stdin_redir |
                     execute_pash_and_check_diff -d $PASH_LOG $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute                 
@@ -237,7 +236,10 @@ paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | 
 #grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
 
 echo "Below follow the non-identical outputs:"     
-grep "are not identical" "$test_results_dir"/result_status | awk '{print $1}'
+# WARNING: Fragile
+sed -nE \
+  's/^([^ ]+).*are not identical.*-d 1 (.*) --output_time.*/\1 with relavant flags \2/p' \
+  "$test_results_dir"/result_status
 
 TOTAL_TESTS=$(cat "$test_results_dir"/result_status | wc -l)
 PASSED_TESTS=$(grep -c "are identical" "$test_results_dir"/result_status)

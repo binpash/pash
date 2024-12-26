@@ -3,19 +3,8 @@
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 # time: print real in seconds, to simplify parsing
 
-# are we running in bash mode?
-test_mode=${1:-dash}
-if [ "$test_mode" = "bash" ]; then
-    echo "Running in bash mode"
-fi
-
 bash="bash"
-if [ "$test_mode" = "bash" ]; then
-    echo "Running in bash mode confirmed"
-    pash="$PASH_TOP/pa.sh --parallel_pipelines --profile_driven --bash"
-else
-    pash="$PASH_TOP/pa.sh --parallel_pipelines --profile_driven"
-fi
+pash="$PASH_TOP/pa.sh --parallel_pipelines --profile_driven --bash"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
@@ -2900,12 +2889,8 @@ test_select.sh()
 }
 
 ## We run all tests composed with && to exit on the first that fails
-# commented out IFS tests should work but this is an issue with PaSh, bug report made
 if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     cd bash_tests
-    if [ "$#" -eq 0 ]; then 
-        echo "Warning: these tests should be run with bash as the first argument to test the bash mode."
-    fi
     # run_test test_exec8.sub - any uncommented script here and forward has an alias (or declare -A) or unset in it
     # run_test test_arith-for.tests - error script, looks good besides an extra error print, this is an important test
     # run_test test_history2.sub - set -o history won't work here bc the history is gonna look different
@@ -2925,7 +2910,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_dollar-at7.sub
     run_test test_trap4.sub
     # run_test test_errors9.sub - this is fine because we're just printing error statements?, dash errors here
-    # run_test test_dollar-star3.sub - setting IFS, also doesn't work in dash
+    run_test test_dollar-star3.sub
     run_test test_assoc1.sub
     # run_test test_alias4.sub
     # run_test test_varenv6.sub
@@ -2940,7 +2925,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_builtins3.sub
     # run_test test_varenv7.sub
     # run_test test_alias5.sub
-    # run_test test_dollar-star2.sub - setting IFS, also doesn't work in dash
+    run_test test_dollar-star2.sub
     # run_test test_nameref1.sub
     run_test test_errors8.sub
     # run_test test_trap5.sub - I don't think this should neccesarly work since we could be catching other PaSh signals
@@ -2977,7 +2962,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_assoc3.sub
     # run_test test_alias6.sub
     # run_test test_posix2syntax.sub
-    # run_test test_dollar-star1.sub - setting IFS, also doesn't work in dash
+    run_test test_dollar-star1.sub
     run_test test_getopts9.sub
     run_test test_dstack2.tests
     # run_test test_trap6.sub
@@ -3005,7 +2990,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_trap2.sub
     # run_test test_alias2.sub
     run_test test_assoc7.sub
-    # run_test test_dollar-star5.sub - setting IFS, also doesn't work in dash
+    run_test test_dollar-star5.sub
     # run_test test_builtins4.sub
     # run_test test_new-exp9.sub - local -A
     run_test test_redir6.sub
@@ -3062,7 +3047,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_array21.sub
     # run_test test_redir4.sub
     # run_test test_intl2.sub
-    # run_test test_herestr1.sub - messing with IFS, never good
+    run_test test_herestr1.sub
     # run_test test_builtins6.sub
     run_test test_varenv2.sub
     # run_test test_dollar-star7.sub
@@ -3145,9 +3130,9 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_arith1.sub
     # run_test test_vredir1.sub - see test_vredir.tests
     # run_test test_cond.tests
-    # run_test test_ifs.tests - messing with IFS is a known bug in PaSh
+    run_test test_ifs.tests
     # run_test test_varenv17.sub
-    # run_test test_exp3.sub - messing with IFS
+    run_test test_exp3.sub
     run_test test_comsub-eof6.sub
     # run_test test_rsh2.sub - error script
     # run_test test_glob5.sub
@@ -3210,7 +3195,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_comsub4.sub
     # run_test test_getopts10.sub
     # run_test test_varenv19.sub - same local function issue
-    # run_test test_exp10.sub - setting IFS doesn't work
+    run_test test_exp10.sub
     # run_test test_nquote5.tests
     # run_test test_new-exp10.sub
     # run_test test_array5.sub
@@ -3270,7 +3255,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_nameref9.sub
     # run_test test_assoc8.sub - declare -A here
     run_test test_new-exp6.sub
-    # run_test test_dollar-at-star2.sub - IFS stuff again
+    run_test test_dollar-at-star2.sub
     run_test test_exec12.sub
     run_test test_source1.sub
     run_test test_array10.sub
@@ -3308,7 +3293,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_dollar-star9.sub
     # run_test test_exec11.sub - traps could catch other system stuff not expected to work
     run_test test_dollar-at-star1.sub
-    # run_test test_new-exp5.sub - messes with IFS
+    run_test test_new-exp5.sub
     run_test test_source2.sub
     # run_test test_quotearray1.sub
     # run_test test_array13.sub - declare -a
@@ -3360,7 +3345,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_exec4.sub
     # run_test test_posixexp3.sub
     run_test test_errors5.sub
-    # run_test test_ifs1.sub - messes with IFS
+    run_test test_ifs1.su
     run_test test_getopts7.sub
     # run_test test_coproc.tests - error script
     run_test test_source4.sub
@@ -3370,7 +3355,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_array15.sub
     # run_test test_exportfunc.tests
     # run_test test_array14.sub
-    # run_test test_dollar-at-star6.sub - setting IFS doesn't work
+    run_test test_dollar-at-star6.sub
     run_test test_new-exp2.sub
     run_test test_mapfile1.sub
     # run_test test_source5.sub
