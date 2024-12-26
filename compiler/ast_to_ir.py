@@ -105,7 +105,7 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
                 ## commands in parallel (Is that correct?)
                 # acc_ir.background_union(IR([compiled_ast]))
                 compiled_asts.append(acc_ir)
-                acc_it = None
+                acc_ir = None
                 compiled_asts.append(compiled_ast)
 
             ## If the current compiled ast not in background (and so
