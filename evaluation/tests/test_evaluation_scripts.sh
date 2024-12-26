@@ -238,7 +238,7 @@ paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | 
 echo "Below follow the non-identical outputs:"     
 # WARNING: Fragile
 sed -nE \
-  's/^([^ ]+).*are not identical.*-d 1 (.*) --output_time.*/\1 with relavant flags \2/p' \
+  's/^([^ ]+).*are not identical.*-d 1 (.*) --output_time.*/\1 with relevant flags \2/p' \
   "$test_results_dir"/result_status
 
 TOTAL_TESTS=$(cat "$test_results_dir"/result_status | wc -l)
