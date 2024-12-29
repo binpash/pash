@@ -144,7 +144,6 @@ else
             trap inform_daemon_exit SIGTERM SIGINT EXIT
             export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
             source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
-            inform_daemon_exit
         }
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
