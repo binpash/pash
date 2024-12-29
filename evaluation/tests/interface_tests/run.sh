@@ -3,8 +3,8 @@
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 # time: print real in seconds, to simplify parsing
 
-pash="$PASH_TOP/pa.sh --parallel_pipelines"
-pash_with_bash="$PASH_TOP/pa.sh --parallel_pipelines --bash"
+pash="$PASH_TOP/pa.sh --profile_driven"
+pash_with_bash="$PASH_TOP/pa.sh --profile_driven --bash"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
