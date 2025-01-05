@@ -141,6 +141,8 @@ else
         pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
     else 
         function run_parallel() {
+            # ideally we'd call inform_daemon_exit with the EXIT handler,
+            # but it isn't called on Ubuntu 20.04 (for no clear reason)
             trap inform_daemon_exit SIGTERM SIGINT
             export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
             source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
