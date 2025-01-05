@@ -124,7 +124,7 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
     return compiled_asts
 
 
-def compile_node(ast_object, fileIdGen, config):
+def compile_node(ast_object, fileIdGen, config) -> IR:
     global compile_cases
     return ast_match(ast_object, compile_cases, fileIdGen, config)
 
