@@ -5,9 +5,9 @@ on:
     types: [published]
 
 env:
-  DEBIAN: pash/debian-10
-  UBUNTU: pash/ubuntu-18.04
-  FEDORA: pash/fedora-35
+  DEBIAN: pash/debian-12
+  UBUNTU: pash/ubuntu-24.04
+  FEDORA: pash/fedora-41
   IMAGENAME: pash/pash
 
 jobs:

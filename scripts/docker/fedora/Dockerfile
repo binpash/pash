@@ -1,4 +1,4 @@
-FROM fedora:35
+FROM fedora:41
 RUN dnf install git -y
 ENV PASH_TOP=/opt/pash
 # download PaSh
