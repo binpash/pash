@@ -27,7 +27,11 @@ jobs:
         fail-fast: false
         matrix:
           os: 
+            - ubuntu-24.04
             - ubuntu-20.04
+            # TODO: Test on other OSes (see #620)
+            # - debian-12
+            # - fedora-41
       runs-on: ${{ matrix.os }}
       if: github.event.pull_request.draft == false
       steps:
