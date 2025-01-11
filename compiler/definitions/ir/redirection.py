@@ -1,24 +1,22 @@
 from definitions.ir.arg import *
 from shell_ast.ast_util import *
-
+from custom_error import UnparallelizableError
 
 class Redirection:
     def __init__(self, redirection: RedirectionNode):
-        if isinstance(redirection, FileRedirNode):
-            self.redir_type = FileRedirNode.NodeName
-        elif isinstance(redirection, DupRedirNode):
-            self.redir_type = DupRedirNode.NodeName
-        elif isinstance(redirection, HeredocRedirNode):
-            self.redir_type = HeredocRedirNode.NodeName
+        ## TODO: Support all redirections
+        if not isinstance(redirection, FileRedirNode) or redirection.redir_type not in [
+            "To",
+            "From",
+        ]:
+            raise NotImplementedError(redirection)
 
+        self.redir_type = redirection.NodeName
         self.redir_subtype = redirection.redir_type
         self.stream_id = redirection.fd
         self.file_arg = Arg(redirection.arg)
 
         # log(redirection)
-        ## TODO: Support all redirections
-        assert self.redir_type == "File"
-        assert self.redir_subtype in ["To", "From"]
 
     def __repr__(self):
         return "({}, {}, {}, {})".format(

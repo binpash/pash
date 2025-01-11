@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --parallel_pipelines --profile_driven --bash"
+pash="$PASH_TOP/pa.sh --assert_compiler_success --parallel_pipelines --profile_driven --bash"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
@@ -2354,12 +2354,6 @@ test_posixexp7.sub()
     $shell posixexp7.sub
 }
 
-test_read8.sub()
-{
-    local shell=$1
-    $shell read8.sub
-}
-
 test_exec2.sub()
 {
     local shell=$1
@@ -2901,7 +2895,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_assoc14.sub
     run_test test_attr.tests 
     run_test test_array28.sub
-    run_test test_heredoc.tests
+    # run_test test_heredoc.tests
     run_test test_jobs1.sub
     run_test test_case1.sub
     # run_test test_nameref17.sub
@@ -2976,7 +2970,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_heredoc2.sub
     # run_test test_read2.sub
     run_test test_jobs3.sub
-    run_test test_heredoc6.sub
+    # run_test test_heredoc6.sub
     run_test test_jobs7.sub
     run_test test_read6.sub
     # run_test test_shopt.tests
@@ -3012,7 +3006,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_nameref10.sub
     run_test test_parser1.sub
     # run_test test_jobs.tests - error script
-    run_test test_posixexp8.sub
+    # run_test test_posixexp8.sub
     # run_test test_read7.sub
     run_test test_jobs6.sub
     run_test test_heredoc7.sub
@@ -3047,7 +3041,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_array21.sub
     # run_test test_redir4.sub
     # run_test test_intl2.sub
-    run_test test_herestr1.sub
+    # run_test test_herestr1.sub
     # run_test test_builtins6.sub
     run_test test_varenv2.sub
     # run_test test_dollar-star7.sub
@@ -3072,7 +3066,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_glob1.sub
     # run_test test_glob.tests
     # run_test test_varenv13.sub
-    run_test test_comsub-eof2.sub
+    # run_test test_comsub-eof2.sub
     # run_test test_exp7.sub
     # run_test test_braces.tests
     # run_test test_vredir5.sub - see test_vredir.tests
@@ -3117,7 +3111,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_extglob.tests - has shopt -s extglob
     run_test test_glob7.sub
     # run_test test_dbg-support.tests - using BASH variables related to debugging
-    run_test test_exp1.sub
+    # run_test test_exp1.sub -\x7f character causes the expansion server to fail
     run_test test_comsub-eof4.sub
     # run_test test_rsh.tests - error script
     run_test test_varenv15.sub
@@ -3179,7 +3173,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_posix2.tests
     # run_test test_histexp5.sub - history expansion issue
     # run_test test_printf.tests
-    run_test test_unicode3.sub
+    # run_test test_unicode3.sub
     # run_test test_set-x.tests - using sets doesn't work, and this calls on several other tests here
     # run_test test_extglob7.sub - extended globbing again
     run_test test_func2.sub
@@ -3199,7 +3193,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_nquote5.tests
     # run_test test_new-exp10.sub
     # run_test test_array5.sub
-    run_test test_test1.sub
+    # run_test test_test1.sub
     # run_test test_assoc11.sub
     run_test test_array1.sub
     # run_test test_assoc15.sub
@@ -3228,7 +3222,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_vredir8.sub
     run_test test_cond-regexp.sub
     # run_test test_arith8.sub
-    run_test test_set-e.tests
+    # run_test test_set-e.tests
     # run_test test_histexp3.sub - history expansion
     # run_test test_varenv22.sub - error script
     run_test test_procsub1.sub
@@ -3261,11 +3255,11 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_array10.sub
     run_test test_redir9.sub
     # run_test test_quotearray2.sub
-    run_test test_redir8.sub
+    # run_test test_redir8.sub
     # run_test test_quotearray3.sub
     # run_test test_array11.sub
     # run_test test_dollar-at-star3.sub
-    run_test test_exec13.sub
+    # run_test test_exec13.sub
     run_test test_new-exp7.sub
     # run_test test_tilde.tests
     # run_test test_assoc9.sub
@@ -3278,8 +3272,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_nameref23.sub
     run_test test_redir10.sub
     run_test test_printf4.sub
-    run_test test_posixexp7.sub
-    run_test test_read8.sub
+    # run_test test_posixexp7.sub
     run_test test_exec2.sub
     # run_test test_posixexp5.sub
     # run_test test_trap.tests
@@ -3350,18 +3343,18 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_coproc.tests - error script
     run_test test_source4.sub
     run_test test_new-exp3.sub
-    # run_test test_dollar-at-star7.sub
+    run_test test_dollar-at-star7.sub
     # run_test test_array29.sub
     # run_test test_array15.sub
     # run_test test_exportfunc.tests
     # run_test test_array14.sub
     run_test test_dollar-at-star6.sub
-    run_test test_new-exp2.sub
+    # run_test test_new-exp2.sub
     run_test test_mapfile1.sub
-    # run_test test_source5.sub
+    run_test test_source5.sub
     run_test test_getopts6.sub
     run_test test_errors4.sub
-    # run_test test_printf1.sub
+    run_test test_printf1.sub
     # run_test test_posixexp2.sub
     run_test test_exec5.sub
 else

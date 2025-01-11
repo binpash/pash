@@ -3,6 +3,11 @@ import subprocess
 from shasta.ast_node import *
 from sh_expand.expand import expand_command, ExpansionState
 
+import config
+from sh_expand.bash_expand import (
+    BashExpansionState,
+    expand_command as expand_command_bash,
+)
 from shell_ast.ast_util import *
 from ir import *
 from util import *
@@ -11,7 +16,12 @@ from parse import from_ast_objects_to_shell
 from custom_error import *
 
 BASH_MODE = os.environ.get("pash_shell") == "bash"
+if BASH_MODE:
+    # doesn't need to be kept alive accross invocations
+    # but should be faster to avoid creating new processes
 
+    # too verbose to keep on with -d 1 (TODO: Get -d 2 working here)
+    BASH_EXP_STATE = BashExpansionState(temp_dir=config.PASH_TMP_PREFIX, debug=False)
 ## TODO: Separate the ir stuff to the bare minimum and
 ##       try to move this to the shell_ast folder.
 
@@ -148,9 +158,18 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
         ## Compile subtrees of the AST to out intermediate representation
         ## KK 2023-05-25: Would we ever want to pass this state to the expansion
         ##                of the next object? I don't think so.
-        exp_state = ExpansionState(config["shell_variables"])
-        expanded_ast = expand_command(ast_object, exp_state)
-        # log("Expanded:", expanded_ast)
+        if BASH_MODE:
+            if not BASH_EXP_STATE.is_open:
+                BASH_EXP_STATE.open()
+            expanded_ast = expand_command_bash(
+                ast_object,
+                BASH_EXP_STATE,
+                config["shell_variables_file_path"],
+                config["shell_variables"],
+            )
+        else:
+            exp_state = ExpansionState(config["shell_variables"])
+            expanded_ast = expand_command(ast_object, exp_state)
         compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
         # log("Compiled AST:")
@@ -288,7 +307,7 @@ def compile_node_and_or_semi(ast_node, fileIdGen, config):
 
 
 def compile_node_redir_subshell(ast_node, fileIdGen, config):
-    compiled_node = compile_node(ast_node.node, fileIdGen, config)
+    compiled_node = compile_node(ast_node.body, fileIdGen, config)
 
     if isinstance(compiled_node, IR):
         ## TODO: I should use the redir list to redirect the files of
@@ -340,7 +359,9 @@ def compile_node_for(ast_node, fileIdGen, config):
     )
     return compiled_ast
 
+
 # Bash only:
+
 
 def compile_node_not(ast_node, fileIdGen, config):
     ast_node: NotNode = ast_node
@@ -550,80 +571,6 @@ def parse_string_to_arguments(arg_char_string):
     return string_to_arguments(arg_char_string)
 
 
-## TODO: Use "pash_input_args" when expanding in place of normal arguments.
-def naive_expand(argument, config):
-    ## config contains a dictionary with:
-    ##  - all variables, their types, and values in 'shell_variables'
-    ##  - the name of a file that contains them in 'shell_variables_file_path'
-    # log(config['shell_variables'])
-    # log(config['shell_variables_file_path'])
-
-    # if we've already expanded this argument, don't do it again
-    for c in argument:
-        if c.NodeName == "E":
-            return argument
-
-    # this argument is quoted
-    q_mode = False
-    if argument[0].char == ord("'") and argument[-1].char == ord("'"):
-        q_mode = True
-
-    ## Create an AST node that "echo"s the argument
-    echo_asts = make_echo_ast(argument, config["shell_variables_file_path"])
-
-    ## Execute the echo AST by unparsing it to shell
-    ## and calling bash
-    expanded_string = execute_shell_asts(echo_asts)
-
-    log("Argument:", argument, "was expanded to:", expanded_string)
-
-    ## Parse the expanded string back to an arg_char
-    special_chars = [
-        "\\",
-        "*",
-        "?",
-        "[",
-        "]",
-        "#",
-        "<",
-        ">",
-        "~",
-        " ",
-    ]
-    chars_to_escape_when_no_quotes = [ord(c) for c in special_chars]
-    expanded_arguments = parse_string_to_arguments(expanded_string)
-    # we need to escape some characters if the argument is not quoted
-    expanded_arguments = [
-        (
-            EArgChar(arg[1])
-            if arg[1] in chars_to_escape_when_no_quotes
-            else CArgChar(arg[1])
-        )
-        for arg in expanded_arguments[0]
-    ]
-    # if we've identified that the argument is quoted, we need to wrap it in quotes
-    expanded_arguments = (
-        [QArgChar(expanded_arguments)] if q_mode else expanded_arguments
-    )
-
-    ## TODO: Handle any errors
-    # log(expanded_arg_char)
-    return expanded_arguments
-
-
-## This function expands an arg_char.
-## At the moment it is pretty inefficient as it serves as a prototype.
-##
-## TODO: At the moment this has the issue that a command that has the words which we want to expand
-##       might have assignments of its own, therefore requiring that we use them to properly expand.
-def expand_command_argument_bash(argument, config):
-    new_arguments = [argument]
-    # TODO: Create a reliable heuristic for bash argument expansion
-    if True or should_expand_argument(argument):
-        new_arguments = naive_expand(argument, config)
-    return new_arguments
-
-
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##
 ## It is currently being extended to also expand any arguments that are safe to expand.
@@ -650,9 +597,6 @@ def compile_arg_char(arg_char: ArgChar, fileIdGen, config):
 
 
 def compile_command_argument(argument, fileIdGen, config):
-    global BASH_MODE
-    if BASH_MODE:
-        argument = expand_command_argument_bash(argument, config)
     compiled_argument = [compile_arg_char(char, fileIdGen, config) for char in argument]
     return compiled_argument
 
@@ -664,19 +608,23 @@ def compile_command_arguments(arguments, fileIdGen, config):
     return compiled_arguments
 
 
-## Compiles the value assigned to a variable using the command argument rules.
-## TODO: Is that the correct way to handle them?
+def compile_assignment(assignment, fileIdGen, config):
+    assignment.val = compile_command_argument(assignment.val, fileIdGen, config)
+    return assignment
+
+
 def compile_assignments(assignments, fileIdGen, config):
     compiled_assignments = [
-        [assignment[0], compile_command_argument(assignment[1], fileIdGen, config)]
+        compile_assignment(assignment, fileIdGen, config)
         for assignment in assignments
     ]
     return compiled_assignments
 
 
 def compile_redirection(redirection, fileIdGen, config):
-    file_arg = compile_command_argument(redirection.arg, fileIdGen, config)
-    redirection.arg = file_arg
+    if redirection.arg is not None:
+        file_arg = compile_command_argument(redirection.arg, fileIdGen, config)
+        redirection.arg = file_arg
     return redirection
 
 

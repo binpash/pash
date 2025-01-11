@@ -8,6 +8,7 @@ from sh_expand import env_vars_util
 
 import config
 from pash_graphviz import maybe_generate_graphviz
+import ast_to_ir
 import pash_compiler
 from util import *
 from dspash.worker_manager import WorkersManager
@@ -513,6 +514,14 @@ class Scheduler:
 
 
 def shutdown():
+    # in-bash expansion server, if it exists
+    try:
+        ast_to_ir.BASH_EXP_STATE
+    except AttributeError:
+        pass
+    else:
+        ast_to_ir.BASH_EXP_STATE.close()
+
     ## There may be races since this is called through the signal handling
     log("PaSh daemon is shutting down...")
     log("PaSh daemon shut down successfully...")
