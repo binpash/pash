@@ -40,7 +40,8 @@ pash_redir_output echo "$$: (2) Before asking the daemon for compilation..."
 msg="Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
 daemon_response=$(pash_communicate_daemon "$msg") # Blocking step, daemon will not send response until it's safe to continue
 
-if [[ "$daemon_response" == *"not all regions are parallelizable"* ]]; then
+# WARNING: finicky!
+if [[ "$daemon_response" == *"not"*"parallelizable"* ]]; then
     pash_all_region_parallelizable=1 
 else 
     pash_all_region_parallelizable=0 
