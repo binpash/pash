@@ -66,8 +66,10 @@ def parse_arg_list_to_command_invocation(
     command, flags_options_operands
 ) -> CommandInvocationInitial:
     cmd_name = format_arg_chars(command)
+    #strip quotes from command where necessary
+    #quoted commands are interpreted as non-parallelizable
+    cmd_name = cmd_name.strip().strip('"').strip("'")
     json_data = get_json_data(cmd_name)
-
     set_of_all_flags: Set[str] = get_set_of_all_flags(json_data)
     dict_flag_to_primary_repr: dict[str, str] = get_dict_flag_to_primary_repr(json_data)
     set_of_all_options: Set[str] = get_set_of_all_options(json_data)
