@@ -106,6 +106,11 @@ pipeline_microbenchmarks=(
     ann-agg              # Tests custom aggregators in annotations
     # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
+bash_skip=(
+    # has '*' characters in the sed which is conservatively caught as a glob
+    # by the bash expansion
+    sed-test
+)
 
 
 
@@ -188,6 +193,9 @@ execute_tests() {
         echo "   exited with $?"
         tail -n1 ${seq_time} >> ${results_time_bash}
         for conf in "${configurations[@]}"; do
+            if [[ "${conf[*]}" =~ "bash" ]] && [[ "${bash_skip[*]}" =~ "$microbenchmark" ]]; then
+                continue
+            fi
             for n_in in "${n_inputs[@]}"; do
                 echo "|-- Executing with pash --width ${n_in} ${conf}..."
                 export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_$(echo ${conf} | tr -d ' ').time"
