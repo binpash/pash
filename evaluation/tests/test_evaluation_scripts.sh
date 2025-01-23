@@ -107,9 +107,11 @@ pipeline_microbenchmarks=(
     # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
 bash_skip=(
-    # has '*' characters in the sed which is conservatively caught as a glob
+    # have '*' characters in the regex which is conservatively caught as a glob
     # by the bash expansion
     sed-test
+    minimal_grep_stdin
+    minimal_grep
 )
 
 
