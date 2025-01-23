@@ -44,15 +44,23 @@ class UnparsedScript:
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-
-def format_args(args):
-    formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
-    return formatted_args
-
-
 def format_arg_chars(arg_chars):
-    chars = [format_arg_char(arg_char) for arg_char in arg_chars]
-    return "".join(chars)
+    return traverse_and_format(arg_chars)
+
+def traverse_and_format(arg_char):
+    if isinstance(arg_char, list):
+        return "".join(traverse_and_format(c) for c in arg_char)
+    elif isinstance(arg_char, QArgChar):
+        return remove_quotes_from_quoted_content(arg_char.format())
+    elif isinstance(arg_char, (CArgChar, EArgChar)):
+        return format_arg_char(arg_char)
+    else:
+        # Fallback: not sure what the fallback for non recognized characters should be?
+        return format_arg_char(arg_char)
+
+def remove_quotes_from_quoted_content(arg_char):
+    formatted_content = traverse_and_format(arg_char)
+    return formatted_content.strip('"').strip("'")
 
 
 def format_arg_char(arg_char: ArgChar) -> str:

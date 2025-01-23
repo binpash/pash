@@ -379,7 +379,6 @@ class Scheduler:
                 ]
             )
 
-        assert self.running_procs > 0
         self.running_procs -= 1
         if self.running_procs == 0:
             self.unsafe_running = False

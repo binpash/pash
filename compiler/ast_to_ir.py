@@ -100,19 +100,23 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
             if isinstance(compiled_ast, IR):
                 acc_ir.background_union(compiled_ast)
             else:
-                ## shouldn't happen since compile_node should have already
-                ## raised this error
-                raise UnparallelizableError(f"Node: {compiled_ast} is not pure")
+                ## TODO: Make this union the compiled_ast with the
+                ## accumulated IR, since the user wanted to run these
+                ## commands in parallel (Is that correct?)
+                # acc_ir.background_union(IR([compiled_ast]))
+                compiled_asts.append(acc_ir)
+                acc_it = None
+                compiled_asts.append(compiled_ast)
 
             ## If the current compiled ast not in background (and so
             ## the union isn't in background too), stop accumulating
-            if not acc_ir.is_in_background():
+            if not acc_ir is None and not acc_ir.is_in_background():
                 compiled_asts.append(acc_ir)
                 acc_ir = None
         else:
             ## If the compiled ast is in background, start
             ## accumulating it
-            if compiled_ast.is_in_background():
+            if isinstance(compiled_ast, IR) and compiled_ast.is_in_background():
                 acc_ir = compiled_ast
             else:
                 compiled_asts.append(compiled_ast)
@@ -124,7 +128,7 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
     return compiled_asts
 
 
-def compile_node(ast_object, fileIdGen, config) -> IR:
+def compile_node(ast_object, fileIdGen, config):
     global compile_cases
     return ast_match(ast_object, compile_cases, fileIdGen, config)
 
