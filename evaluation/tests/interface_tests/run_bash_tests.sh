@@ -2884,7 +2884,7 @@ test_select.sh()
 
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
-    cd bash_tests
+    cd "$PASH_TOP/evaluation/tests/interface_tests/bash_tests"
     # run_test test_exec8.sub - any uncommented script here and forward has an alias (or declare -A) or unset in it
     # run_test test_arith-for.tests - error script, looks good besides an extra error print, this is an important test
     # run_test test_history2.sub - set -o history won't work here bc the history is gonna look different
