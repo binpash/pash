@@ -15,12 +15,13 @@ mkdir -p "$output_dir"
 run_test()
 {
     local test=$1
+    local args="$2"
     echo -n "Running $test..."
     TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
     { time $bash "$test" > "$output_dir/$test.bash.out"; } 2> >(tee -a $output_dir/results.time_bash)
     test_bash_ec=$?
     TIMEFORMAT="%3R" # %3U %3S"
-    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2> >(tee -a $output_dir/results.time_pash)
+    { time $pash $args "$test" > "$output_dir/$test.pash.out"; } 2> >(tee -a $output_dir/results.time_pash)
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
@@ -59,6 +60,7 @@ run_test()
 
 run_test "demo-spell.sh"
 run_test "hello-world.sh"
+run_test "hello-world-bash.sh" "--bash"
 
 if type lsb_release >/dev/null 2>&1 ; then
    distro=$(lsb_release -i -s)
