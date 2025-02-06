@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 ## Necessary to avoid interactive responses in installations
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y && apt-get install -y git

@@ -3,9 +3,9 @@
 
 Docker files for [PaSh](https://github.com/binpash/pash) published on Dockerhub:
 
-* Ubuntu 18.04: [binpash/pash:ubuntu-18.04](https://hub.docker.com/r/binpash/pash)
-* Fedora 35: [binpash/pash:fedora-35](https://hub.docker.com/r/binpash/pash)
-* Debian 10: [binpash/pash:debian-10](https://hub.docker.com/r/binpash/pash)
+* Ubuntu 24.04: [binpash/pash:ubuntu-24.04](https://hub.docker.com/r/binpash/pash)
+* Fedora 41: [binpash/pash:fedora-41](https://hub.docker.com/r/binpash/pash)
+* Debian 12: [binpash/pash:debian-12](https://hub.docker.com/r/binpash/pash)
 
 ## Run locally
 
@@ -28,9 +28,9 @@ docker build -t "pash:latest" .
 
 ## As a Dockerfile
 
-* Ubuntu 18.04: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
-* Fedora 35: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
-* Debian 10: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
+* Ubuntu 24.04: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
+* Fedora 41: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
+* Debian 12: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
 
 To build any of these containers and run it locally:
 

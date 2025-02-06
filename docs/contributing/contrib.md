@@ -47,7 +47,7 @@ This is a small list of useful docker commands. Docker distinguishes between an 
 ```
 docker images                    # shows all images in the system
 docker ps -a | grep pash         # shows all containers with name pash
-docker run --name NN pash/18.04  # creates a writable container (add `-it` for interactive)
+docker run --name NN pash/24.04  # creates a writable container (add `-it` for interactive)
 docker start -i NN               # starts container (add `-i` to drop straight into shell)
 docker attach NN                 # non-interactive -> interactive
 <CTL+p>, then <CTL+q>            # interactive -> non-interactive
@@ -109,8 +109,8 @@ wsl --set-default-version 2
 
 Install one of the Linux distributions on which PaSh has been tested from the Microsoft Store:
 
-* [Ubuntu 18.04 LTS](https://www.microsoft.com/store/apps/9N9TNGVNDL3Q)
 * [Ubuntu 20.04 LTS](https://www.microsoft.com/store/apps/9n6svws3rx71)
+* [Ubuntu 24.04 LTS](https://www.microsoft.com/store/apps/9nz3klhxdjp5)
 * [Debian GNU/Linux](https://www.microsoft.com/store/apps/9MSVKQC78PK6)
 * [Fedora Remix for WSL](https://www.microsoft.com/store/apps/9n6gdm4k2hnc)
 
