@@ -52,7 +52,7 @@ jobs:
             results=$(bash run.sh)
             mkdir ~/artifact
             echo "$results" | tee ~/artifact/results.log
-        - uses: actions/upload-artifact@v3
+        - uses: actions/upload-artifact@v4
           with:
             name: tight-loop-artifact
             path: ~/artifact
