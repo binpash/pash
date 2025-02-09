@@ -84,7 +84,7 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     
     Example: given the following optimized IR
                       - tr -- grep -
-                    /                \
+                    /                \\
     cat - uniq -split                    cat - wc
                     \                /
                       - tr -- grep -
