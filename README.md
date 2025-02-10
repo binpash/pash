@@ -21,6 +21,8 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization de
 ./pa.sh ./evaluation/intro/hello-world.sh
 ```
 
+If the script contains bash specific syntax, add the beta `--bash` flag to enable support.
+
 Run `./pa.sh --help` to get more information about the available commands.
 Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
 

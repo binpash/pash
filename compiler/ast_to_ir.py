@@ -3,6 +3,11 @@ import subprocess
 from shasta.ast_node import *
 from sh_expand.expand import expand_command, ExpansionState
 
+import config
+from sh_expand.bash_expand import (
+    BashExpansionState,
+    expand_command as expand_command_bash,
+)
 from shell_ast.ast_util import *
 from ir import *
 from util import *
@@ -10,6 +15,13 @@ from parse import from_ast_objects_to_shell
 
 from custom_error import *
 
+BASH_MODE = os.environ.get("pash_shell") == "bash"
+if BASH_MODE:
+    # doesn't need to be kept alive accross invocations
+    # but should be faster to avoid creating new processes
+
+    # too verbose to keep on with -d 1 (TODO: Get -d 2 working here)
+    BASH_EXP_STATE = BashExpansionState(temp_dir=config.PASH_TMP_PREFIX, debug=False)
 ## TODO: Separate the ir stuff to the bare minimum and
 ##       try to move this to the shell_ast folder.
 
@@ -71,6 +83,67 @@ compile_cases = {
             ast_node, fileIdGen, config
         )
     ),
+    # Bash only:
+    "Not": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_not(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Defun": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_defun(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "While": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_while(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "If": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_if(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Case": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_case(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Select": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_select(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Arith": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_arith(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Cond": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_cond(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "ArithFor": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_arith_for(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Coproc": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_coproc(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Time": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_time(
+            ast_node, fileIdGen, config
+        )
+    ),
+    "Group": (
+        lambda fileIdGen, config: lambda ast_node: compile_node_group(
+            ast_node, fileIdGen, config
+        )
+    ),
 }
 
 
@@ -85,9 +158,18 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
         ## Compile subtrees of the AST to out intermediate representation
         ## KK 2023-05-25: Would we ever want to pass this state to the expansion
         ##                of the next object? I don't think so.
-        exp_state = ExpansionState(config["shell_variables"])
-        expanded_ast = expand_command(ast_object, exp_state)
-        # log("Expanded:", expanded_ast)
+        if BASH_MODE:
+            if not BASH_EXP_STATE.is_open:
+                BASH_EXP_STATE.open()
+            expanded_ast = expand_command_bash(
+                ast_object,
+                BASH_EXP_STATE,
+                config["shell_variables_file_path"],
+                config["shell_variables"],
+            )
+        else:
+            exp_state = ExpansionState(config["shell_variables"])
+            expanded_ast = expand_command(ast_object, exp_state)
         compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
         # log("Compiled AST:")
@@ -221,7 +303,7 @@ def compile_node_and_or_semi(ast_node, fileIdGen, config):
 
 
 def compile_node_redir_subshell(ast_node, fileIdGen, config):
-    compiled_node = compile_node(ast_node.node, fileIdGen, config)
+    compiled_node = compile_node(ast_node.body, fileIdGen, config)
 
     if isinstance(compiled_node, IR):
         ## TODO: I should use the redir list to redirect the files of
@@ -274,6 +356,172 @@ def compile_node_for(ast_node, fileIdGen, config):
     return compiled_ast
 
 
+# Bash only:
+
+
+def compile_node_not(ast_node, fileIdGen, config):
+    ast_node: NotNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName, [compile_node(ast_node.body, fileIdGen, config)]
+    )
+    return compiled_ast
+
+
+def compile_node_defun(ast_node, fileIdGen, config):
+    ast_node: DefunNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.name),
+            compile_node(ast_node.body, fileIdGen, config),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_while(ast_node, fileIdGen, config):
+    ast_node: WhileNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            compile_node(ast_node.test, fileIdGen, config),
+            compile_node(ast_node.body, fileIdGen, config),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_if(ast_node, fileIdGen, config):
+    ast_node: IfNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            compile_node(ast_node.cond, fileIdGen, config),
+            compile_node(ast_node.then_b, fileIdGen, config),
+            (
+                compile_node(ast_node.else_b, fileIdGen, config)
+                if ast_node.else_b
+                else None
+            ),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_command_cases(cases, fileIdGen, config):
+    compiled_cases = [
+        [
+            compile_command_argument(case["cpattern"], fileIdGen, config),
+            compile_node(case["cbody"], fileIdGen, config),
+        ]
+        for case in cases
+    ]
+    return compiled_cases
+
+
+def compile_node_case(ast_node, fileIdGen, config):
+    ast_node: CaseNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.argument, fileIdGen, config),
+            compile_command_cases(ast_node.cases, fileIdGen, config),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_select(ast_node, fileIdGen, config):
+    ast_node: SelectNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.variable, fileIdGen, config),
+            compile_node(ast_node.body, fileIdGen, config),
+            compile_command_arguments(ast_node.map_list, fileIdGen, config),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_arith(ast_node, fileIdGen, config):
+    ast_node: ArithNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_arguments(ast_node.argument, fileIdGen, config),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_cond(ast_node, fileIdGen, config):
+    ast_node: CondNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            ast_node.cond_type,
+            (
+                compile_command_argument(ast_node.op, fileIdGen, config)
+                if ast_node.op
+                else None
+            ),
+            compile_node(ast_node.left, fileIdGen, config) if ast_node.left else None,
+            compile_node(ast_node.right, fileIdGen, config) if ast_node.right else None,
+            ast_node.invert_return,
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_arith_for(ast_node, fileIdGen, config):
+    ast_node: ArithForNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            ast_node.line_number,
+            compile_command_argument(ast_node.init, fileIdGen, config),
+            compile_command_argument(ast_node.cond, fileIdGen, config),
+            compile_command_argument(ast_node.step, fileIdGen, config),
+            compile_node(ast_node.action, fileIdGen, config),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_coproc(ast_node, fileIdGen, config):
+    ast_node: CoprocNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName,
+        [
+            compile_command_argument(ast_node.name, fileIdGen, config),
+            compile_node(ast_node.body, fileIdGen, config),
+        ],
+    )
+    return compiled_ast
+
+
+def compile_node_time(ast_node, fileIdGen, config):
+    ast_node: TimeNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName, [compile_node(ast_node.command, fileIdGen, config)]
+    )
+    return compiled_ast
+
+
+def compile_node_group(ast_node, fileIdGen, config):
+    ast_node: GroupNode = ast_node
+    compiled_ast = make_kv(
+        type(ast_node).NodeName, [compile_node(ast_node.body, fileIdGen, config)]
+    )
+    return compiled_ast
+
+
 ## This function checks if we should expand an arg_char
 ##
 ## It has a dual purpose:
@@ -319,43 +567,6 @@ def parse_string_to_arguments(arg_char_string):
     return string_to_arguments(arg_char_string)
 
 
-## TODO: Use "pash_input_args" when expanding in place of normal arguments.
-def naive_expand(argument, config):
-    ## config contains a dictionary with:
-    ##  - all variables, their types, and values in 'shell_variables'
-    ##  - the name of a file that contains them in 'shell_variables_file_path'
-    # log(config['shell_variables'])
-    # log(config['shell_variables_file_path'])
-
-    ## Create an AST node that "echo"s the argument
-    echo_asts = make_echo_ast(argument, config["shell_variables_file_path"])
-
-    ## Execute the echo AST by unparsing it to shell
-    ## and calling bash
-    expanded_string = execute_shell_asts(echo_asts)
-
-    log("Argument:", argument, "was expanded to:", expanded_string)
-
-    ## Parse the expanded string back to an arg_char
-    expanded_arguments = parse_string_to_arguments(expanded_string)
-
-    ## TODO: Handle any errors
-    # log(expanded_arg_char)
-    return expanded_arguments
-
-
-## This function expands an arg_char.
-## At the moment it is pretty inefficient as it serves as a prototype.
-##
-## TODO: At the moment this has the issue that a command that has the words which we want to expand
-##       might have assignments of its own, therefore requiring that we use them to properly expand.
-def expand_command_argument(argument, config):
-    new_arguments = [argument]
-    if should_expand_argument(argument):
-        new_arguments = naive_expand(argument, config)
-    return new_arguments
-
-
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##
 ## It is currently being extended to also expand any arguments that are safe to expand.
@@ -393,19 +604,23 @@ def compile_command_arguments(arguments, fileIdGen, config):
     return compiled_arguments
 
 
-## Compiles the value assigned to a variable using the command argument rules.
-## TODO: Is that the correct way to handle them?
+def compile_assignment(assignment, fileIdGen, config):
+    assignment.val = compile_command_argument(assignment.val, fileIdGen, config)
+    return assignment
+
+
 def compile_assignments(assignments, fileIdGen, config):
     compiled_assignments = [
-        [assignment[0], compile_command_argument(assignment[1], fileIdGen, config)]
+        compile_assignment(assignment, fileIdGen, config)
         for assignment in assignments
     ]
     return compiled_assignments
 
 
 def compile_redirection(redirection, fileIdGen, config):
-    file_arg = compile_command_argument(redirection.arg, fileIdGen, config)
-    redirection.arg = file_arg
+    if redirection.arg is not None:
+        file_arg = compile_command_argument(redirection.arg, fileIdGen, config)
+        redirection.arg = file_arg
     return redirection
 
 
