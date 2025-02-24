@@ -3,7 +3,10 @@
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
+export PYTHONPATH=$PASH_TOP/venv/lib/python3.12/site-packages:$PYTHONPATH
 export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
+export PYTHONPATH=~/annotations:$PYTHONPATH
+
 ## Register the signal handlers, we can add more signals here
 trap kill_all SIGTERM SIGINT
 
@@ -74,3 +77,4 @@ if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
 fi
 
 (exit "$pash_exit_code")
+
