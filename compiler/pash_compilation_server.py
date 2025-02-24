@@ -39,7 +39,19 @@ def parse_args():
 
 
 # Initialize the daemon
+initial_env_vars = {}
 
+def store_initial_env():
+    """Stores initial locale environment variables at startup."""
+    global initial_env_vars
+    initial_env_vars = {
+        "LC_ALL": os.environ.get("LC_ALL", "Not Set"),
+        "LANG": os.environ.get("LANG", "Not Set"),
+        "LC_CTYPE": os.environ.get("LC_CTYPE", "Not Set"),
+        "LC_COLLATE": os.environ.get("LC_COLLATE", "Not Set"),
+        "LC_NUMERIC": os.environ.get("LC_NUMERIC", "Not Set")
+    }
+    log(f"Initial locale settings: {initial_env_vars}")
 
 def init():
     ## Set the logging prefix
@@ -53,7 +65,7 @@ def init():
         config.load_config(args.config_path)
 
     pash_compiler.runtime_config = config.config["distr_planner"]
-
+    store_initial_env()
     return args
 
 
@@ -511,11 +523,29 @@ class Scheduler:
         self.connection_manager.close()
         shutdown()
 
+def check_final_env():
+    """Checks if locale environment variables changed during execution."""
+    final_env_vars = {
+        "LC_ALL": os.environ.get("LC_ALL", "Not Set"),
+        "LANG": os.environ.get("LANG", "Not Set"),
+        "LC_CTYPE": os.environ.get("LC_CTYPE", "Not Set"),
+        "LC_COLLATE": os.environ.get("LC_COLLATE", "Not Set"),
+        "LC_NUMERIC": os.environ.get("LC_NUMERIC", "Not Set")
+    }
+
+    if final_env_vars != initial_env_vars:
+        log("WARNING: Locale environment variables changed during execution!")
+        log(f"Initial: {initial_env_vars}")
+        log(f"Final: {final_env_vars}")
+    
 
 def shutdown():
-    ## There may be races since this is called through the signal handling
+    """Shuts down the PaSh daemon."""
+    check_final_env()  
     log("PaSh daemon is shutting down...")
     log("PaSh daemon shut down successfully...")
+
+
 
 
 def main():

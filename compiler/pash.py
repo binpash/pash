@@ -17,6 +17,9 @@ LOGGING_PREFIX = "PaSh: "
 def main():
     ## Parse arguments
     args, shell_name = parse_args()
+    
+    check_locale_settings()
+
     ## If it is interactive we need a different execution mode
     ##
     ## The user can also ask for an interactive mode irregardless of whether pash was invoked in interactive mode.
@@ -163,6 +166,39 @@ def execute_script(compiled_script_filename, command, arguments, shell_name):
     exec_obj = subprocess.run(subprocess_args, env=new_env, close_fds=False)
     return exec_obj.returncode
 
+
+
+def check_locale_settings():
+    """
+    Checks if locale settings are set correctly to avoid execution inconsistencies.
+    """
+    
+    locale_vars = {
+        "LC_ALL": os.environ.get("LC_ALL", "Not Set"),
+        "LANG": os.environ.get("LANG", "Not Set"),
+        "LC_CTYPE": os.environ.get("LC_CTYPE", "Not Set"),
+        "LC_COLLATE": os.environ.get("LC_COLLATE", "Not Set"),
+        "LC_NUMERIC": os.environ.get("LC_NUMERIC", "Not Set"),
+    }
+
+    # If LC_ALL is set, it overrides all locale settings
+    if locale_vars["LC_ALL"] not in ["Not Set", "C", "C.UTF-8"]:
+        log(f"WARNING: LC_ALL is set to '{locale_vars['LC_ALL']}', which overrides all other locale settings.")
+        log(f"Consider setting LC_ALL=C for full consistency.")
+        return  # No need to check others if LC_ALL is set
+
+    # Warn if LC_COLLATE is neither C nor C.UTF-8
+    if locale_vars["LC_COLLATE"] not in ["C", "C.UTF-8"]:
+        log(f"WARNING: LC_COLLATE is set to '{locale_vars['LC_COLLATE']}'. This may affect sorting behavior.")
+        log(f"Consider setting LC_COLLATE=C for strict ASCII ordering.")
+
+    # Warn if LC_NUMERIC is neither C nor C.UTF-8
+    if locale_vars["LC_NUMERIC"] not in ["C", "C.UTF-8"]:
+        log(f"WARNING: LC_NUMERIC is set to '{locale_vars['LC_NUMERIC']}'. This may affect numerical operations.")
+        log(f"Consider setting LC_NUMERIC=C for consistent behavior.")
+
+    log("Locale settings checked. To avoid performance inconsistencies, use `LC_ALL=C.UTF-8`.")
+    pid = os.getpid()
 
 if __name__ == "__main__":
     main()

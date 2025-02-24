@@ -2,7 +2,6 @@ import sys
 import pickle
 import traceback
 from datetime import datetime
-
 from sh_expand import env_vars_util
 from sh_expand.expand import ExpansionError 
 
