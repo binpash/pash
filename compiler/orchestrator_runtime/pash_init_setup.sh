@@ -23,6 +23,7 @@ export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
+export local_annotations=0
 
 for item in "$@"
 do
@@ -87,11 +88,27 @@ do
     if [ "--distributed_exec" == "$item" ]; then
         export distributed_exec=1
     fi
+
+    if [ "--local-annotations-dir" == "$item" ]; then
+        shift
+        export ANNOTATIONS_PATH=$(realpath "$2")
+        export local_annotations=1
+        export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
+        #echo "✅ Using local annotations directory: $ANNOTATIONS_PATH"
+    fi
 done
 
 ## `pash_redir_output` and `pash_redir_all_output` are strictly for logging.
 ##
 ## They do not execute their arguments if there is no debugging.
+if [ "$local_annotations" -eq 1 ]; then
+    # Comment out the PyPI-installed `pash-annotations`
+    sed -i 's/^pash-annotations.*/#&/' "$PASH_TOP/requirements.txt"
+
+    # Add the local annotations path only if not already in `requirements.txt`
+    grep -qxF "-e $ANNOTATIONS_PATH" "$PASH_TOP/requirements.txt" || echo "-e $ANNOTATIONS_PATH" >> "$PASH_TOP/requirements.txt"
+fi
+
 if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
     pash_redir_output()
     {
@@ -221,6 +238,11 @@ else
     {
         local daemon_pid=$1
         ## Only wait for daemon if it lives (it might be dead, rip)
+
+        ##bring back the pypi annotations and remove the local annotations library
+        sed -i 's/^#\(pash-annotations.*\)$/\1/' "$PASH_TOP/requirements.txt"
+        sed -i "\|^-e $ANNOTATIONS_PATH|d" "$PASH_TOP/requirements.txt"
+
         if ps -p "$daemon_pid" > /dev/null
         then
             ## Send and receive from daemon

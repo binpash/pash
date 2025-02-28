@@ -216,6 +216,14 @@ class RunnerParser(BaseParser):
             action="store_true",
         )
         self.add_argument(
+            "--local-annotations-dir",
+            help="Specify a local annotations directory instead of using the default one",
+            nargs="?",  # <-- Makes it optional (accepts zero or one argument)
+            const="",  # <-- Allows flag usage without an argument
+            type=str,
+            default=None,
+        )
+        self.add_argument(
             "--interactive",
             help="Executes the script using an interactive internal shell session (experimental)",
             action="store_true",

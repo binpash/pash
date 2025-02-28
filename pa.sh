@@ -42,8 +42,6 @@ if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
   "$PASH_TOP"/compiler/superoptimize.sh
   exit
 fi
-parsed_args=()
-skip_flag=0
 
 
 ##This will check if use-local was passed in as a flag, and appropriately use the correct annotations library
@@ -88,17 +86,23 @@ export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
-source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "${parsed_args[@]}"
+source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
+
+# Read annotations path if set
+
+#echo $PYTHONPATH
+
+# Ensure the local annotations directory is in `PYTHONPATH`
 
 ## This starts a different server depending on the configuration
 if [ "$show_version" -eq 0 ]; then
   ## Exports $daemon_pid
-  start_server "${parsed_args[@]}"
+  start_server "$@"
 fi
 
 ## Restore the umask before executing
 umask "$old_umask"
-PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "${parsed_args[@]}"
+PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "$@"
 pash_exit_code=$?
 if [ "$show_version" -eq 0 ]; then
   cleanup_server "${daemon_pid}"
