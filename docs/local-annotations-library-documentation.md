@@ -43,18 +43,9 @@ PaSh provides a script to configure dependencies, including an option to install
 
 To install dependencies normally:
 
-```sh
-./setup-annotations.sh
-```
-
 To install local annotations:
 ```sh
 ./setup-local.sh
-```
-
-To install local annotations:
-```sh
-./pash.sh --local-annotations
 ```
 
 This will:
@@ -67,6 +58,12 @@ Once everything is set up, test PaSh with:
 ```sh
 cd pash/evaluation/intro
 time $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
+```
+
+To run it with local annotation:
+```sh
+cd pash/evaluation/intro
+time $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh --local-annotations
 ```
 
 You can also run the full PaSh test suite:
