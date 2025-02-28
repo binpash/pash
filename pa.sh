@@ -3,9 +3,24 @@
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
-export PYTHONPATH=$PASH_TOP/venv/lib/python3.12/site-packages:$PYTHONPATH
 export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
-export PYTHONPATH=~/annotations:$PYTHONPATH
+export ANNOTATIONS_PATH=$([ -f "$PASH_TOP/local-annotations-path.txt" ] && tr -d '[:space:]' < "$PASH_TOP/local-annotations-path.txt")
+#export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
+trap cleanup EXIT
+
+## Function to restore `requirements.txt` on script exit
+cleanup() {
+    if [ -f "$PASH_TOP/requirements_backup.txt" ]; then
+        mv "$PASH_TOP/requirements_backup.txt" "$PASH_TOP/requirements.txt"
+    fi
+
+    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+        rm -rf "${PASH_TMP_PREFIX}"
+    fi
+}
+
+## Backup `requirements.txt`
+cp "$PASH_TOP/requirements.txt" "$PASH_TOP/requirements_backup.txt"
 
 ## Register the signal handlers, we can add more signals here
 trap kill_all SIGTERM SIGINT
@@ -27,7 +42,25 @@ if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
   "$PASH_TOP"/compiler/superoptimize.sh
   exit
 fi
+parsed_args=()
+skip_flag=0
 
+
+##This will check if use-local was passed in as a flag, and appropriately use the correct annotations library
+for arg in "$@"; do
+    if [ "$arg" == "--local-annotations" ]; then
+        sed -i 's/^pash-annotations.*/#&/' $PASH_TOP/requirements.txt
+        skip_flag=1
+	export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
+	continue
+    fi
+    parsed_args+=("$arg")
+done
+
+if [ "$skip_flag" -eq 0 ]; then
+    sed -i "s|-e $ANNOTATIONS_PATH|#-e $ANNOTATIONS_PATH|" $PASH_TOP/requirements.txt
+fi
+cat $PASH_TOP/requirements.txt
 if ! command -v python3 &> /dev/null
 then
     echo "Python >=3 could not be found"
@@ -55,17 +88,17 @@ export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
-source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
+source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "${parsed_args[@]}"
 
 ## This starts a different server depending on the configuration
 if [ "$show_version" -eq 0 ]; then
   ## Exports $daemon_pid
-  start_server "$@"
+  start_server "${parsed_args[@]}"
 fi
 
 ## Restore the umask before executing
 umask "$old_umask"
-PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "$@"
+PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "${parsed_args[@]}"
 pash_exit_code=$?
 if [ "$show_version" -eq 0 ]; then
   cleanup_server "${daemon_pid}"
@@ -76,5 +109,9 @@ if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
   rm -rf "${PASH_TMP_PREFIX}"
 fi
 
+sed -i 's/^#\(pash-annotations.*\)$/\1/' "$PASH_TOP/requirements.txt"
+sed -i "s|^#-e $ANNOTATIONS_PATH|-e $ANNOTATIONS_PATH|" "$PASH_TOP/requirements.txt"
+
 (exit "$pash_exit_code")
+
 
