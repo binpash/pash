@@ -44,21 +44,6 @@ if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
 fi
 
 
-##This will check if use-local was passed in as a flag, and appropriately use the correct annotations library
-for arg in "$@"; do
-    if [ "$arg" == "--local-annotations" ]; then
-        sed -i 's/^pash-annotations.*/#&/' $PASH_TOP/requirements.txt
-        skip_flag=1
-	export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
-	continue
-    fi
-    parsed_args+=("$arg")
-done
-
-if [ "$skip_flag" -eq 0 ]; then
-    sed -i "s|-e $ANNOTATIONS_PATH|#-e $ANNOTATIONS_PATH|" $PASH_TOP/requirements.txt
-fi
-cat $PASH_TOP/requirements.txt
 if ! command -v python3 &> /dev/null
 then
     echo "Python >=3 could not be found"
