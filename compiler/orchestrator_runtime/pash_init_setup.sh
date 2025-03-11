@@ -24,7 +24,7 @@ export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
 export local_annotations=0
-
+export at_least_one_optimization=0
 count=0
 for item in "$@"
 do

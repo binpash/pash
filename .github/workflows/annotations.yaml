@@ -1,4 +1,4 @@
-name: Custom Test Loop
+name: annotations
 
 on:
   push:
@@ -46,8 +46,9 @@ jobs:
           export PASH_TOP=$PWD
           export PATH=$PATH:$PASH_TOP
 
+          $PASH_TOP/scripts/setup-annotations.sh
+          $PASH_TOP/scripts/ci/test_local_annotations.sh
 
-          
           mkdir -p ~/artifact
           echo "$results" | tee ~/artifact/custom_results.log
 

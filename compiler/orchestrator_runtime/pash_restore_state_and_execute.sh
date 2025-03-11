@@ -14,6 +14,7 @@ export pash_current_set_state=$-
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
 pash_redir_output echo "$$: (3) Reverted to BaSh set state: $-"
 
+
 ## Execute the script
 pash_redir_output echo "$$: (4) Restoring previous exit code: ${pash_previous_exit_status}"
 pash_redir_output echo "$$: (4) Will execute script in ${SCRIPT_TO_EXECUTE}:"
