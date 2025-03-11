@@ -4,23 +4,7 @@ export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
 export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
-export ANNOTATIONS_PATH=$([ -f "$PASH_TOP/local-annotations-path.txt" ] && tr -d '[:space:]' < "$PASH_TOP/local-annotations-path.txt")
-#export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
-trap cleanup EXIT
 
-## Function to restore `requirements.txt` on script exit
-cleanup() {
-    if [ -f "$PASH_TOP/requirements_backup.txt" ]; then
-        mv "$PASH_TOP/requirements_backup.txt" "$PASH_TOP/requirements.txt"
-    fi
-
-    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
-        rm -rf "${PASH_TMP_PREFIX}"
-    fi
-}
-
-## Backup `requirements.txt`
-cp "$PASH_TOP/requirements.txt" "$PASH_TOP/requirements_backup.txt"
 
 ## Register the signal handlers, we can add more signals here
 trap kill_all SIGTERM SIGINT
@@ -75,9 +59,6 @@ source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
 # Read annotations path if set
 
-#echo $PYTHONPATH
-
-# Ensure the local annotations directory is in `PYTHONPATH`
 
 ## This starts a different server depending on the configuration
 if [ "$show_version" -eq 0 ]; then
@@ -97,9 +78,6 @@ fi
 if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
   rm -rf "${PASH_TMP_PREFIX}"
 fi
-
-sed -i 's/^#\(pash-annotations.*\)$/\1/' "$PASH_TOP/requirements.txt"
-sed -i "s|^#-e $ANNOTATIONS_PATH|-e $ANNOTATIONS_PATH|" "$PASH_TOP/requirements.txt"
 
 (exit "$pash_exit_code")
 

@@ -217,10 +217,6 @@ class RunnerParser(BaseParser):
         )
         self.add_argument(
             "--local-annotations-dir",
-            help="Specify a local annotations directory instead of using the default one",
-            nargs="?",  # <-- Makes it optional (accepts zero or one argument)
-            const="",  # <-- Allows flag usage without an argument
-            type=str,
             default=None,
         )
         self.add_argument(

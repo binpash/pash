@@ -1,0 +1,65 @@
+name: Custom Test Loop
+
+on:
+  # Run when pushing to specific branches or creating/updating a PR
+  push:
+    branches:
+      - future
+      - main
+    paths:
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+      - scripts/**
+
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened, ready_for_review]
+    paths:
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+      - scripts/**
+
+jobs:
+  custom-tests:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install Dependencies
+        run: |
+          set -e
+          sudo touch /.githubenv
+          # Install system dependencies
+          sudo -E bash scripts/distro-deps.sh -o
+          # Install PaSh
+          sudo -E bash scripts/setup-pash.sh -o
+          export PASH_TOP=$PWD
+          export PATH=$PATH:$PASH_TOP
+
+      - name: Run Custom Test Scripts
+        run: |
+          export PASH_TOP=$PWD
+          export PATH=$PATH:$PASH_TOP
+
+          # ---- INSERT YOUR SCRIPTS BELOW ----
+          cd evaluation/benchmarks/runtime-overhead
+          results=$(bash run.sh)  # Example: Replace this with your scripts
+
+          # Example: Running multiple test scripts
+          # bash scripts/test_script_1.sh
+          # bash scripts/test_script_2.sh
+          # bash evaluation/some_benchmark.sh
+
+          mkdir -p ~/artifact
+          echo "$results" | tee ~/artifact/custom_results.log
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: custom-test-artifact
+          path: ~/artifact
