@@ -4,8 +4,6 @@ export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
 export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
-
-
 ## Register the signal handlers, we can add more signals here
 trap kill_all SIGTERM SIGINT
 
@@ -26,7 +24,6 @@ if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
   "$PASH_TOP"/compiler/superoptimize.sh
   exit
 fi
-
 
 if ! command -v python3 &> /dev/null
 then
@@ -57,9 +54,6 @@ export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
-# Read annotations path if set
-
-
 ## This starts a different server depending on the configuration
 if [ "$show_version" -eq 0 ]; then
   ## Exports $daemon_pid
@@ -80,5 +74,3 @@ if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
 fi
 
 (exit "$pash_exit_code")
-
-

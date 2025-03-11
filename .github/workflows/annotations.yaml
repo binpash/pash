@@ -1,7 +1,6 @@
 name: Custom Test Loop
 
 on:
-  # Run when pushing to specific branches or creating/updating a PR
   push:
     branches:
       - future
@@ -47,15 +46,8 @@ jobs:
           export PASH_TOP=$PWD
           export PATH=$PATH:$PASH_TOP
 
-          # ---- INSERT YOUR SCRIPTS BELOW ----
-          cd evaluation/benchmarks/runtime-overhead
-          results=$(bash run.sh)  # Example: Replace this with your scripts
 
-          # Example: Running multiple test scripts
-          # bash scripts/test_script_1.sh
-          # bash scripts/test_script_2.sh
-          # bash evaluation/some_benchmark.sh
-
+          
           mkdir -p ~/artifact
           echo "$results" | tee ~/artifact/custom_results.log
 

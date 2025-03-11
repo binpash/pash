@@ -130,8 +130,8 @@ In the **ParallelizabilityInfo generator**, define what parallelization strategi
 
 For example:
 - `sort` can process chunks **independently**, then merge results.
-- `uniq` requires **sorted input**, meaning certain parallelization strategies won’t work.
-- `awk` may be **line-independent** or require full input context, depending on the script.
+- `wc` can process chunks **independently**, and would then sum up the results.
+- `cat` with no flags is **stateless**, so the default options work.
 
 By implementing these details, you ensure **efficient parallel execution** while preserving the **functional correctness** of your command.
 

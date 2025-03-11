@@ -41,6 +41,7 @@ fi
 
 if [[ "$daemon_response" == *"OK:"* ]]; then
     pash_runtime_return_code=0
+    pash_redir_output echo "=====PARRELLIZED AT LEAST ONE PART OF THE CODE====="
 elif [ -z "$daemon_response" ]; then
     ## Trouble... Daemon crashed, rip
     pash_redir_output echo "$$: ERROR: (2) Daemon crashed!"
@@ -100,4 +101,3 @@ function inform_daemon_exit () {
     msg="Exit:${process_id}"
     daemon_response=$(pash_communicate_daemon_just_send "$msg")
 } 
-
