@@ -39,6 +39,7 @@ do
     if [ "$local_annotations" -eq 1 ]; then
         export ANNOTATIONS_PATH=$(realpath "$item")
         export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
+        export local_annotations=0
     fi
 
     # We output time always 

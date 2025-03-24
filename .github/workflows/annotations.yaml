@@ -5,6 +5,7 @@ on:
     branches:
       - future
       - main
+      - local-annotations-library
     paths:
       - compiler/**
       - runtime/**
