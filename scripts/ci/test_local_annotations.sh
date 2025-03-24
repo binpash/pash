@@ -3,9 +3,11 @@
 # Define the file path
 FILE="$PASH_TOP/../annotations/pash_annotations/annotation_generation/AnnotationGeneration.py"
 
-# First run the script normally, make sure that the optimization occurred by checking that the FIFOs were made
-$PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh -d 2 --local-annotations-dir ~/annotations/ --log_file "$PASH_TOP/pash.log"
 
+# First run the script normally, make sure that the optimization occurred by checking that the FIFOs were made
+$PASH_TOP/pa.sh -c "cat /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' | wc -l" -d 2 --local-annotations-dir ~/annotations/ --log_file "$PASH_TOP/pash.log"
+
+#I initially tried to use --assert_compiler_success but that kept leading to the script henging when a certain section was not parrallelizable
 if grep -Eq "rm_pash_fifos|mkfifo_pash_fifos" "$PASH_TOP/pash.log"; then
     echo "Success: the line was in the output when the cat annotations are available"
 else
@@ -23,7 +25,7 @@ sed -i 's/^\(\s*\)"cat": "Cat",/\1# "cat": "Cat",/' "$FILE"
 echo "Successfully commented out the 'cat' entry in $FILE"
 
 # After removing the annotation for cat, the code should not be optimized, and no FIFOs will be made
-$PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh -d 2 --local-annotations-dir ~/annotations/ --log_file "$PASH_TOP/pash.log"
+$PASH_TOP/pa.sh -c "cat /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' | wc -l" -d 2 --local-annotations-dir ~/annotations/ --log_file "$PASH_TOP/pash.log"
 
 if grep -Eq "rm_pash_fifos|mkfifo_pash_fifos" "$PASH_TOP/pash.log"; then
     echo "Error: The line was found!"

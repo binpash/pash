@@ -1,33 +1,52 @@
 #!/bin/bash
 
+# Usage: ./setup-annotations.sh [ANNOTATIONS_DIR] [-f|--force]
 
-# Determine PaSh top directory
-PASH_TOP=$(dirname "$(realpath "$0")")
+FORCE=0
+USER_PROVIDED_DIR=""
 
-# Default annotations directory (sibling of PASH_TOP)
-DEFAULT_ANNOTATIONS_DIR="$(dirname "$PASH_TOP")/annotations"
+for arg in "$@"; do
+  if [ "$arg" = "-f" ] || [ "$arg" = "--force" ]; then
+    FORCE=1
+  else
+    USER_PROVIDED_DIR="$arg"
+  fi
+done
 
-# Use user-provided path if given, otherwise use default
-if [ -n "$1" ]; then
-    ANNOTATIONS_DIR="$1"
-    ANNOTATIONS_DIR=$(realpath "$ANNOTATIONS_DIR")
+# Determine annotations directory
+if [ -n "$USER_PROVIDED_DIR" ]; then
+    ANNOTATIONS_DIR=$(realpath "$USER_PROVIDED_DIR")
 else
-    ANNOTATIONS_DIR="$DEFAULT_ANNOTATIONS_DIR"
+    if [ -z "$PASH_TOP" ]; then
+        echo "Error: PASH_TOP is not set and no annotations directory was provided."
+        echo "Set PASH_TOP or provide a directory path as an argument."
+        exit 1
+    fi
+    ANNOTATIONS_DIR="$(dirname "$PASH_TOP")/annotations"
 fi
 
 echo "Annotations directory set to: $ANNOTATIONS_DIR"
 
-# Always clone the repository to the specified or default location
+# Check if directory exists
+if [ -d "$ANNOTATIONS_DIR" ]; then
+    if [ "$FORCE" -eq 1 ]; then
+        echo "Removing existing annotations directory due to --force..."
+        rm -rf "$ANNOTATIONS_DIR"
+    else
+        echo "Error: Annotations directory already exists at $ANNOTATIONS_DIR"
+        echo "Use --force or -f to overwrite it."
+        exit 1
+    fi
+fi
+
+# Clone the annotations repository
 echo "Downloading annotations repository..."
-rm -rf "$ANNOTATIONS_DIR"
-git clone https://github.com/binpash/annotations.git "$ANNOTATIONS_DIR" 
+git clone https://github.com/binpash/annotations.git "$ANNOTATIONS_DIR"
 
 if [ $? -ne 0 ]; then
     echo "Failed to clone annotations repository."
     exit 1
 fi
 
-# Get the absolute path
 ANNOTATIONS_PATH=$(realpath "$ANNOTATIONS_DIR")
 echo "Annotations repository cloned to: $ANNOTATIONS_PATH"
-

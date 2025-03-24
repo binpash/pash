@@ -24,11 +24,9 @@ export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
 export local_annotations=0
-export at_least_one_optimization=0
-count=0
+
 for item in "$@"
 do
-    count=$(( count + 1 ))
     if [ "$pash_checking_log_file" -eq 1 ]; then
         export pash_checking_log_file=0
         export PASH_REDIR="$item"
@@ -37,6 +35,10 @@ do
     if [ "$pash_checking_debug_level" -eq 1 ]; then
         export pash_checking_debug_level=0
         export PASH_DEBUG_LEVEL=$item
+    fi
+    if [ "$local_annotations" -eq 1 ]; then
+        export ANNOTATIONS_PATH=$(realpath "$item")
+        export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
     fi
 
     # We output time always 
@@ -91,10 +93,8 @@ do
     fi
 
     if [ "--local-annotations-dir" == "$item" ]; then
-        count=$(( count + 1 ))
-        export ANNOTATIONS_PATH=$(realpath "${!count}")
+        
         export local_annotations=1
-        export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
         #echo "✅ Using local annotations directory: $ANNOTATIONS_PATH"
     fi
 done
