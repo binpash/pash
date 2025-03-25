@@ -98,7 +98,7 @@ def parse_args():
     if args.command is not None:
         fname = ptempfile()
         with open(fname, "w") as f:
-            f.write(args.command + "\n")
+            f.write(args.command)
         ## If the shell is invoked with -c and arguments after it, then these arguments
         ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
         if len(args.input) > 0:

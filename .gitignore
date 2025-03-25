@@ -56,9 +56,3 @@ runtime/dgsh-tee
 .vscode/*
 .idea/*
 .vs/*
-
-#venv
-venv/*
-
-# Ignore local annotations path
-local-annotations-path.txt

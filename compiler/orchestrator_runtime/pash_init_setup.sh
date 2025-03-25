@@ -102,8 +102,7 @@ done
 
 ## `pash_redir_output` and `pash_redir_all_output` are strictly for logging.
 ##
-
-
+## They do not execute their arguments if there is no debugging.
 if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
     pash_redir_output()
     {
