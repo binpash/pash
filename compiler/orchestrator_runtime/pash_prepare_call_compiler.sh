@@ -100,3 +100,4 @@ function inform_daemon_exit () {
     msg="Exit:${process_id}"
     daemon_response=$(pash_communicate_daemon_just_send "$msg")
 } 
+
