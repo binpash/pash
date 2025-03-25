@@ -1,38 +1,74 @@
 #!/bin/bash
 
-# Define the file path
+# Set the annotation file path
 FILE="$PASH_TOP/../annotations/pash_annotations/annotation_generation/AnnotationGeneration.py"
+LOG_FILE="$PASH_TOP/pash.log"
 
-
-# First run the script normally, make sure that the optimization occurred by checking that the FIFOs were made
-$PASH_TOP/pa.sh -c "cat /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' | wc -l" -d 2 --local-annotations-dir ~/annotations/ --log_file "$PASH_TOP/pash.log"
-
-#I initially tried to use --assert_compiler_success but that kept leading to the script henging when a certain section was not parrallelizable
-if grep -Eq "rm_pash_fifos|mkfifo_pash_fifos" "$PASH_TOP/pash.log"; then
-    echo "Success: the line was in the output when the cat annotations are available"
-else
-    echo "Error: The line is not found!"
-    exit 1
-fi  # ✅ Added missing `fi` here!
-
-# Comment out the line containing '"cat": "Cat"' if not already commented
+# Ensure the annotation file exists
 if [[ ! -f "$FILE" ]]; then
-    echo "Error: File not found at $FILE"
+    echo "Error: Annotation file not found at $FILE"
     exit 1
 fi
 
+echo "Annotation file before test:"
+grep '"cat": "Cat"' "$FILE" || echo "cat annotation not found (possibly already commented)"
+
+# -------------------------------
+# First run (annotation present)
+# -------------------------------
+echo "Running with cat annotation enabled..."
+$PASH_TOP/pa.sh -c "cat /usr/share/dict/words | grep '^un' | wc -l" \
+    --local-annotations-dir "$PASH_TOP/../annotations/" \
+    --assert_all_regions_parallelizable
+first_run_status=$?
+echo "First run exit code: $first_run_status"
+
+if [[ "$first_run_status" -ne 0 ]]; then
+    echo " Error: First run failed when annotation was present"
+    exit 1
+fi
+
+# -----------------------------------
+# Comment out "cat" annotation
+# -----------------------------------
+echo "Commenting out cat annotation in: $FILE"
 sed -i 's/^\(\s*\)"cat": "Cat",/\1# "cat": "Cat",/' "$FILE"
-echo "Successfully commented out the 'cat' entry in $FILE"
 
-# After removing the annotation for cat, the code should not be optimized, and no FIFOs will be made
-$PASH_TOP/pa.sh -c "cat /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words /usr/share/dict/words | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' | wc -l" -d 2 --local-annotations-dir ~/annotations/ --log_file "$PASH_TOP/pash.log"
+echo "Annotation file after commenting out:"
+grep '"cat": "Cat"' "$FILE" || echo "cat annotation is now commented"
 
-if grep -Eq "rm_pash_fifos|mkfifo_pash_fifos" "$PASH_TOP/pash.log"; then
-    echo "Error: The line was found!"
+# ------------------------------------------
+# Second run (annotation removed)
+# ------------------------------------------
+echo "Running with cat annotation removed..."
+$PASH_TOP/pa.sh -c "cat /usr/share/dict/words | grep '^un' | wc -l" \
+    --local-annotations-dir "$PASH_TOP/../annotations/" \
+    --assert_all_regions_parallelizable
+second_run_status=$?
+echo "Second run exit code: $second_run_status"
+
+if [[ "$second_run_status" -eq 0 ]]; then
+    echo "Error: Second run should have failed (no 'cat' annotation) but it succeeded"
+    
+    # Restore annotation before exiting
+    sed -i 's/^\(\s*\)# "cat": "Cat",/\1"cat": "Cat",/' "$FILE"
+    echo "Annotation restored after failure."
+    
     exit 1
-else
-    echo "Success: The line is NOT in the output when the cat annotations are not available"
 fi
 
-# Restore the original "cat" annotation
+# --------------------------------
+# Restore original cat annotation
+# --------------------------------
 sed -i 's/^\(\s*\)# "cat": "Cat",/\1"cat": "Cat",/' "$FILE"
+
+echo "Annotation file after restoration:"
+grep '"cat": "Cat"' "$FILE" || {
+    echo "Error: Failed to restore annotation!"
+    exit 1
+}
+
+echo "Test complete and cat annotation restored."
+
+# Success
+exit 0

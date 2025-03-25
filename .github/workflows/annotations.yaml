@@ -50,10 +50,7 @@ jobs:
           $PASH_TOP/scripts/setup-annotations.sh
           $PASH_TOP/scripts/ci/test_local_annotations.sh
 
-          mkdir -p ~/artifact
-          echo "$results" | tee ~/artifact/custom_results.log
+          mkdir -p artifact
+          echo "$results" | tee artifact/custom_results.log
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: custom-test-artifact
-          path: ~/artifact
+
