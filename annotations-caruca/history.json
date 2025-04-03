@@ -1,0 +1,12 @@
+{
+    "command": "history",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "side-effectful",
+            "inputs": [],
+            "outputs": ["stdout"]
+        }
+    ]
+}

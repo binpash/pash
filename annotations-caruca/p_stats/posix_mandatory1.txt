@@ -1,0 +1,57 @@
+mkfifo           ?*         Makes named pipes (FIFOs) [nv: might affect DAG]
+tee              ?*         Sends output to multiple files [nv: affects DAG]
+chgrp            DFS        Changes file group ownership
+chmod            DFS        Changes the permissions of a file or directory
+chown            DFS        Changes file ownership
+cp               DFS        Copies a file or directory
+csplit           DFS        Splits a file into sections determined by context lines
+dd               DFS        Copies and converts a file
+ln               DFS        Creates a link to a file
+mkdir            DFS        Creates a directory
+mv               DFS        Moves files or rename files
+rm               DFS        Removes (deletes) files, directories, device nodes and symbolic links
+rmdir            DFS        Removes empty directories
+touch            DFS        Changes file timestamps
+split            DFS*       Splits a file into pieces [nv: splitting is pure]
+false     Side-effectful    Does nothing, but exits unsuccessfully
+nice      Side-effectful    Modifies scheduling priority
+nohup     Side-effectful    Allows a command to continue running after logging out
+sleep     Side-effectful    Delays for a specified amount of time
+true      Side-effectful    Does nothing, but exits successfully
+stty            env         Changes and prints terminal line settings
+env             envr.       Displays and modifies environment variables
+date            info.       Prints or sets the system date and time
+df              info.       Shows disk free space on file systems
+du              info.       Shows disk usage on file systems
+id              info.       Prints real or effective UID and GID
+logname         info.       Print the user's login name
+ls              info.       Lists the files in a directory
+pwd             info.       Prints the current working directory
+tty             info.       Prints terminal name
+uname           info.       Prints system information
+who             info.       Prints a list of all users currently logged in
+cut         l-stateless     Removes sections from each line of files
+expand      l-stateless     Converts tabs to spaces
+fold        l-stateless     Wraps each input line to fit in specified width [nv: like map, from one to two lines]
+join        l-stateless     Joins lines of two files on a common field
+paste       l-stateless     Merges lines of files
+comm        l-stateless*    Compares two sorted files line by line
+cat             pure        Concatenates and prints files on the standard output
+cksum           pure        Checksums and count the bytes in a file
+head            pure        Outputs the first part of files [nv: if we have chunks and watermarks, then this is trivially parallelizable]
+pr              pure        Converts text files for printing
+sort            pure        sort lines of text files
+tail            pure        Outputs the last part of files
+tsort           pure        Performs a topological sort
+uniq            pure        Removes duplicate lines from a sorted file
+wc              pure        Prints the number of bytes, words, and lines in files
+basename     stateless      Removes the path prefix from a given pathname
+dirname      stateless      Strips non-directory suffix from file name
+echo         stateless      Displays a specified line of text
+expr         stateless      Evaluates expressions [nv: not shell, but math etc]
+pathchk      stateless      Checks whether file names are valid or portable
+printf       stateless      Formats and prints data
+test         stateless      Evaluates an expression
+tr           stateless      Translates or deletes characters
+unexpand     stateless      Converts spaces to tabs
+od           stateless*     Dumps files in octal and other formats [nv: but changes \n location]

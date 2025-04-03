@@ -1,0 +1,17 @@
+{
+    "command": "alt_bigrams_aux",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "parallelizable_pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "name": "alt_bigram_aux_reduce"
+            }
+        }
+    ],
+    "comment": "This is a custom command that is used in our evaluation."
+}

@@ -1,0 +1,13 @@
+{
+    "command": "sed",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "non-pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "comment": "Always stateless unless NUMBERd or NUMBERq is present. Maybe introduce REGEX? Need to introduce operator starts_with (if starts with s then is stateless). For now it is OK since it is overriden in command-categories.py"
+        }
+    ]
+}

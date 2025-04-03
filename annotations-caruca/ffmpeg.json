@@ -1,0 +1,13 @@
+{
+    "command": "ffmpeg",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"],
+            "options": ["stdin-hyphen"]
+        }
+    ]
+}
