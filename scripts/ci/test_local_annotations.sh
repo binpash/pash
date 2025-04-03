@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Set the annotation file path
+# Set the annotation file path, this assumes annotations is a sibling repository
 FILE="$PASH_TOP/../annotations/pash_annotations/annotation_generation/AnnotationGeneration.py"
 LOG_FILE="$PASH_TOP/pash.log"
 
@@ -32,6 +32,10 @@ fi
 # Comment out "cat" annotation
 # -----------------------------------
 echo "Commenting out cat annotation in: $FILE"
+
+##store original file for recovery later
+cp "$FILE" "AnnotationGenerationCopy.py"
+
 sed -i 's/^\(\s*\)"cat": "Cat",/\1# "cat": "Cat",/' "$FILE"
 
 echo "Annotation file after commenting out:"
@@ -60,7 +64,8 @@ fi
 # --------------------------------
 # Restore original cat annotation
 # --------------------------------
-sed -i 's/^\(\s*\)# "cat": "Cat",/\1"cat": "Cat",/' "$FILE"
+cp "AnnotationGenerationCopy.py" "$FILE"
+rm AnnotationGenerationCopy.py
 
 echo "Annotation file after restoration:"
 grep '"cat": "Cat"' "$FILE" || {

@@ -23,7 +23,7 @@ export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
-export local_annotations=0
+export pash_checking_local_annotations=0
 
 for item in "$@"
 do
@@ -36,10 +36,10 @@ do
         export pash_checking_debug_level=0
         export PASH_DEBUG_LEVEL=$item
     fi
-    if [ "$local_annotations" -eq 1 ]; then
+    if [ "$pash_checking_local_annotations" -eq 1 ]; then
         export ANNOTATIONS_PATH=$(realpath "$item")
         export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
-        export local_annotations=0
+        export pash_checking_local_annotations=0
     fi
 
     # We output time always 
@@ -95,7 +95,7 @@ do
 
     if [ "--local-annotations-dir" == "$item" ]; then
         
-        export local_annotations=1
+        export pash_checking_local_annotations=1
         #echo "✅ Using local annotations directory: $ANNOTATIONS_PATH"
     fi
 done

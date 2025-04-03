@@ -1,6 +1,6 @@
 # PaSh Setup and Execution Guide
 
-This guide walks you through **setting up and running PaSh**, including:
+This guide walks you through setting up and running PaSh **with local annotations**, including:
 - Installing dependencies
 - Running `setup-pash.sh` to install required tools
 - Exporting `PASH_TOP`

@@ -49,8 +49,10 @@ jobs:
 
           $PASH_TOP/scripts/setup-annotations.sh
           $PASH_TOP/scripts/ci/test_local_annotations.sh
-
+          test_exit_code=$?
           mkdir -p artifact
-          echo "$results" | tee artifact/custom_results.log
+          echo "$test_exit_code=$?" | tee artifact/custom_results.log
+
+          exit $test_exit_code
 
 
