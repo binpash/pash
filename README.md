@@ -83,4 +83,7 @@ series = {EuroSys '21}
 }
 ```
 
-Caruca Note: docker run -it -v "$(pwd)":/opt/pash pash:caruca bash
+Caruca Note:
+sudo docker run -it -d -v "$(pwd)":/opt/pash --name pash_caruca pash:caruca bash
+sudo docker exec -it pash_caruca bash
+
