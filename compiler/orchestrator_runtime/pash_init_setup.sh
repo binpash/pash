@@ -16,6 +16,7 @@ export pash_assert_compiler_success_flag=0
 export pash_assert_all_regions_parallelizable_flag=0
 export pash_checking_log_file=0
 export pash_checking_debug_level=0
+export pash_checking_local_annotations=0
 export pash_avoid_pash_runtime_completion_flag=0
 export pash_profile_driven_flag=1
 export pash_no_parallel_pipelines=0
@@ -23,7 +24,6 @@ export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
-export pash_checking_local_annotations=0
 
 for item in "$@"
 do

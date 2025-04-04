@@ -64,8 +64,7 @@ fi
 # --------------------------------
 # Restore original cat annotation
 # --------------------------------
-cp "AnnotationGenerationCopy.py" "$FILE"
-rm AnnotationGenerationCopy.py
+mv "AnnotationGenerationCopy.py" "$FILE"
 
 echo "Annotation file after restoration:"
 grep '"cat": "Cat"' "$FILE" || {
