@@ -16,6 +16,7 @@ export pash_assert_compiler_success_flag=0
 export pash_assert_all_regions_parallelizable_flag=0
 export pash_checking_log_file=0
 export pash_checking_debug_level=0
+export pash_checking_local_annotations=0
 export pash_avoid_pash_runtime_completion_flag=0
 export pash_profile_driven_flag=1
 export pash_no_parallel_pipelines=0
@@ -26,7 +27,6 @@ export distributed_exec=0
 
 for item in "$@"
 do
-
     if [ "$pash_checking_log_file" -eq 1 ]; then
         export pash_checking_log_file=0
         export PASH_REDIR="$item"
@@ -35,6 +35,11 @@ do
     if [ "$pash_checking_debug_level" -eq 1 ]; then
         export pash_checking_debug_level=0
         export PASH_DEBUG_LEVEL=$item
+    fi
+    if [ "$pash_checking_local_annotations" -eq 1 ]; then
+        export ANNOTATIONS_PATH=$(realpath "$item")
+        export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
+        export pash_checking_local_annotations=0
     fi
 
     # We output time always 
@@ -89,6 +94,12 @@ do
 
     if [ "--distributed_exec" == "$item" ]; then
         export distributed_exec=1
+    fi
+
+    if [ "--local-annotations-dir" == "$item" ]; then
+        
+        export pash_checking_local_annotations=1
+        #echo "✅ Using local annotations directory: $ANNOTATIONS_PATH"
     fi
 done
 
@@ -224,6 +235,7 @@ else
     {
         local daemon_pid=$1
         ## Only wait for daemon if it lives (it might be dead, rip)
+
         if ps -p "$daemon_pid" > /dev/null
         then
             ## Send and receive from daemon

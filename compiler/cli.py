@@ -216,6 +216,10 @@ class RunnerParser(BaseParser):
             action="store_true",
         )
         self.add_argument(
+            "--local-annotations-dir",
+            default=None,
+        )
+        self.add_argument(
             "--interactive",
             help="Executes the script using an interactive internal shell session (experimental)",
             action="store_true",
