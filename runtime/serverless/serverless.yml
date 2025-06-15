@@ -1,16 +1,16 @@
-org: yizhengx
-app: sls-pash
-service: pash
+org: yizhengxnv
+app: sls-pash-nv-acc
+service: pashlib
 
 provider:
   name: aws
   region: us-east-1
   runtime: python3.9
   memorySize: 1792
-  timeout: 120
+  timeout: 30
   stage: release
   layers:
-    - arn:aws:lambda:us-east-1:${env:AWS_ACCOUNT_ID}:layer:pashlib:20
+    - arn:aws:lambda:us-east-1:${env:AWS_ACCOUNT_ID}:layer:pashlib:3
   iamRoleStatements:
   - Effect: "Allow"
     Action:
@@ -37,6 +37,5 @@ functions:
     handler: lambda-function.lambda_handler
     environment:
       AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
-      AWS_QUEUE: ${env:AWS_QUEUE}
       AWS_BUCKET: ${env:AWS_BUCKET}
     maximumRetryAttempts: 0
