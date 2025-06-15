@@ -57,7 +57,7 @@ def from_ast_objects_to_shell(asts):
                     stdout_str = line.split()
                     # print(">> Original command:", line)
                     obj_key = stdout_str[-3].replace(">", "")
-                    s3_cmd = f"| python3 {os.path.join(config.PASH_TOP, 'runtime/serverless/aws/s3-put-object.py')} {obj_key} /dev/stdin"
+                    s3_cmd = f"| python3 {os.path.join(config.PASH_TOP, 'runtime/serverless/aws/s3-put-object.py')} {obj_key} /dev/stdin dummy"
                     new_cmd = line.replace(f">{obj_key}", s3_cmd)
                     # print(">> New command:", new_cmd)
                     shell_list.append(new_cmd)
