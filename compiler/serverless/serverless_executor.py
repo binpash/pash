@@ -137,11 +137,10 @@ class ServerlessManager:
         )
         self.concurrency_limit = 2000 # NOTE Changing this for leash invocation microbenchmark
         self.counter = ThreadSafeCounter(self.concurrency_limit)
-        self.ec2_enabled = True
+        self.ec2_enabled = False
         self.ec2_ip = "44.200.137.114" # "54.224.107.71" 
         self.ec2_port = 9999
-        self.recovery = True
-        # self.recovery = False
+        self.recovery = False
 
     def invoke_ec2(self, folder_ids, script_ids):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -200,7 +199,6 @@ class ServerlessManager:
             client_thread.start()
 
     def handler(self, request, conn):
-        # print(f"[Serverless Manager] Received request: {request}")
         args = request.split(':', 1)[1].strip()
         ir_filename, declared_functions_file = args.split()
         try:
