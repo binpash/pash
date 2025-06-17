@@ -15,9 +15,10 @@ pure_func() {
 }
 export -f pure_func
 
-
 for item in $(seq 1 $ENTRIES); do
-    cat ${IN}pcap10_f5-honeypot-release.pcap | pure_func > ${OUT}.pcap10_f5-honeypot-release.pcap.$item.out
+    for j in $(cat "$PASH_TOP/evaluation/benchmarks/log-analysis/heavy-pcap");do
+        cat ${IN}${j} | pure_func > ${OUT}${j}.${item}.stdout.log; 
+    done
 done
 
 echo 'done';
