@@ -1,0 +1,1 @@
+ENTRIES=16 IN=log-analysis/inputs/pcap_data_heavy/ OUT=log-analysis/outputs/heavy-pcap-pash-core4/ SERVERLESS_PASH=1 $PASH_TOP/pa.sh -w1 --parallel_pipelines scripts/heavy_pcaps.sh
