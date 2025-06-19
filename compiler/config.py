@@ -156,6 +156,10 @@ def add_common_arguments(parser):
                         help="Run multiple pipelines in parallel if they are safe to run",
                         action="store_true",
                         default=False)
+    parser.add_argument("--parallel_pipelines_limit",
+                        help="Maximum number of parallel independent pipelines",
+                        type=int,
+                        default=2)
     parser.add_argument("--r_split_batch_size",
                         type=int,
                         help="configure the batch size of r_split (default: 1MB)",

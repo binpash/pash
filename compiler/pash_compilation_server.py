@@ -282,6 +282,8 @@ class Scheduler:
         
         if not run_parallel:
             self.wait_for_all()
+        else:
+            self.wait_for_limit(config.pash_args.parallel_pipelines_limit)
             
         if compile_success:
             response = server_util.success_response(
@@ -317,6 +319,22 @@ class Scheduler:
     def get_next_id(self):
         self.next_id += 1
         return self.next_id
+
+    def wait_for_limit(self, limit):
+        log(
+            f"Waiting for less than {limit} processes to be running. There are",
+            self.running_procs,
+            "processes remaining.",
+        )
+        while self.running_procs >= limit:
+            input_cmd = self.get_input()
+            # must be exit command or something is wrong
+            if (input_cmd.startswith("Exit:")):
+                self.handle_exit(input_cmd)
+            else:
+                raise Exception(
+                    f"Command should be exit but it was {input_cmd}")
+        # self.unsafe_running = False
 
     def wait_for_all(self):
         log("Waiting for all processes to finish. There are", self.running_procs, "processes remaining.")
