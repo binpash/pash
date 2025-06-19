@@ -5,15 +5,15 @@ cat $IN |
   cut -c 88-92 |
   grep -v 999 |
   sort -rn |
-  head -n 1 > ${OUT}max.txt
+  head -n 1 > ${OUT}max.stdout.txt
 
 cat $IN |
   cut -c 88-92 |
   grep -v 999 |
   sort -n |
-  head -n 1 > ${OUT}min.txt
+  head -n 1 > ${OUT}min.stdout.txt
 
 cat $IN |
   cut -c 88-92 |
   grep -v 999 |
-  awk "{ total += \$1; count++ } END { print total/count }" > ${OUT}average.txt 
+  awk "{ total += \$1; count++ } END { print total/count }" > ${OUT}average.stdout.txt 

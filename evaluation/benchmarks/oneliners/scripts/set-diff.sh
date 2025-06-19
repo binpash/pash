@@ -4,9 +4,8 @@
 
 cd "$(dirname "$0")" || exit 1
 
-SIZE=500M
-
-IN="input/$SIZE.txt"
+# SIZE=500M
+# IN="input/$SIZE.txt"
 
 mkfifo s1 s2
 
@@ -19,6 +18,6 @@ cat $IN |
     cut -d ' ' -f 1 |
     sort > s2 &
 
-comm -23 s1 s2
+comm -23 s1 s2 > ${OUT}stdout.txt
 
 rm s1 s2
