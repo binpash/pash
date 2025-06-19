@@ -1,6 +1,7 @@
 import os
 import boto3
 import sys
+import collections
 from datetime import datetime
 
 logs_client = boto3.client('logs')
@@ -59,7 +60,6 @@ def save_then_delete_scripts(out_dir: str = "scripts"):
             continue
         for obj in page['Contents']:
             key = obj['Key']
-            print(f"Downloading {key}...")
             script_count += 1
             file_name = os.path.join(out_dir, key.split('/')[-2], key.split('/')[-1])
             file_dir = os.path.dirname(file_name)
@@ -68,7 +68,6 @@ def save_then_delete_scripts(out_dir: str = "scripts"):
             if not os.path.exists(file_name):
                 s3_client.download_file('yizheng', key, file_name)
             s3_client.delete_object(Bucket='yizheng', Key=key)
-            print(f"Deleted {key} from S3.")
     print(f"Total scripts saved: {script_count}")
 
 def analyze_logs(logs_folder: str):
@@ -81,23 +80,42 @@ def analyze_logs(logs_folder: str):
 
     total_billed_time = []
     count_billed_time = 0
+    err_log_files = []
+    err_type = collections.defaultdict(str)
 
     print(f">>> Analyzing logs in folder: {logs_folder}")
 
     for log_file in os.listdir(logs_folder):
+        err_found = False
         with open(os.path.join(logs_folder, log_file), 'r') as f:
             for line in f:
+                if "Err" in line or "err" in line or "panic" in line or "space" in line:
+                    err_found = True
+                if "Connection reset by peer" in line:
+                    err_type[log_file] = "Connection reset by peer"
+                if "already in use" in line:
+                    err_type[log_file] = "Port already in use"
+                if "Timeout" in line:
+                    err_type[log_file] = "Timeout"
+                if "OutOfMemory" in line:
+                    err_type[log_file] = "Out of memory"
                 if "Billed Duration:" in line:
                     try:
                         billed_time = int(line.split("Billed Duration:")[1].split(" ms")[0])
                         total_billed_time.append(billed_time)
                         count_billed_time += 1
-                        print(f"Billed time: {log_file}: {total_billed_time[-1]} ms")
+                        # print(f"Billed time: {log_file}: {total_billed_time[-1]} ms")
                     except ValueError:
                         print(f"Could not parse billed time from line: {line.strip()}")
+        if err_found:
+            err_log_files.append(log_file)
     print(f"Total billed time: {sum(total_billed_time)} ms")
     print(f"Total number of billed time entries: {count_billed_time}")
-    print(f"Cost estimate: ${sum(total_billed_time) / 1000 * 0.000000028849902:.6f}")
+    print(f"Cost estimate: ${sum(total_billed_time) * 0.000000028849902:.6f}")
+    print(f"Errors may be found in the following log files:")
+    for err_log_file in err_log_files:
+        print(f"  {err_type[err_log_file]}:")
+        print(f"    {logs_folder}/{err_log_file}")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -108,6 +126,7 @@ if __name__ == "__main__":
         os.mkdir(debug_dir_prefix)
     else:
         print(f"Debug directory already exists: `{debug_dir_prefix}`, skipping everything to avoid overwriting.")
+        analyze_logs(os.path.join(debug_dir_prefix, "logs"))
         sys.exit(0)
 
     logs_folder = os.path.join(debug_dir_prefix, "logs")
