@@ -16,8 +16,8 @@ export -f pure_func
 
 for input in $(cat "$PASH_TOP/evaluation/benchmarks/nlp/1000-books.txt" | head -n ${ENTRIES})
 do
-    cat $IN$input | grep 'the land of' | pure_func ${input} | sort -nr | sed 5q > ${OUT}${input}.0.out
-    cat $IN$input | grep 'And he said' | pure_func ${input} | sort -nr | sed 5q > ${OUT}${input}.1.out
+    cat $IN$input | grep 'the land of' | pure_func ${input} | sort -nr | sed 5q > ${OUT}${input}.0.stdout
+    cat $IN$input | grep 'And he said' | pure_func ${input} | sort -nr | sed 5q > ${OUT}${input}.1.stdout
 done
 
 echo 'done';
