@@ -83,7 +83,10 @@ series = {EuroSys '21}
 }
 ```
 
-Caruca Note:
+Caruca notes:
+sudo docker build -t pash:caruca -f scripts/docker/debian/Dockerfile .
+
 sudo docker run -it -d -v "$(pwd)":/opt/pash --name pash_caruca pash:caruca bash
 sudo docker exec -it pash_caruca bash
 
+Run all benchmarks: evaluation/osdi22-eval/run_all.sh
