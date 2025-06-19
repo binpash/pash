@@ -107,7 +107,7 @@ else
         trap inform_daemon_exit SIGTERM SIGINT EXIT
         export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
         source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
-        inform_daemon_exit
+        # inform_daemon_exit
     }
 
     ## Check if there are traps set, and if so do not execute in parallel
