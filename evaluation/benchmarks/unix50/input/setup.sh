@@ -23,26 +23,25 @@ setup_dataset() {
     # generate small inputs 
     if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
       if [ ! -d ./small ]; then                                                          
-        echo "Generating small-size inputs"                                             
-        # FIXME PR: Do we need all of them?                                             
-        curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/unix50.zip' > unix50.zip
-        unzip unix50.zip                                                                 
-        rm -f unix50.zip                                                                 
+         mkdir small                                                               
       fi                                                                                 
-      return 0
+      cd small || exit 1
     fi
-  
+
     for input in ${inputs[@]}
-    do
-	# To get idempotence
-	rm -f "${input}.txt"
-        #if [ ! -f "${input}.txt" ]; then
-        wget "http://ndr.md/data/unix50/${input}.txt"
-        "$PASH_TOP/scripts/append_nl_if_not.sh" "${input}.txt"
-        #fi
+    do 
+        rm -f "${input}.txt"
+        if [ ! -f "${input}.txt" ]; then
+          wget -q --no-check-certificate "https://atlas.cs.brown.edu/data/unix50/${input}.txt" 
+          "$PASH_TOP/scripts/append_nl_if_not.sh" "${input}.txt"
+        fi
     done
 
-    ## FIXME: Calling this script with --full is not idempotent.
+    if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
+      cd .. || exit 1
+    fi
+  
+    # FIXME: Calling this script with --full is not idempotent.
     if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
         for file in *.txt; do
             echo '' > temp.txt

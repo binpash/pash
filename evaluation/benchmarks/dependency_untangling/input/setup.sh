@@ -28,21 +28,21 @@ setup_dataset() {
   if [ "$1" == "--small" ]; then
       LOG_DATA_FILES=6
       WAV_DATA_FILES=20
-      NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/node_modules.zip
-      BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/bio.zip
-      JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/jpg.zip
+      NODE_MODULE_LINK=https://atlas.cs.brown.edu/data/small/node_modules.zip
+      BIO_DATA_LINK=https://atlas.cs.brown.edu/data/small/bio.zip
+      JPG_DATA_LINK=https://atlas.cs.brown.edu/data/small/jpg.zip
       PCAP_DATA_FILES=1
   else
       LOG_DATA_FILES=84
       WAV_DATA_FILES=120
-      NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/node_modules.zip
-      BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/bio.zip
-      JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/jpg.zip
+      NODE_MODULE_LINK=https://atlas.cs.brown.edu/data/full/node_modules.zip
+    #   BIO_DATA_LINK=https://atlas.cs.brown.edu/data/bio.zip
+      JPG_DATA_LINK=https://atlas.cs.brown.edu/data/full/jpg.zip
       PCAP_DATA_FILES=15
   fi
   
   if [ ! -d ${IN}/wav ]; then
-      wget http://pac-n4.csail.mit.edu:81/pash_data/wav.zip
+      wget https://atlas.cs.brown.edu/data/wav.zip
       unzip wav.zip && cd wav/
       for f in *.wav; do
           FILE=$(basename "$f")
@@ -65,7 +65,7 @@ setup_dataset() {
   # download the input for the nginx logs and populate the dataset
   if [ ! -d ${IN}/log_data ]; then
       cd $IN
-      wget http://pac-n4.csail.mit.edu:81/pash_data/nginx.zip
+      wget https://atlas.cs.brown.edu/data/nginx.zip
       unzip nginx.zip 
       rm nginx.zip
       # generating analysis logs
@@ -85,17 +85,17 @@ setup_dataset() {
           wget $BIO_DATA_LINK 
           unzip bio.zip
           cd bio
-          wget http://pac-n4.csail.mit.edu:81/pash_data/Gene_locs.txt
-          wget http://pac-n4.csail.mit.edu:81/pash_data/small/100G.txt
+          wget https://atlas.cs.brown.edu/data/Gene_locs.txt
+          wget https://atlas.cs.brown.edu/data/small/100G.txt
           cd ..
           rm bio.zip
       else
           mkdir ${IN}/bio                                                          
           cd ${IN}/bio                                                             
           # download the file containing the links for the dataset                 
-          wget http://pac-n4.csail.mit.edu:81/pash_data/100G.txt                   
+          wget https://atlas.cs.brown.edu/data/100G.txt                   
           # download the Genome loc file                                           
-          wget http://pac-n4.csail.mit.edu:81/pash_data/Gene_locs.txt              
+          wget https://atlas.cs.brown.edu/data/Gene_locs.txt              
           # start downloading the real dataset  
           IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/bio/100G.txt
           cat ${IN_NAME} |while read s_line;                                       
@@ -115,7 +115,7 @@ setup_dataset() {
   # download the initial pcaps to populate the whole dataset
   if [ ! -d ${IN}/pcap_data ]; then
       cd $IN
-      wget http://pac-n4.csail.mit.edu:81/pash_data/pcaps.zip
+      wget https://atlas.cs.brown.edu/data/pcaps.zip
       unzip pcaps.zip
       rm pcaps.zip
       mkdir ${IN}/pcap_data/
@@ -136,7 +136,7 @@ setup_dataset() {
       unzip node_modules.zip 
       rm node_modules.zip
       # download the specific mir version
-      wget http://pac-n4.csail.mit.edu:81/pash_data/mir-sa.zip
+      wget https://atlas.cs.brown.edu/data/mir-sa.zip
       unzip mir-sa.zip
       rm mir-sa.zip
       echo "Node modules generated"
@@ -145,7 +145,7 @@ setup_dataset() {
   # download the packages for the package building
   if [ ! -f ${IN}/packages ]; then
       cd $IN
-      wget http://pac-n4.csail.mit.edu:81/pash_data/packages
+      wget https://atlas.cs.brown.edu/data/packages
       if [ "$1" = "--small" ]; then
           head -n 20 packages > p
           mv p  packages

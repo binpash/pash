@@ -27,7 +27,7 @@ fi
 
 if ! dpkg -s "makedeb-makepkg" >/dev/null 2>&1 ; then
     cd ${IN}/deps/
-    wget http://pac-n4.csail.mit.edu:81/pash_data/makedeb.deb
+    wget https://atlas.cs.brown.edu/data/makedeb.deb
     sudo dpkg -i makedeb.deb
     echo 'Makedeb installed'
 fi

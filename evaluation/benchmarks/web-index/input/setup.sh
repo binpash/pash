@@ -17,24 +17,27 @@ setup_dataset() {
     wget $wiki_archive || eexit "cannot fetch wikipedia"
     7za x wikipedia-en-html.tar.7z
     tar -xvf wikipedia-en-html.tar
-    wget http://ndr.md/data/wikipedia/index.txt # || eexit "cannot fetch wiki indices"
+    # wget http://ndr.md/data/wikipedia/index.txt # || eexit "cannot fetch wiki indices"
     # It is actually OK if we don't have this index since we download the 500/1000 below
   fi
 
   if [ "$1" = "--small" ]; then
     # 500 entries
-    wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
-    unzip web-index.small.zip
-    mv small/500.txt .
-    rm -rf small web-index.small.zip
+    # wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
+    # unzip web-index.small.zip
+    # mv small/500.txt .
+    # rm -rf small web-index.small.zip
+
+    wget https://atlas.cs.brown.edu/data/wikipedia/input_small/index.txt -O 500.txt || eexit "cannot fetch small index"
   else
     # elif [ "$1" = "--full" ]; then
     # the default full 
     # 1000 entries
-    wget http://pac-n4.csail.mit.edu:81/pash_data/full/web-index.full.zip
-    unzip web-index.full.zip
-    mv full/1000.txt .
-    rm -rf full web-index.full.zip
+    # wget http://pac-n4.csail.mit.edu:81/pash_data/full/web-index.full.zip
+    # unzip web-index.full.zip
+    # mv full/1000.txt .
+    # rm -rf full web-index.full.zip
+    wget "https://atlas.cs.brown.edu/data/wikipedia/index1g.txt" -O 1000.txt || eexit "cannot fetch full index"
   fi
 }
 

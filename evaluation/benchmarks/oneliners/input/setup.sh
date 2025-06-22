@@ -16,17 +16,19 @@ fi
 setup_dataset() {
   if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
     if [ ! -d ./small ]; then
-      echo "Generating small-size inputs"
-      # FIXME PR: Do we need all of them?
-      curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/oneliners.zip' > oneliners.zip
-      unzip oneliners.zip
-      rm -f oneliners.zip
+    #   echo "Generating small-size inputs"
+    #   # FIXME PR: Do we need all of them?
+    #   curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/oneliners.zip' > oneliners.zip
+    #   unzip oneliners.zip
+    #   rm -f oneliners.zip
+      mkdir small
     fi
-    return 0
+    # return 0
+    cd small || exit 1
   fi
 
     if [ ! -f ./1M.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
+        curl -sf 'https://atlas-group.cs.brown.edu/data/dummy/1M.txt' > 1M.txt
         if [ $? -ne 0 ]; then
             echo 'cannot find 1M.txt -- please contact the developers of pash'
             exit 1
@@ -50,18 +52,9 @@ setup_dataset() {
         "$PASH_TOP/scripts/append_nl_if_not.sh" ./100M.txt
     fi
 
-    if [ ! -f ./1G.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/1G.txt' > 1G.txt
-        if [ $? -ne 0 ]; then
-            echo 'cannot find 1G.txt -- please contact the developers of pash'
-            exit 1
-        fi
-        "$PASH_TOP/scripts/append_nl_if_not.sh" ./1G.txt
-    fi
-
   # download wamerican-insane dictionary and sort according to machine
   if [ ! -f ./dict.txt ]; then
-      curl -sf 'http://ndr.md/data/dummy/dict.txt' | sort > dict.txt
+      curl -sf 'https://atlas-group.cs.brown.edu/data/dummy/dict.txt' | sort > dict.txt
       if [ $? -ne 0 ]; then
           echo 'cannot find dict.txt -- please contact the developers of pash'
           exit 1
@@ -70,7 +63,7 @@ setup_dataset() {
     fi
 
     if [ ! -f ./all_cmds.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt
+        curl -sf 'https://atlas-group.cs.brown.edu/data/dummy/all_cmds.txt' > all_cmds.txt
         if [ $? -ne 0 ]; then
             # This should be OK for tests, no need for abort
             ls /usr/bin/* > all_cmds.txt
@@ -78,10 +71,22 @@ setup_dataset() {
         "$PASH_TOP/scripts/append_nl_if_not.sh" ./all_cmds.txt
     fi
 
+    if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
+        cd .. || exit 1
+    fi
 
     if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
         echo "Generating full-size inputs"
         # FIXME PR: Do we need all of them?
+
+        if [ ! -f ./1G.txt ]; then
+            curl -sf 'https://atlas-group.cs.brown.edu/data/dummy/1G.txt' > 1G.txt
+            if [ $? -ne 0 ]; then
+                echo 'cannot find 1G.txt -- please contact the developers of pash'
+                exit 1
+            fi
+            "$PASH_TOP/scripts/append_nl_if_not.sh" ./1G.txt
+        fi
 
         if [ ! -f ./3G.txt ]; then
             touch 3G.txt
@@ -91,13 +96,14 @@ setup_dataset() {
             "$PASH_TOP/scripts/append_nl_if_not.sh" ./3G.txt
         fi
 
-        if [ ! -f ./10G.txt ]; then
-            touch 10G.txt
-            for (( i = 0; i < 10; i++ )); do
-                cat 1G.txt >> 10G.txt
-            done
-            "$PASH_TOP/scripts/append_nl_if_not.sh" ./10G.txt
-        fi
+        # if [ ! -f ./10G.txt ]; then
+        #     touch 10G.txt
+        #     for (( i = 0; i < 10; i++ )); do
+        #         cat 1G.txt >> 10G.txt
+        #     done
+        #     "$PASH_TOP/scripts/append_nl_if_not.sh" ./10G.txt
+        # fi
+        
 
         if [ ! -f ./all_cmdsx100.txt ]; then
             touch all_cmdsx100.txt

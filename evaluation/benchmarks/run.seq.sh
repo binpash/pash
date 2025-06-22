@@ -43,6 +43,21 @@ oneliners(){
       "shortest-scripts;all_cmdsx100.txt"
   )
 
+  if [ "$1" = "--small" ]; then
+    scripts_inputs=(
+      "nfa-regex;1M.txt"
+      "sort;1M.txt"
+      "top-n;1M.txt"
+      "wf;1M.txt"
+      "spell;1M.txt"
+      "diff;1M.txt"
+      "bi-grams;1M.txt"
+      "set-diff;1M.txt"
+      "sort-sort;1M.txt"
+      "shortest-scripts;all_cmds.txt"
+    )
+  fi
+
   touch "$seq_times_file"
   echo executing one-liners $(date) | tee -a "$seq_times_file"
   echo '' >> "$seq_times_file"

@@ -17,16 +17,16 @@ setup_dataset() {
   if [ ! -f ./in.csv ] && [ "$1" = "--full" ]; then
     # yesterday=$(date --date='1 days ago' +'%y-%m-%d')
     # curl https://www.balab.aueb.gr/~dds/oasa-$yesterday.bz2 |
-    curl -sf 'https://www.balab.aueb.gr/~dds/oasa-2021-01-08.bz2' | bzip2 -d > in.csv
+    curl --silent --insecure "https://atlas.cs.brown.edu/data/covid-mts/in_full.csv.gz" | gunzip > in.csv
     if [ $? -ne 0 ]; then
-      echo "oasa-2021-01-08.bz2 / bzip2 not available, contact the pash authors"
+      echo "Fail to download input data, contact the pash authors"
       exit 1
     fi
   elif [ ! -f ./in_small.csv ] && [ "$1" = "--small" ]; then
     if [ ! -f ./in_small.csv ]; then                                                       
       echo "Generating small-size inputs"                                                  
       # FIXME PR: Do we need all of them?                                                  
-      curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/in_small.csv' > in_small.csv
+      curl --silent --insecure "https://atlas.cs.brown.edu/data/covid-mts/in_small.csv.gz" | gunzip > in_small.csv
     fi                                                                                     
   fi
 }

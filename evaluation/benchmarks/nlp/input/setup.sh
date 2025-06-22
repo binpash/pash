@@ -5,13 +5,21 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 [[ "$1" == "-c" ]] && { rm -rf genesis exodus pg; exit; }
 
 setup_dataset() {
+  if [ ! -f ./book_links.txt ]; then
+    wget -q -O book_links.txt "https://atlas-group.cs.brown.edu/data/gutenberg/books.txt"
+    if [ ! -f book_links.txt ]; then
+        echo "Failed to download book_links.txt"
+        exit 1
+    fi
+  fi
+
   if [ ! -f ./genesis ]; then
-      curl -sf https://www.gutenberg.org/cache/epub/8001/pg8001.txt > genesis
+      curl -sf https://atlas-group.cs.brown.edu/data/gutenberg/8/0/0/8001/8001.txt > genesis
       "$PASH_TOP/scripts/append_nl_if_not.sh" genesis
   fi 
 
   if [ ! -f ./exodus ]; then
-    curl -sf https://www.gutenberg.org/files/33420/33420-0.txt > exodus
+    curl -sf https://atlas-group.cs.brown.edu/data/gutenberg/3/3/4/2/33420/33420-0.txt > exodus
     "$PASH_TOP/scripts/append_nl_if_not.sh" exodus
   fi
 
@@ -19,22 +27,20 @@ setup_dataset() {
     mkdir pg
     cd pg
   if [[ "$1" == "--full" ]]; then
-    echo 'N.b.: download/extraction will take about 10min'
-    wget ndr.md/data/pg.tar.xz
-    if [ $? -ne 0 ]; then
-		cat <<-'EOF' | sed 's/^ *//'
-		Downloading input dataset failed, thus need to manually rsync all books from  project gutenberg:
-		rsync -av --del --prune-empty-dirs --include='*.txt' --include='*/' --exclude='*' ftp@ftp.ibiblio.org::gutenberg .
-		please contact the pash developers pash-devs@googlegroups.com
-		EOF
-    exit 1
-    fi
-    cat pg.tar.xz | tar -xJ
+    cat ../book_links.txt | while IFS= read -r line
+    do
+        full_url="https://atlas-group.cs.brown.edu/data/gutenberg/${line}"
+        echo "Downloading $full_url"
+        wget -q "$full_url"
+    done
   else
-    wget http://pac-n4.csail.mit.edu:81/pash_data/nlp.zip
-    unzip nlp.zip
-    mv data/* .
-    rm nlp.zip data -rf
+    book_count=40
+    head -n $book_count ../book_links.txt | while IFS= read -r line
+    do
+        full_url="https://atlas-group.cs.brown.edu/data/gutenberg/${line}"
+        echo "Downloading $full_url"
+        wget -q "$full_url"
+    done
   fi
     for f in *.txt; do
       "$PASH_TOP/scripts/append_nl_if_not.sh" $f
