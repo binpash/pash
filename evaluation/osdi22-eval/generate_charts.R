@@ -31,7 +31,7 @@ bars <-
   scale_fill_discrete(labels = c('PaSh JIT', 'PaSh AOT')) +
   theme(axis.text.x = element_text(angle = 45, hjust=1),
         text = element_text(family='Times'),
-        legend.position = c(0.9, 0.81),
+        legend.position = c(0.5, 0.81),
         legend.title = element_blank()) + 
       guides(fill = guide_legend(reverse = FALSE))
 p <- grid.arrange(boxes, bars, nrow=1, ncol=2)
@@ -57,7 +57,7 @@ bars <-
   scale_fill_discrete(labels = c('PaSh JIT', 'PaSh JIT no_prof', 'PaSh JIT no_prof no_du')) +
   theme(axis.text.x = element_text(angle = 45, hjust=1),
         text = text,
-        legend.position = c(0.79, 0.80),
+        legend.position = c(0.52, 0.80),
         legend.title = element_blank())
 p <- grid.arrange(boxes, bars, nrow=1, ncol=2, widths = c(1,4))
 ggsave("figure6.pdf", p, width=8, height=4)
@@ -95,7 +95,7 @@ bars <-
   labs(y = "", x = "", fill="") +
   theme(axis.text.x = element_text(angle = 45, hjust=1),
         text = text,
-        legend.position = c(0.27, 0.82),
+        legend.position = c(0.27, 0.5),
         legend.title = element_blank())
 p <- grid.arrange(boxes, bars, nrow=1, ncol=2)
 ggsave("figure7.pdf", p, width=8, height=4)
