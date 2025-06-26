@@ -16,11 +16,11 @@ boxes <-
          aes(x=factor(suite, level=box_order), y=as.double(speedup), fill=factor(rev(shell)))) +
   geom_boxplot() + #geom(aes(color=factor(shell))) +
   geom_hline(yintercept = 1) +
-  scale_y_log10() + 
+  # scale_y_log10() + 
   theme(axis.text.x = element_text(angle = 45, hjust=1),
         text = element_text(family='Times'),
         legend.position = 'none') +
-  labs(y = "Speedup vs. bash (log on left)", x = "", color = "Shell")
+  labs(y = "Speedup vs. bash", x = "", color = "Shell")
 bar_order <- c('AvgTemp', 'WebIndex', 'MediaConv1', 'MediaConv2', 'ProgInf', 'LogAnalysis1', 'LogAnalysis2', 'Genomics', 'AurPkg', 'FileEnc1', 'FileEnc2')
 bars <- 
   ggplot(bench[bench$shell %in% c('pash_aot', 'pash_jit') & bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex'),],

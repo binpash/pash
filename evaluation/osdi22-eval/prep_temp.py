@@ -26,8 +26,7 @@ while True:
     rest = ":".join(temp[1:])
     perf = re_matcher.findall(rest)[0]
     # perf = re.findall('[0-9]+\.[0-9]+\n', rest)[0]
-    # print("Perf:", perf)
-    rest = rest.split(perf)[1]
+    rest = f"{perf}".join(rest.split(perf)[1:])
     # print(rest)
     print(f'{bench}:\t{perf.rstrip()}')
     
