@@ -5,7 +5,7 @@
 
 IN=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/
 OUT=$PASH_TOP/evaluation/benchmarks/dependency_untangling/output/
-IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/100G.txt
+IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/input.txt
 
 if [ "$1" == "-c" ]; then
     rm -rf ${IN}/jpg
@@ -36,7 +36,6 @@ setup_dataset() {
       LOG_DATA_FILES=84
       WAV_DATA_FILES=120
       NODE_MODULE_LINK=https://atlas.cs.brown.edu/data/full/node_modules.zip
-    #   BIO_DATA_LINK=https://atlas.cs.brown.edu/data/bio.zip
       JPG_DATA_LINK=https://atlas.cs.brown.edu/data/full/jpg.zip
       PCAP_DATA_FILES=15
   fi
@@ -85,27 +84,29 @@ setup_dataset() {
           wget $BIO_DATA_LINK 
           unzip bio.zip
           cd bio
+          cp ${IN}/bio_small_input.txt input.txt
           wget https://atlas.cs.brown.edu/data/Gene_locs.txt
-          wget https://atlas.cs.brown.edu/data/small/100G.txt
           cd ..
           rm bio.zip
       else
           mkdir ${IN}/bio                                                          
           cd ${IN}/bio                                                             
-          # download the file containing the links for the dataset                 
-          wget https://atlas.cs.brown.edu/data/100G.txt                   
-          # download the Genome loc file                                           
+          # download the Genome loc file                      
+          cp ${IN}/bio_input.txt input.txt                     
           wget https://atlas.cs.brown.edu/data/Gene_locs.txt              
           # start downloading the real dataset  
-          IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/bio/100G.txt
+          IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/bio/input.txt
           cat ${IN_NAME} |while read s_line;                                       
           do                                                                       
             echo ${IN_NAME}                                                      
             sample=$(echo $s_line |cut -d " " -f 2);                             
             if [[ ! -f $sample ]]; then                                          
-                pop=$(echo $s_line |cut -f 1 -d " ");                            
-                link=$(echo $s_line |cut -f 3 -d " ");                           
-                wget -O "$sample".bam  "$link"; ##this part can be adjusted maybe
+                link="https://atlas.cs.brown.edu/data/bio/large/$sample.bam"
+                if wget -O "$sample".bam.tmp $link; then ##this part can be adjusted maybe
+                    mv $sample.bam.tmp $sample.bam
+                else
+                    rm -rf $sample.bam.tmp
+                fi
             fi                                                                   
           done;    
       fi                                                                           

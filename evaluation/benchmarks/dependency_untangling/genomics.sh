@@ -5,7 +5,7 @@ IN=${IN:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input}
 SAMTOOLS_BIN=${IN}/deps/samtools-1.7/samtools
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/output/bio}
 LOGS=${OUT}/logs
-IN_NAME=${IN}/bio/100G.txt
+IN_NAME=${IN}/bio/input.txt
 GENE_LOCS=${IN}/bio/Gene_locs.txt
 mkdir -p ${LOGS}
 run_tests() {
