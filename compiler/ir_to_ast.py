@@ -106,7 +106,7 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file) -> "list[AstNode]
     asts = []
     if (clean_up_graph):
         ## TODO: Wait for all output nodes not just one
-        pids = [[standard_var_ast('!')]]
+        pids = [[standard_var_ast('pids_to_kill')]]
         clean_up_path_script = os.path.join(config.PASH_TOP, config.config['runtime']['clean_up_graph_binary'])
         if config.pash_args.serverless_exec:
             pids = [[standard_var_ast('pids_to_kill')]]
