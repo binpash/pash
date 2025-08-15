@@ -18,6 +18,7 @@ from ir import IR
 import config
 import queue
 import multiprocessing
+import subprocess
 
 AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
 QUEUE=os.environ.get("AWS_QUEUE")
@@ -137,7 +138,7 @@ class ServerlessManager:
         )
         self.concurrency_limit = 2000 # NOTE Changing this for leash invocation microbenchmark
         self.counter = ThreadSafeCounter(self.concurrency_limit)
-        self.ec2_enabled = False
+        self.ec2_enabled = True
         self.ec2_ip = "44.200.137.114" # "54.224.107.71" 
         self.ec2_port = 9999
         self.recovery = False
@@ -154,6 +155,17 @@ class ServerlessManager:
             self.counter.decrement()
         except Exception as e:
             log(f"EC2 failed {folder_ids} && {folder_ids}: {e}")
+    
+    def run_local(self, script_id):
+        script_path = os.path.join(config.PASH_TMP_PREFIX, script_id)  
+        process = subprocess.run(
+            ["/bin/bash", script_path],
+            cwd=config.PASH_TOP
+        )
+        if process.returncode != 0:
+            log(f"[Serverless Manager] Local execution failed for script {script_id}")
+        self.counter.decrement()
+        return
 
     def invoke_lambda(self, folder_ids, script_ids):
         # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
@@ -248,7 +260,9 @@ class ServerlessManager:
                 if script_id == main_graph_script_id:
                     continue
                 if self.ec2_enabled and script_id in ec2_set:
-                    invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
+                    # invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
+                    print(">> Running script locally:", script_id)
+                    invocation_thread = threading.Thread(target=self.run_local, args=(script_id,))
                     invocation_thread.start()
                 else:
                     invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
