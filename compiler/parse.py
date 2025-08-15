@@ -43,24 +43,22 @@ def from_ast_objects_to_shell(asts):
                 # Original one
                 shell_list.append(ast.pretty())
             else:
-                # Cut-corner for cat and output redirection
+                # Shortcut for cat and output redirection
                 line = ast.pretty()
-                if "cat" in line:
+                if "cat" in line and "inputs" in line:
                     cat_list = line.split()
-                    # print(">> Original command:", line)
                     obj_key = cat_list[2]
                     s3_cmd = f"python3 {os.path.join(config.PASH_TOP, 'runtime/serverless/aws/s3-get-object.py')} {cat_list[2]} /dev/stdout"
                     new_cmd = line.replace(f"cat {obj_key}", s3_cmd)
-                    # print(">> New command:", new_cmd)
                     shell_list.append(new_cmd)
                 elif "stdout" in line:
                     stdout_str = line.split()
-                    # print(">> Original command:", line)
                     obj_key = stdout_str[-3].replace(">", "")
                     s3_cmd = f"| python3 {os.path.join(config.PASH_TOP, 'runtime/serverless/aws/s3-put-object.py')} {obj_key} /dev/stdin dummy"
                     new_cmd = line.replace(f">{obj_key}", s3_cmd)
-                    # print(">> New command:", new_cmd)
                     shell_list.append(new_cmd)
+                elif "auto-split" in line:
+                    shell_list.append(line.replace("runtime", config.PASH_TOP + "/runtime"))
                 else:
                     shell_list.append(line)
     return "\n".join(shell_list) + "\n"
