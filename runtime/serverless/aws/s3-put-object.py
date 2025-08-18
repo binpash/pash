@@ -6,7 +6,7 @@ import time
 
 AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
 BUCKET=os.environ.get("AWS_BUCKET")
-object_key, infile, _ = sys.argv[1:]
+object_key, infile = sys.argv[1:][:2]
 DEBUG=False
 
 if object_key == "/dev/null":
