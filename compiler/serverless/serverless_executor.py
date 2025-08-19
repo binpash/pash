@@ -139,7 +139,7 @@ class ServerlessManager:
         self.concurrency_limit = 2000 # NOTE Changing this for leash invocation microbenchmark
         self.counter = ThreadSafeCounter(self.concurrency_limit)
         self.ec2_enabled = True
-        self.ec2_ip = "44.200.137.114" # "54.224.107.71" 
+        self.ec2_ip = "54.242.68.18" # "54.224.107.71" 
         self.ec2_port = 9999
         self.recovery = False
 
@@ -263,7 +263,7 @@ class ServerlessManager:
                     # invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
                     print(">> Running script locally:", script_id)
                     invocation_thread = threading.Thread(target=self.run_local, args=(script_id,))
-                    invocation_thread.start()
+                    # invocation_thread.start()
                 else:
                     invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
                     invocation_thread.start()
