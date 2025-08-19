@@ -261,9 +261,8 @@ class ServerlessManager:
                     continue
                 if self.ec2_enabled and script_id in ec2_set:
                     # invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
-                    print(">> Running script locally:", script_id)
                     invocation_thread = threading.Thread(target=self.run_local, args=(script_id,))
-                    # invocation_thread.start()
+                    invocation_thread.start()
                 else:
                     invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
                     invocation_thread.start()
