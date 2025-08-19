@@ -43,14 +43,14 @@ pip_install() {
     pip install boto3
 }
 
-install_docker
-setup_stun_lib
+# install_docker
+# setup_stun_lib
 setup_pash
 pip_install
-export AWS_ACCOUNT_ID="192165654483"
-export AWS_QUEUE="queue"
-export AWS_BUCKET="yizhengx"
-export AWS_DEFAULT_REGION=us-east-1
-export AWS_ACCESS_KEY_ID=""
-export AWS_SECRET_ACCESS_KEY=""
-export AWS_SESSION_TOKEN=""
+# export AWS_ACCOUNT_ID="192165654483"
+# export AWS_QUEUE="queue"
+# export AWS_BUCKET="yizhengx"
+# export AWS_DEFAULT_REGION=us-east-1
+# export AWS_ACCESS_KEY_ID=""
+# export AWS_SECRET_ACCESS_KEY=""
+# export AWS_SESSION_TOKEN=""

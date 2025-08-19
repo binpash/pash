@@ -44,7 +44,7 @@ def save_then_delete_log_streams(out_dir: str = "logs"):
                             file_name += f"_script_id_{script_id}"
             os.rename(f"{out_dir}/temp.log", f"{out_dir}/{file_name}.log")
             logs_client.delete_log_stream(logGroupName="/aws/lambda/lambda", logStreamName=log_stream["logStreamName"])
-    print(f"Total log streams saved: {log_stream_count}")
+    print(f"[Analysis] Total log streams saved: {log_stream_count}")
 
 def save_then_delete_scripts(out_dir: str = "scripts"):
     """
@@ -68,14 +68,14 @@ def save_then_delete_scripts(out_dir: str = "scripts"):
             if not os.path.exists(file_name):
                 s3_client.download_file('yizheng', key, file_name)
             s3_client.delete_object(Bucket='yizheng', Key=key)
-    print(f"Total scripts saved: {script_count}")
+    print(f"[Analysis] Total shell scripts saved: {script_count}")
 
 def analyze_logs(logs_folder: str):
     """
     Analyzes the logs in the specified folder and prints the summary.
     """
     if not os.path.exists(logs_folder):
-        print(f"Logs folder does not exist: {logs_folder}")
+        print(f"[Analysis] Logs folder does not exist: {logs_folder}")
         return
 
     total_billed_time = []
@@ -83,7 +83,7 @@ def analyze_logs(logs_folder: str):
     err_log_files = []
     err_type = collections.defaultdict(str)
 
-    print(f">>> Analyzing logs in folder: {logs_folder}")
+    print(f"[Analysis] Analyzing logs in folder: {logs_folder}")
 
     for log_file in os.listdir(logs_folder):
         err_found = False
@@ -106,13 +106,13 @@ def analyze_logs(logs_folder: str):
                         count_billed_time += 1
                         # print(f"Billed time: {log_file}: {total_billed_time[-1]} ms")
                     except ValueError:
-                        print(f"Could not parse billed time from line: {line.strip()}")
+                        print(f"[Analysis] Could not parse billed time from line: {line.strip()}")
         if err_found:
             err_log_files.append(log_file)
-    print(f"Total billed time: {sum(total_billed_time)} ms")
-    print(f"Total number of billed time entries: {count_billed_time}")
-    print(f"Cost estimate: ${sum(total_billed_time) * 0.000000028849902:.6f}")
-    print(f"Errors may be found in the following log files:")
+    print(f"[Analysis] Total billed time: {sum(total_billed_time)} ms")
+    print(f"[Analysis] Total number of billed time entries: {count_billed_time}")
+    print(f"[Analysis] Cost estimate: ${sum(total_billed_time) * 0.000000028849902:.6f}")
+    print(f"[Analysis] Errors may be found in the following log files:")
     for err_log_file in err_log_files:
         print(f"  {err_type[err_log_file]}:")
         print(f"    {logs_folder}/{err_log_file}")
@@ -123,9 +123,9 @@ if __name__ == "__main__":
     else:
         debug_dir_prefix = "debug"
     if not os.path.exists(debug_dir_prefix):
-        os.mkdir(debug_dir_prefix)
+        os.makedirs(debug_dir_prefix, exist_ok=True)
     else:
-        print(f"Debug directory already exists: `{debug_dir_prefix}`, skipping everything to avoid overwriting.")
+        print(f"[Analysis] Debug directory already exists: `{debug_dir_prefix}`, skipping everything to avoid overwriting.")
         analyze_logs(os.path.join(debug_dir_prefix, "logs"))
         sys.exit(0)
 
