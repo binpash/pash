@@ -141,7 +141,7 @@ class SocketManager:
 
         ## TODO: Check if we need to configure the backlog
         self.sock.listen()
-        log("SocketManager: Listenting on socket")
+        log("SocketManager: Listening on socket")
 
         ## Connection stack
         self.connections = []
