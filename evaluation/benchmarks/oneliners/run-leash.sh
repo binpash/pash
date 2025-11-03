@@ -29,5 +29,3 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     fi
     python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir"
 done
-
-
