@@ -22,8 +22,8 @@ SCRIPTS_INPUTS=(
     # "19.sh:8_20G.txt"
     # "21.sh:8_5G.txt"
     # "23.sh:9.1_20G.txt"
-    # "24.sh:9.2_20G.txt"
-    # "25.sh:9.3_20G.txt"
+    "24.sh:9.2_20G.txt"
+    "25.sh:9.3_20G.txt"
     # "26.sh:9.4_20G.txt"
     # "28.sh:9.6_20G.txt"
     # "29.sh:9.7_20G.txt"
@@ -33,11 +33,10 @@ SCRIPTS_INPUTS=(
     # "33.sh:10_20G.txt"
     # "35.sh:11_20G.txt"
     # "34.sh:10_20G.txt"
-    "36.sh:11_20G.txt"
+    # "36.sh:11_20G.txt"
   )
 
 mkdir -p outputs
-# for script in nfa-regex-1.sh nfa-regex-2.sh nfa-regex-3.sh nfa-regex-1-sort.sh nfa-regex-2-sort.sh nfa-regex-3-sort.sh nfa-regex-sort.sh
 for script_input in "${SCRIPTS_INPUTS[@]}"
 do
   IFS=':' read -r script INPUT <<< "$script_input"

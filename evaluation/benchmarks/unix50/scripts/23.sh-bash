@@ -1,4 +1,6 @@
 #!/bin/bash
 
 # 9.1: extract the word PORT
-python3 aws/s3-get-object.py "$IN" /dev/stdout | tr ' ' '\n' | grep '[A-Z]' | tr '[a-z]' '\n' | grep '[A-Z]' | tr -d '\n' | cut -c 1-4 | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin
+IN=unix50/inputs/9.1_20G.txt
+OUT=unix50/outputs/23.sh:9.1_20G.txt:bash
+python3 $PASH_TOP/runtime/serverless/aws/s3-get-object.py "$IN" /dev/stdout | tr ' ' '\n' | grep '[A-Z]' | tr '[a-z]' '\n' | grep '[A-Z]' | tr -d '\n' | cut -c 1-4 | python3 $PASH_TOP/runtime/serverless/aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

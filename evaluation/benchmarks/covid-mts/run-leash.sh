@@ -3,14 +3,10 @@
 cd "$(dirname "$0")" || exit 1
 
 SCRIPT_INPUT_WIDTH=(
-    "sort.sh:1G.txt:16"
-    "sort-sort.sh:3G.txt:16"
-    "wf.sh:3G.txt:16"
-    "top-n.sh:3G.txt:16"
-    "set-diff.sh:3G.txt:16"
-    "bi-grams.sh:1G.txt:16"
-    "spell.sh:3G.txt:16"
-    "nfa-regex.sh:3G.txt:128"
+    "1.sh:in.csv:16"
+    "2.sh:in.csv:16"
+    "3.sh:in.csv:16"
+    "4.sh:in.csv:16"
 )
 
 for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
@@ -19,7 +15,7 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
     WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
     echo "Running $SCRIPT with input $INPUT and width $WIDTH"
-    time IN="oneliners/inputs/$INPUT" OUT="oneliners/outputs/$SCRIPT:$INPUT:$WIDTH:leash" DICT="oneliners/inputs/dict.txt" $PASH_TOP/pa.sh --serverless_exec -w"$WIDTH" scripts/"$SCRIPT"
+    time IN="covid-mts/inputs/$INPUT" OUT="covid-mts/outputs/$SCRIPT:$INPUT:$WIDTH:hybrid" $PASH_TOP/pa.sh --serverless_exec -w"$WIDTH" scripts/"$SCRIPT"
 
     sleep 20
     logs_dir="logs/$SCRIPT:$INPUT:$WIDTH"
@@ -29,5 +25,3 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     fi
     python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir"
 done
-
-

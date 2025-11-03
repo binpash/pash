@@ -1,0 +1,14 @@
+#!/bin/bash
+# Sort input
+
+
+IN=oneliners/inputs/3G.txt
+OUT=oneliners/outputs/top-n.sh:3G:bash
+
+
+python3 $PASH_TOP/runtime/serverless/aws/s3-get-object.py "$IN" /dev/stdout | sort -n | python3 $PASH_TOP/runtime/serverless/aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin
+
+# 3G.txt
+# real    4m25.778s
+# user    4m25.769s
+# sys     0m25.381s
