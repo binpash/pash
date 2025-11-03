@@ -28,11 +28,11 @@ fi
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # compile the list of the shared required packages
-pkgs="bc curl git graphviz python3 sudo wget"
+pkgs="bc curl git graphviz libtool python3 sudo wget"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)
-        pkgs="$pkgs bsdmainutils libffi-dev libtool locales locales-all netcat-openbsd pkg-config python3-pip python3-setuptools python3-testresources wamerican-insane"
+        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3-pip python3-setuptools python3-testresources wamerican-insane"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
@@ -52,7 +52,7 @@ case "$distro" in
         fi
         ;;
     debian*)
-        pkgs="$pkgs bsdmainutils libffi-dev libtool locales locales-all netcat-openbsd pkg-config procps python3-pip python3-setuptools python3-testresources wamerican-insane"
+        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config procps python3-pip python3-setuptools python3-testresources wamerican-insane"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
@@ -64,7 +64,7 @@ case "$distro" in
         $SUDO apt-get install -y $pkgs
         ;;
     fedora*)
-        pkgs="$pkgs autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel libtool make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel"
+        pkgs="$pkgs autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
@@ -73,7 +73,7 @@ case "$distro" in
         $SUDO dnf install -y $pkgs
         ;;
     arch*)
-        pkgs="$pkgs autoconf inetutils libffi libtool make openbsd-netcat pkg-config python-pip"
+        pkgs="$pkgs autoconf inetutils libffi make openbsd-netcat pkg-config python-pip"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
@@ -84,7 +84,7 @@ case "$distro" in
         yes | $SUDO pacman -S $pkgs
         ;;
     freebsd*)
-        pkgs="$pkgs autoconf gmake gsed libffi libtool py38-pip"
+        pkgs="$pkgs autoconf gmake gsed libffi  py38-pip"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
