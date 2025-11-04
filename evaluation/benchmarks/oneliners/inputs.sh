@@ -30,38 +30,39 @@ if [ ! -f inputs/1G.txt ]; then
 
     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1G.txt
 fi
-if [ ! -f inputs/3G.txt ]; then
 
-    touch inputs/3G.txt
+# if [ ! -f inputs/3G.txt ]; then
 
-    for i in {1..3}; do
-        cat inputs/1G.txt >>inputs/3G.txt
-    done
+#     touch inputs/3G.txt
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/3G.txt
-fi
+#     for i in {1..3}; do
+#         cat inputs/1G.txt >>inputs/3G.txt
+#     done
 
-if [ ! -f inputs/5G.txt ]; then
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/3G.txt
+# fi
 
-    touch inputs/5G.txt
+# if [ ! -f inputs/5G.txt ]; then
 
-    for i in {1..5}; do
-        cat inputs/1G.txt >>inputs/5G.txt
-    done
+#     touch inputs/5G.txt
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/5G.txt
-fi
+#     for i in {1..5}; do
+#         cat inputs/1G.txt >>inputs/5G.txt
+#     done
 
-if [ ! -f inputs/10G.txt ]; then
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/5G.txt
+# fi
 
-    touch inputs/10G.txt
+# if [ ! -f inputs/10G.txt ]; then
 
-    for i in {1..10}; do
-        cat inputs/1G.txt >>inputs/10G.txt
-    done
+#     touch inputs/10G.txt
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/10G.txt
-fi
+#     for i in {1..10}; do
+#         cat inputs/1G.txt >>inputs/10G.txt
+#     done
+
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/10G.txt
+# fi
 
 # # download wamerican-insane dictionary and sort according to machine
 # if [ ! -f inputs/dict.txt ]; then
