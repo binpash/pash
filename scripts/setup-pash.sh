@@ -23,6 +23,7 @@ mkdir -p $PYTHON_PKG_DIR
 echo "Installing python dependencies..."
 
 python3 -m pip install -r "$PASH_TOP/requirements.txt" --no-cache-dir --root $PYTHON_PKG_DIR --ignore-installed
+python3 -m pip install boto3
 
 ## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
 if [[ "$install_eval" == 1 ]];  then
@@ -59,6 +60,13 @@ esac
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
+
+# for leash
+sudo apt update
+sudo apt upgrade -y
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.9 -y
 
 # export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 echo " * * * "
