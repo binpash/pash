@@ -1,6 +1,4 @@
-org: yizhengxnv
-app: sls-pash-nv-acc
-service: pashlib
+service: pash
 
 provider:
   name: aws
@@ -30,6 +28,14 @@ provider:
       - "iam:PassRole"
     Resource:
       - "*"
+
+package:
+  include:
+    - runtime/** 
+    - aws/** 
+    - lambda-function.py
+  exclude:
+    - resumability/**
 
 functions:
   lambda:
