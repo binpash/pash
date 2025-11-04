@@ -3,14 +3,14 @@
 cd "$(dirname "$0")" || exit 1
 
 SCRIPT_INPUT_WIDTH=(
-    "sort.sh:1G.txt:16"
-    "sort-sort.sh:3G.txt:16"
-    "wf.sh:3G.txt:16"
-    "top-n.sh:3G.txt:16"
-    "set-diff.sh:3G.txt:16"
-    "bi-grams.sh:1G.txt:16"
-    "spell.sh:3G.txt:16"
-    "nfa-regex.sh:3G.txt:128"
+    "sort.sh:1G.txt:4"
+    # "sort-sort.sh:3G.txt:16"
+    # "wf.sh:3G.txt:16"
+    # "top-n.sh:3G.txt:16"
+    # "set-diff.sh:3G.txt:16"
+    # "bi-grams.sh:1G.txt:16"
+    # "spell.sh:3G.txt:16"
+    # "nfa-regex.sh:3G.txt:128"
 )
 
 for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
