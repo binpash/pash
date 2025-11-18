@@ -28,8 +28,8 @@ def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
 def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace, recover: bool = False):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
         read/write nodes for data movement and lambda invocation nodes to trigger
-        downstream processing. This function also produces graph that should run in
-        the original shell in which pash was executed. This graph contains
+        downstream processing (lambda). This function also produces graph that should run in
+        the original shell in which pash was executed. EC2 (client graph) This graph contains
         remote read/write nodes for stdin/stdout, named pipes, and files.
 
     Args:
@@ -96,8 +96,11 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     key_to_sender_receiver[str(communication_key)] = [subgraph, None]
                 else:
                     key_to_sender_receiver[str(communication_key)][1] = subgraph
-
-                arg = "send*"+str(communication_key)+"*0*1*"+config.PASH_TMP_PREFIX+str(ephemeral_edge)
+                
+                # sends lambda's output to ec2/lambda 
+                # not sure. have to figure that out
+                arg = "send*"+str(communication_key)+"*0*1*"+config.PASH_TMP_PREFIX+str(ephemeral_edge) 
+                
                 if subgraph not in subgraph_stun_lib_args:
                     subgraph_stun_lib_args[subgraph] = []
                 subgraph_stun_lib_args[subgraph].append(arg)
@@ -130,10 +133,15 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 subgraphs_not_having_upstream.discard(matching_subgraph)
             else:
                 # Add edge to main graph
+                #TODO. inspect subgraph obj to see before and after 
+                # defined in compiler/IR.py
+
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
             if (not matching_subgraph is main_graph):
                 # arg = recv_rdvkey_1_0_output-fifoname
+
+                # remote rcv in ec2/lambda from ec2/lambda
                 arg = "recv*"+str(communication_key)+"*1*0*"+config.PASH_TMP_PREFIX+str(new_edge)
                 if matching_subgraph not in subgraph_stun_lib_args:
                     subgraph_stun_lib_args[matching_subgraph] = []
