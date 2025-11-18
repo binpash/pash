@@ -55,7 +55,7 @@ def save_then_delete_scripts(out_dir: str = "scripts"):
         os.mkdir(out_dir)
     script_count = 0
     paginator = s3_client.get_paginator('list_objects_v2')
-    page_iterator = paginator.paginate(Bucket='yizheng', Prefix='sls-scripts/')
+    page_iterator = paginator.paginate(Bucket=os.environ['AWS_BUCKET'], Prefix='sls-scripts/')
     for page in page_iterator:
         if 'Contents' not in page:
             continue
@@ -67,8 +67,8 @@ def save_then_delete_scripts(out_dir: str = "scripts"):
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)
             if not os.path.exists(file_name):
-                s3_client.download_file('yizheng', key, file_name)
-            s3_client.delete_object(Bucket='yizheng', Key=key)
+                s3_client.download_file(os.environ['AWS_BUCKET'], key, file_name)
+            s3_client.delete_object(Bucket=os.environ['AWS_BUCKET'], Key=key)
     print(f"[Analysis] Total shell scripts saved: {script_count}")
 
 def analyze_logs(logs_folder: str):

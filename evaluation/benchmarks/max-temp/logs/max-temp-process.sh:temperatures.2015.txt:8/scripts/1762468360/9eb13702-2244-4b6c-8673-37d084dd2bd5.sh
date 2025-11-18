@@ -1,0 +1,186 @@
+export PATH=$PATH:runtime
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib
+export RUST_BACKTRACE=1
+version=$2
+mkdir -p /tmp/pash_ekD6Q5i/ 
+mkdir -p /tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/ 
+bigram_aux_map () 
+{ 
+    IN=$1;
+    OUT=$2;
+    AUX_HEAD=$3;
+    AUX_TAIL=$4;
+    s2=$(mktemp -u);
+    aux1=$(mktemp -u);
+    aux2=$(mktemp -u);
+    aux3=$(mktemp -u);
+    temp=$(mktemp -u);
+    mkfifo "$s2";
+    mkfifo "$aux1";
+    mkfifo "$aux2";
+    mkfifo "$aux3";
+    cat "$IN" > "$temp";
+    sed '$d' "$temp" > "$aux3" & cat "$temp" | head -n 1 > "$AUX_HEAD" & cat "$temp" | tail -n 1 > "$AUX_TAIL" & cat "$temp" | tail -n +2 | paste "$aux3" - > "$OUT" & wait;
+    rm "$temp";
+    rm "$s2";
+    rm "$aux1";
+    rm "$aux2";
+    rm "$aux3"
+}
+declare -fx bigram_aux_map
+bigram_aux_reduce () 
+{ 
+    IN1=$1;
+    AUX_HEAD1=$2;
+    AUX_TAIL1=$3;
+    IN2=$4;
+    AUX_HEAD2=$5;
+    AUX_TAIL2=$6;
+    OUT=$7;
+    AUX_HEAD_OUT=$8;
+    AUX_TAIL_OUT=$9;
+    temp=$(mktemp -u);
+    mkfifo "$temp";
+    cat "$AUX_HEAD1" > "$AUX_HEAD_OUT" & cat "$AUX_TAIL2" > "$AUX_TAIL_OUT" & paste "$AUX_TAIL1" "$AUX_HEAD2" > "$temp" & cat "$IN1" "$temp" "$IN2" > "$OUT" & wait;
+    rm "$temp"
+}
+declare -fx bigram_aux_reduce
+bigrams_aux () 
+{ 
+    s2=$(mktemp -u);
+    mkfifo "$s2";
+    tee "$s2" | tail -n +2 | paste "$s2" - | sed '$d';
+    rm "$s2"
+}
+declare -fx bigrams_aux
+inform_daemon_exit () 
+{ 
+    msg="Exit:${process_id}";
+    daemon_response=$(pash_communicate_daemon_just_send "$msg")
+}
+pash_communicate_daemon () 
+{ 
+    local message=$1;
+    pash_communicate_unix_socket "compilation-server" "${DAEMON_SOCKET}" "${message}"
+}
+declare -fx pash_communicate_daemon
+pash_communicate_daemon_just_send () 
+{ 
+    pash_communicate_daemon "$1"
+}
+declare -fx pash_communicate_daemon_just_send
+pash_communicate_unix_socket () 
+{ 
+    local server_name=$1;
+    local socket=$2;
+    local message=$3;
+    pash_redir_output echo "Sending msg to ${server_name}: $message";
+    daemon_response=$(echo "$message" | nc -U "${socket}");
+    pash_redir_output echo "Got response from ${server_name}: $daemon_response";
+    echo "$daemon_response"
+}
+declare -fx pash_communicate_unix_socket
+pash_redir_all_output () 
+{ 
+    :
+}
+declare -fx pash_redir_all_output
+pash_redir_all_output_always_execute () 
+{ 
+    "$@" > /dev/null 2>&1
+}
+declare -fx pash_redir_all_output_always_execute
+pash_redir_output () 
+{ 
+    :
+}
+declare -fx pash_redir_output
+pash_wait_until_daemon_listening () 
+{ 
+    pash_wait_until_unix_socket_listening "compilation-server" "${DAEMON_SOCKET}"
+}
+declare -fx pash_wait_until_daemon_listening
+pash_wait_until_unix_socket_listening () 
+{ 
+    local server_name=$1;
+    local socket=$2;
+    i=0;
+    maximum_retries=1000;
+    until echo "Daemon Start" 2> /dev/null | nc -U "$socket" > /dev/null 2>&1; do
+        sleep 0.01;
+        i=$((i+1));
+        if [ $i -eq $maximum_retries ]; then
+            echo "Error: Maximum retries: $maximum_retries exceeded when waiting for server: ${server_name} to bind to socket: ${socket}!" 1>&2;
+            echo "Exiting..." 1>&2;
+            exit 1;
+        fi;
+    done
+}
+declare -fx pash_wait_until_unix_socket_listening
+run_parallel () 
+{ 
+    trap inform_daemon_exit SIGTERM SIGINT EXIT;
+    export SCRIPT_TO_EXECUTE="$pash_script_to_execute";
+    source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
+}
+
+rm_pash_fifos() {
+{ rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo421" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo422" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo425" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo426" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo429" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo430" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo433" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo434" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo437" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo438" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo441" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo442" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo599" ; } 
+ { { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo603" ; } 
+ { rm -f "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo607" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+}
+mkfifo_pash_fifos() {
+{ mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo421" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo422" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo425" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo426" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo429" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo430" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo433" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo434" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo437" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo438" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo441" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo442" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo599" ; } 
+ { { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo603" ; } 
+ { mkfifo "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo607" ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; } ; }
+}
+rm_pash_fifos
+mkfifo_pash_fifos
+pids_to_kill=""
+{ bigram_aux_reduce "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo422" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo426" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo430" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo434" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo438" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo442" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo599" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo603" "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo607" & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ runtime/dgsh-tee -i "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo421" -o "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo422" -I -b 5M & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ runtime/dgsh-tee -i "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo425" -o "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo426" -I -b 5M & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ runtime/dgsh-tee -i "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo429" -o "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo430" -I -b 5M & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ runtime/dgsh-tee -i "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo433" -o "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo434" -I -b 5M & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ runtime/dgsh-tee -i "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo437" -o "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo438" -I -b 5M & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ runtime/dgsh-tee -i "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo441" -o "/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo442" -I -b 5M & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pashlib recv*8c628ccf-8516-4ec1-812d-ac2fceea3fa8*1*0*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo421 recv*2c2f2d75-94a6-4cac-89a4-0a27d747560f*1*0*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo433 send*c5af30de-155e-4d67-baa9-11f26091542c*0*1*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo599 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pashlib recv*9461f7ed-a28d-47f3-b3ab-e324a76d2bb6*1*0*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo425 recv*bd04017e-a1de-4900-8d0c-c7a0c1ec4346*1*0*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo437 send*6e558dcd-9acd-43bb-8ead-efd89d6b0694*0*1*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo603 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ /opt/pashlib recv*56d8fd13-f26c-4496-8fd9-6118c8b1b5a8*1*0*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo429 recv*5e230af0-2f3e-4a52-8d21-9ff45ccb7d17*1*0*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo441 send*51009d68-ad3f-4512-8d37-fd2534db5da6*0*1*/tmp/pash_ekD6Q5i/006f8626e71a4b69ba8a06639eaa9fa3/#fifo607 & }
+pids_to_kill="${!} ${pids_to_kill}"
+source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
+rm_pash_fifos
+( exit "${internal_exec_status}" )
