@@ -1,6 +1,12 @@
 #include "r_split.h"
 #include "stdbool.h"
 
+//TODO. investiagte this code + change to use original split 
+// in batches 
+// sends mini batches to each FIFO
+// pulls data from S3 in chunks
+
+
 void SplitByBytes(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles)
 {
   int current_file_id = 0;
