@@ -17,9 +17,9 @@ setup_dataset() {
   if [ ! -f ./in.csv ] && [ "$1" = "--full" ]; then
     # yesterday=$(date --date='1 days ago' +'%y-%m-%d')
     # curl https://www.balab.aueb.gr/~dds/oasa-$yesterday.bz2 |
-    curl -sf 'https://www.balab.aueb.gr/~dds/oasa-2021-01-08.bz2' | bzip2 -d > in.csv
+    curl -sf 'https://www.balab.aueb.gr/~dds/master-telemetry-distilled.bz2' | bzip2 -d > in.csv
     if [ $? -ne 0 ]; then
-      echo "oasa-2021-01-08.bz2 / bzip2 not available, contact the pash authors"
+      echo "master-telemetry-distilled.bz2 / bzip2 not available, contact the pash authors"
       exit 1
     fi
   elif [ ! -f ./in_small.csv ] && [ "$1" = "--small" ]; then

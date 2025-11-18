@@ -494,13 +494,53 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
     ## assignment (Q: or just redirections?)
     trans_options : TransformationState
 
+    ## Check if this is an HS_LOOP_LIST assignment or unset
+    is_hs_loop_list_op = False
+    if trans_options.get_mode() is TransformationType.PASH:
+        # Check for HS_LOOP_LIST assignments
+        if len(ast_node.arguments) == 0 and len(ast_node.assignments) > 0:
+            for assignment in ast_node.assignments:
+                # Try different ways to access the variable name
+                var_name = None
+                if hasattr(assignment, 'var'):
+                    var_name = assignment.var
+                elif hasattr(assignment, 'name'):
+                    var_name = assignment.name
+                elif isinstance(assignment, tuple) and len(assignment) > 0:
+                    # Try tuple access if it's a tuple
+                    var_name = assignment[0] if isinstance(assignment[0], str) else None
+                
+                if var_name == 'HS_LOOP_LIST':
+                    is_hs_loop_list_op = True
+                    break
+        
+        # Check for HS_LOOP_LIST unset commands
+        if len(ast_node.arguments) > 0:
+            first_arg = string_of_arg(ast_node.arguments[0])
+            if first_arg == 'unset' and len(ast_node.arguments) > 1:
+                unset_var = string_of_arg(ast_node.arguments[1])
+                if unset_var == 'HS_LOOP_LIST':
+                    is_hs_loop_list_op = True
+
     if trans_options.get_mode() is TransformationType.PASH \
-    and (len(ast_node.arguments) == 0):
+    and (len(ast_node.arguments) == 0) \
+    and not is_hs_loop_list_op:
         preprocessed_ast_object = PreprocessedAST(ast_node,
                                                 replace_whole=False,
                                                 non_maximal=False,
                                                 something_replaced=False,
                                                 last_ast=last_object)
+        return preprocessed_ast_object
+
+    ## Force replacement for HS_LOOP_LIST operations
+    if is_hs_loop_list_op:
+        preprocessed_ast_object = PreprocessedAST(ast_node,
+                                                  replace_whole=True,
+                                                  non_maximal=False,
+                                                  something_replaced=True,
+                                                  last_ast=last_object)
+        trans_options.visit_command(ast_node)
+        log(f"[DEBUG_LOG] HS_LOOP_LIST operation: {ast_node}")
         return preprocessed_ast_object
 
     ## This means we have a command. Commands are always candidate dataflow

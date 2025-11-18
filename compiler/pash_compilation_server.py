@@ -13,6 +13,21 @@ import pash_compiler
 from util import *
 from dspash.worker_manager import WorkersManager
 import server_util
+import subprocess
+import re
+
+def get_bash_version_tuple():
+    """Get bash version as a tuple (major, minor, patch)"""
+    try:
+        result = subprocess.run(['bash', '--version'], capture_output=True, text=True, timeout=5)
+        version_line = result.stdout.split('\n')[0]
+        match = re.search(r'(\d+)\.(\d+)\.(\d+)', version_line)
+        if match:
+            return tuple(map(int, match.groups()))
+    except:
+        pass
+    # Default to (5, 1, 0) if we can't determine version
+    return (5, 1, 0)
 
 ##
 ## A Daemon (not with the strict Unix sense) 
@@ -242,7 +257,8 @@ class Scheduler:
 
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
-        vars_dict = env_vars_util.read_vars_file(var_file)
+        bash_version_tuple = get_bash_version_tuple()
+        vars_dict = env_vars_util.read_vars_file(var_file, bash_version_tuple)
         config.set_vars_file(var_file, vars_dict)
 
         variable_reading_end_time = datetime.now()
