@@ -3,9 +3,10 @@
 cd "$(dirname "$0")" || exit 1
 
 SCRIPT_INPUT_WIDTH=(
-    #"sort.sh:1G.txt:4"
+    "sort.sh:1G.txt:4"
     # "sort-sort.sh:3G.txt:16"
-     "sort.sh:1M.txt:2"
+    # "sort.sh:1M.txt:2"
+     
     # "sort-sort.sh:3G.txt:16"
     # "wf.sh:3G.txt:16"
     # "top-n.sh:3G.txt:16"
