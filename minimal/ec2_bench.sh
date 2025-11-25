@@ -1,28 +1,35 @@
 export PATH=$PATH:runtime
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib
 export RUST_BACKTRACE=1
+
+# Benchmark parameters
+FILE_SIZE=${1:-100M}  # Accepts: 100M, 500M, 1G
 version=$2
-mkdir -p /tmp/pash_p4qiBDD/ 
-mkdir -p /tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/ 
-mkdir -p /tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/ 
-inform_daemon_exit () 
-{ 
+
+# Start timing (milliseconds since epoch)
+start_time=$(date +%s%3N)
+
+mkdir -p /tmp/pash_p4qiBDD/
+mkdir -p /tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/
+mkdir -p /tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/
+inform_daemon_exit ()
+{
     msg="Exit:${process_id}";
     daemon_response=$(pash_communicate_daemon_just_send "$msg")
 }
-pash_communicate_daemon () 
-{ 
+pash_communicate_daemon ()
+{
     local message=$1;
     pash_communicate_unix_socket "compilation-server" "${DAEMON_SOCKET}" "${message}"
 }
 declare -fx pash_communicate_daemon
-pash_communicate_daemon_just_send () 
-{ 
+pash_communicate_daemon_just_send ()
+{
     pash_communicate_daemon "$1"
 }
 declare -fx pash_communicate_daemon_just_send
-pash_communicate_unix_socket () 
-{ 
+pash_communicate_unix_socket ()
+{
     local server_name=$1;
     local socket=$2;
     local message=$3;
@@ -32,28 +39,28 @@ pash_communicate_unix_socket ()
     echo "$daemon_response"
 }
 declare -fx pash_communicate_unix_socket
-pash_redir_all_output () 
-{ 
+pash_redir_all_output ()
+{
     :
 }
 declare -fx pash_redir_all_output
-pash_redir_all_output_always_execute () 
-{ 
+pash_redir_all_output_always_execute ()
+{
     "$@" > /dev/null 2>&1
 }
 declare -fx pash_redir_all_output_always_execute
-pash_redir_output () 
-{ 
+pash_redir_output ()
+{
     :
 }
 declare -fx pash_redir_output
-pash_wait_until_daemon_listening () 
-{ 
+pash_wait_until_daemon_listening ()
+{
     pash_wait_until_unix_socket_listening "compilation-server" "${DAEMON_SOCKET}"
 }
 declare -fx pash_wait_until_daemon_listening
-pash_wait_until_unix_socket_listening () 
-{ 
+pash_wait_until_unix_socket_listening ()
+{
     local server_name=$1;
     local socket=$2;
     i=0;
@@ -69,23 +76,23 @@ pash_wait_until_unix_socket_listening ()
     done
 }
 declare -fx pash_wait_until_unix_socket_listening
-run_parallel () 
-{ 
+run_parallel ()
+{
     trap inform_daemon_exit SIGTERM SIGINT EXIT;
     export SCRIPT_TO_EXECUTE="$pash_script_to_execute";
     source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
 }
 
 rm_pash_fifos() {
-{ rm -f "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" ; } 
+{ rm -f "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" ; }
+ { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" ; }
+ { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" ; }
  { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" ; } ; } ; }
 }
 mkfifo_pash_fifos() {
-{ mkfifo "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" ; } 
+{ mkfifo "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" ; }
+ { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" ; }
+ { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" ; }
  { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" ; } ; } ; }
 }
 rm_pash_fifos
@@ -95,16 +102,24 @@ mkfifo_pash_fifos
 pids_to_kill=""
 
 
-#{ python3.9 aws/s3-get-object.py "unix50/inputs/1_20G.txt" "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" & }
+
+{ python3.9 aws/s3-get-object.py "oneliners/inputs/${FILE_SIZE}.txt" "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" & }
+pids_to_kill="${!} ${pids_to_kill}"
 
 { cat "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" >"/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ runtime/r_split -r "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" 1000000 "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" & }
+
+
+{ /opt/pashlib send*42*0*1*/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ python3.9 aws/s3-get-object.py "oneliners/inputs/1G.txt" "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" & }
-pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pashlib send*42*0*1*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10 send*43*0*1*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14 & }
-pids_to_kill="${!} ${pids_to_kill}"
+
 source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
+
+# End timing and output
+end_time=$(date +%s%3N)
+duration_ms=$((end_time - start_time))
+duration_sec=$(awk "BEGIN {printf \"%.3f\", $duration_ms/1000}")
+echo "EC2_TIME: ${duration_sec}s" >&2
+
 rm_pash_fifos
 ( exit "${internal_exec_status}" )

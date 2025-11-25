@@ -89,8 +89,14 @@ rm_pash_fifos
 mkfifo_pash_fifos
 pids_to_kill=""
 
+# Consumer: use dgsh-tee for buffered I/O (matches original working script)
+#{ runtime/dgsh-tee -i "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo12" -o /tmp/f.out -b 5M & }
+{ runtime/dgsh-tee -i "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo12" -o /dev/null -b 5M & }
+pids_to_kill="${!} ${pids_to_kill}"
+
 { /opt/pashlib recv*42*1*0*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo12 & }
 pids_to_kill="${!} ${pids_to_kill}"
+
 source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
 rm_pash_fifos
 ( exit "${internal_exec_status}" )
