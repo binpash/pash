@@ -1,0 +1,38 @@
+
+Config: 100M -> /dev/null
+  EC2 Time:   avg=2.780s  min=2.718s  max=2.831s
+  Total Time: avg=4.027s  min=3.957s  max=4.079s
+  Throughput: avg=24.8MB/s min=24.5MB/s max=25.3MB/s
+  (Lambda timing available in CloudWatch Logs)
+
+Config: 100M -> /tmp/f.out
+  EC2 Time:   avg=2.782s  min=2.717s  max=2.852s
+  Total Time: avg=4.013s  min=3.935s  max=4.084s
+  Throughput: avg=24.9MB/s min=24.5MB/s max=25.4MB/s
+  (Lambda timing available in CloudWatch Logs)
+
+Config: 500M -> /dev/null
+  EC2 Time:   avg=6.607s  min=6.192s  max=6.735s
+  Total Time: avg=7.840s  min=7.427s  max=7.999s
+  Throughput: avg=63.8MB/s min=62.5MB/s max=67.3MB/s
+  (Lambda timing available in CloudWatch Logs)
+
+Config: 500M -> /tmp/f.out
+  EC2 Time:   avg=6.838s  min=6.328s  max=8.416s
+  Total Time: avg=8.059s  min=7.551s  max=9.640s
+  Throughput: avg=62.0MB/s min=51.9MB/s max=66.2MB/s
+  (Lambda timing available in CloudWatch Logs)
+
+Config: 1G -> /dev/null
+  EC2 Time:   avg=13.421s  min=13.343s  max=13.497s
+  Total Time: avg=14.650s  min=14.542s  max=14.726s
+  Throughput: avg=69.9MB/s min=69.5MB/s max=70.4MB/s
+  (Lambda timing available in CloudWatch Logs)
+
+Config: 1G -> /tmp/f.out
+  EC2 Time:   avg=13.437s  min=13.353s  max=13.505s
+  Total Time: avg=14.666s  min=14.576s  max=14.738s
+  Throughput: avg=69.8MB/s min=69.5MB/s max=70.3MB/s
+  (Lambda timing available in CloudWatch Logs)
+
+=================================================================
