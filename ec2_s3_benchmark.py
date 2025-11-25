@@ -9,9 +9,15 @@ import time
 import uuid
 
 BUCKET = "inout741448956691"
-#KEY = "oneliners/inputs/1G.txt"
-KEY = "oneliners/inputs/100M.txt"
-#KEY = "oneliners/inputs/500M.txt"
+
+KEYS = [
+    "unix50/inputs/1_20G.txt",
+    "oneliners/inputs/1G.txt",
+    "oneliners/inputs/500M.txt",
+    "oneliners/inputs/100M.txt",
+]
+
+KEY = KEYS[0]  # Change this to select different file sizes
 
 def run_benchmark(event=None, context=None):
     runtimes = []
@@ -29,17 +35,19 @@ def run_benchmark(event=None, context=None):
 
         t0 = time.time()
         res = s3.get_object(Bucket=BUCKET, Key=KEY)
-        data = res['Body'].read()  # force full download
+        for _ in res['Body'].iter_chunks(chunk_size=1024*1024):
+            pass
+
         t1 = time.time()
 
-        if i == 0: # first run is cold start garbage
-            continue
+        #if i == 0: # first run is cold start garbage
+        #    continue
 
         dt = t1 - t0
         runtimes.append(dt)
-        print(f"Run {i+1}: {dt:.2f}s, size pulled: {len(data)/1e6:.1f} MB")
+        print(f"Run {i+1}: {dt:.2f}s")#, size pulled: {len(data)/1e6:.1f} MB")
 
-        del data  # free memory
+        #del data  # free memory
 
     # Compute statistics
     avg_ = sum(runtimes) / len(runtimes)
