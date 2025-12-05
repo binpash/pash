@@ -2,8 +2,8 @@ export PATH=$PATH:runtime
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib
 export RUST_BACKTRACE=1
 version=$2
-mkdir -p /tmp/pash_p4qiBDD/ 
-mkdir -p /tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/ 
+mkdir -p /tmp/pash_TeTZbck/ 
+mkdir -p /tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/ 
 inform_daemon_exit () 
 { 
     msg="Exit:${process_id}";
@@ -76,23 +76,21 @@ run_parallel ()
 }
 
 rm_pash_fifos() {
-{ rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo16" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo17" ; } 
- { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo25" ; } ; }
+{ rm -f "/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo17" ; } 
+ { rm -f "/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo22" ; }
 }
 mkfifo_pash_fifos() {
-{ mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo16" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo17" ; } 
- { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo25" ; } ; }
+{ mkfifo "/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo17" ; } 
+ { mkfifo "/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo22" ; }
 }
 rm_pash_fifos
 mkfifo_pash_fifos
 pids_to_kill=""
-{ sort <"/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo17" >"/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo25" & }
+{ sort <"/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo22" >"/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo17" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ runtime/dgsh-tee -i "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo16" -o "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo17" -I -b 5M & }
+{ python3.9 aws/s3-get-object.py "oneliners/inputs/1M.txt" "/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo22" bytes=524288-1048575 & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pashlib recv*e64098c5-470e-4972-9803-5b7b13c16ffd*1*0*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo16 send*61d430ca-72a0-4745-bf97-94441b9af0fc*0*1*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo25 & }
+{ /opt/pashlib send*d164977f-cabd-44f5-bb29-eeb3c419e325*0*1*/tmp/pash_TeTZbck/622765ca54124f6a8481311031b0b501/#fifo17 & }
 pids_to_kill="${!} ${pids_to_kill}"
 source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
 rm_pash_fifos

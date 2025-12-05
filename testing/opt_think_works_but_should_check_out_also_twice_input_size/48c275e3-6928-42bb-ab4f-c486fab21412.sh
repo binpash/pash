@@ -2,8 +2,8 @@ export PATH=$PATH:runtime
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib
 export RUST_BACKTRACE=1
 version=$2
-mkdir -p /tmp/pash_p4qiBDD/ 
-mkdir -p /tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/ 
+mkdir -p /tmp/pash_jfWr5xt/ 
+mkdir -p /tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/ 
 inform_daemon_exit () 
 { 
     msg="Exit:${process_id}";
@@ -76,31 +76,21 @@ run_parallel ()
 }
 
 rm_pash_fifos() {
-{ rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo20" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo21" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo22" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo27" ; } 
- { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo28" ; } ; } ; } ; }
+{ rm -f "/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo10" ; } 
+ { rm -f "/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo21" ; }
 }
 mkfifo_pash_fifos() {
-{ mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo20" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo21" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo22" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo27" ; } 
- { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo28" ; } ; } ; } ; }
+{ mkfifo "/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo10" ; } 
+ { mkfifo "/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo21" ; }
 }
 rm_pash_fifos
 mkfifo_pash_fifos
 pids_to_kill=""
-{ sort -m "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo21" "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo28" >"/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo22" & }
+{ sort <"/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo21" >"/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo10" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ runtime/dgsh-tee -i "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo20" -o "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo21" -I -b 5M & }
+{ python3.9 aws/s3-get-object.py "oneliners/inputs/1M.txt" "/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo21" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ runtime/dgsh-tee -i "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo27" -o "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo28" -I -b 5M & }
-pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pashlib recv*f0082947-1beb-4dda-b5f4-3e82e8a2ef0b*1*0*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo20 recv*61d430ca-72a0-4745-bf97-94441b9af0fc*1*0*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo27 & }
-pids_to_kill="${!} ${pids_to_kill}"
-{ python3.9 aws/s3-put-object.py oneliners/outputs/sort.sh:1M.txt:2:leashstdout.txt "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo22" $1 & }
+{ /opt/pashlib send*9c5b8cff-b427-4456-99fd-cf924c97b134*0*1*/tmp/pash_jfWr5xt/b34e3a5dfbaf47f18569918146c21ce3/#fifo10 & }
 pids_to_kill="${!} ${pids_to_kill}"
 source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
 rm_pash_fifos

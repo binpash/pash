@@ -1,5 +1,5 @@
 from definitions.ir.dfg_node import *
-from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars, OptionWithIOVar
 from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
 from pash_annotations.datatypes.BasicDatatypes import Operand
 
@@ -15,8 +15,8 @@ class ServerlessRemotePipe(DFGNode):
                          com_assignments=com_assignments,
                          parallelizer_list=parallelizer_list,
                          cmd_related_properties=cmd_related_properties)
-
-def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, output_edge=None, is_tcp=False):
+#here remote key is filename on s3 in our case 
+def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, output_edge=None, is_tcp=False, is_s3_lambda=False, lambda_counter=0, total_lambdas=0, byte_range=None):
     """
     Generate a dfg node for serverless remote communication, now we handle these cases
     1. Remote read from tcp communication
@@ -48,7 +48,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                 operand_list.append(Operand(Arg.string_to_arg("/dev/stdout")))
                 implicit_use_of_streaming_output = output_edge.get_ident() 
             else:
-                operand_list.append(local_fifo_id)
+                operand_list.append(local_fifo_id) # here we should also append byte range with the correct range
     else:
         implicit_use_of_streaming_output = output_edge.get_ident() # avoid node not found err
         if is_tcp:
@@ -60,9 +60,13 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
             operand_list.append(local_fifo_id)
             operand_list.append(Arg.string_to_arg("$1"))
+    
+    if is_s3_lambda:
+        operand_list.append(Operand(Arg.string_to_arg(str(byte_range))))
+
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=remote_pipe_bin,
-        flag_option_list=[],
+        flag_option_list=[range_opt] if False else [], # TODO. add RANGE as flag 
         operand_list=operand_list,
         implicit_use_of_streaming_input=implicit_use_of_streaming_input,
         implicit_use_of_streaming_output=implicit_use_of_streaming_output,
