@@ -59,7 +59,6 @@ def adjust_lambda_incoming_edges(
     """
     # Convert to set as we only need to do this once per unique edge/lambda
     rsplit_output_id_set = set(rsplit_output_ids)
-    total_lambdas = 0
 
     # Iterate through all downstream subgraphs
     for subgraph in subgraphs:
@@ -76,13 +75,8 @@ def adjust_lambda_incoming_edges(
 
                 # Is this edge one of the rsplit outputs?
                 if in_edge_id in rsplit_output_id_set:
-                    # YES - Replace with in edge from ec2
+                    # YES - Replace with S3 direct read
                     subgraph.replace_edge(in_edge_id, ec2_file_in_edge)
-                    total_lambdas += 1
-
-
-                    # next step: replace with a byte range command 
-
 
                     #TODO. replace incoming edges of lambdas with the in_edge
 
@@ -165,7 +159,7 @@ def adjust_lambda_incoming_edges(
                     # 8. Disconnect old edge from source_node
                     subgraph.set_edge_to(in_edge_id, None)
                     """
-    return total_lambdas
+    
 
 # cat -> split
 def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
@@ -217,7 +211,7 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
 
                         # Call adjust function with extracted info
                         # TODO. dont need first subgraph anymore
-                        total_lambdas = adjust_lambda_incoming_edges(
+                        adjust_lambda_incoming_edges(
                             first_subgraph,
                             subgraphs[1:],
                             file_id_gen,
@@ -226,9 +220,9 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
                             in_edge
                         )
 
-                        return subgraphs[1:], in_edge, total_lambdas
+                        return subgraphs[1:]
 
-    return subgraphs, None, 0
+    return subgraphs
 
 def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace, recover: bool = False):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
@@ -263,8 +257,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     # then the loop will not even have it anymore
     # helper fn
     
-    subgraphs, ec2_in_edge, total_lambdas = optimize_s3_lambda_direct_streaming(subgraphs)
-    print("AFTER OPTIMIZATION, TOTAL LAMBDAS:", total_lambdas)
+    #subgraphs = optimize_s3_lambda_direct_streaming(subgraphs)
 
 
     # Replace output edges and corrosponding input edges with remote read/write
@@ -379,7 +372,6 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 is_tcp=(not matching_subgraph is main_graph))
                 matching_subgraph.add_node(remote_read)
 
-    lambda_counter = 0
     # Replace non ephemeral input edges with remote read/write
     for subgraph in subgraphs:
         if subgraph not in subgraph_script_id_pairs:
@@ -397,55 +389,11 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     # Add remote read to current subgraph
                     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
                     subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
-                    # Extract file size from filename (e.g., "oneliners/inputs/1M.txt" -> 1048576)
-                    size_multipliers = {"G": 1024**3, "M": 1024**2, "K": 1024}
-
-                    # Get basename and strip extension and quotes
-                    basename = str(filename).split("/")[-1].replace('.txt"', "").replace('"', '')
-
-                    # Parse size with suffix (e.g., "1M" -> 1048576)
-                    filesize = None
-                    for suffix, multiplier in size_multipliers.items():
-                        if basename.endswith(suffix):
-                            filesize = int(basename.replace(suffix, "")) * multiplier
-                            break
-
-                    # Fallback: try to parse as plain integer
-                    if filesize is None:
-                        try:
-                            filesize = int(basename)
-                        except ValueError:
-                            # Default to 1MB if parsing fails
-                            print(f"Warning: Could not parse file size from '{filename}', defaulting to 1MB")
-                            assert False, "File size parsing failed" # important to know if this is possibly failing, also byte range will give incorrect results here
-
-                    print(f"File: {filename} -> Size: {filesize} bytes")
-
-                    # Calculate byte range for this lambda
-                    chunk_size = filesize // total_lambdas
-                    start_byte = lambda_counter * chunk_size
-                    # Last lambda gets everything remaining to handle rounding
-                    end_byte = filesize - 1 if lambda_counter == total_lambdas - 1 else (lambda_counter + 1) * chunk_size - 1
-                    byte_range = f"bytes={start_byte}-{end_byte}"
-                    print(f"Lambda {lambda_counter}: {byte_range}")
-
-                    if in_edge == ec2_in_edge:
-                        remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
-                                                                                is_remote_read=True,
-                                                                                remote_key=filename,
-                                                                                output_edge=None,
-                                                                                is_tcp=False,
-                                                                                is_s3_lambda=True,
-                                                                                lambda_counter=lambda_counter,
-                                                                                total_lambdas=total_lambdas,
-                                                                                byte_range=byte_range)
-                        lambda_counter += 1
-                    else:
-                        remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
-                                                                                is_remote_read=True,
-                                                                                remote_key=filename,
-                                                                                output_edge=None,
-                                                                                is_tcp=False)
+                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
+                                                                              is_remote_read=True,
+                                                                              remote_key=filename,
+                                                                              output_edge=None,
+                                                                              is_tcp=False)
                     subgraph.add_node(remote_read) # TODO. investigate if this makes a node with a file or s3 input?
 
                     #pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen)
