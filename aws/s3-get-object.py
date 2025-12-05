@@ -4,17 +4,39 @@ import time
 import os
 
 BUCKET=os.environ.get("AWS_BUCKET")
-object_key, outfile = sys.argv[1:]
+object_key, outfile = sys.argv[1:3] #todo. we might have cases where we don't have range but we do s3??like for normal graphs
+byte_range = None
+if len(sys.argv) == 4:
+    byte_range = sys.argv[3] # "0-500"
+
 DEBUG=False
+
 
 # DEBUG
 if DEBUG:
     print(f"[s3-get-object.py] Start getting {object_key}")
     start_time = time.time()
 
-s3 = boto3.client('s3')
-with open(outfile, 'wb') as f:
-    s3.download_fileobj(BUCKET, object_key, f)
+# s3 = boto3.client('s3')
+# with open(outfile, 'wb') as f:
+#     s3.download_fileobj(BUCKET, object_key, f)
+
+s3 = boto3.client("s3")
+
+params = {
+    "Bucket": BUCKET,
+    "Key": object_key
+}
+
+if byte_range is not None:
+    params["Range"] = byte_range
+
+resp = s3.get_object(**params)
+
+
+with open(outfile, "wb") as f:
+    f.write(resp["Body"].read())
+
 
 if DEBUG:
     end_time = time.time()
