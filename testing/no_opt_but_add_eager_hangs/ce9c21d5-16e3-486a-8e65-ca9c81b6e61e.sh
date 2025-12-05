@@ -2,9 +2,8 @@ export PATH=$PATH:runtime
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib
 export RUST_BACKTRACE=1
 version=$2
-mkdir -p /tmp/pash_p4qiBDD/ 
-mkdir -p /tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/ 
-mkdir -p /tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/ 
+mkdir -p /tmp/pash_QV5KeRa/ 
+mkdir -p /tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/ 
 inform_daemon_exit () 
 { 
     msg="Exit:${process_id}";
@@ -77,27 +76,31 @@ run_parallel ()
 }
 
 rm_pash_fifos() {
-{ rm -f "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" ; } 
- { { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" ; } 
- { rm -f "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" ; } ; } ; }
+{ rm -f "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo20" ; } 
+ { { rm -f "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo21" ; } 
+ { { rm -f "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo22" ; } 
+ { { rm -f "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo27" ; } 
+ { rm -f "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo28" ; } ; } ; } ; }
 }
 mkfifo_pash_fifos() {
-{ mkfifo "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" ; } 
- { { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" ; } 
- { mkfifo "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" ; } ; } ; }
+{ mkfifo "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo20" ; } 
+ { { mkfifo "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo21" ; } 
+ { { mkfifo "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo22" ; } 
+ { { mkfifo "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo27" ; } 
+ { mkfifo "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo28" ; } ; } ; } ; }
 }
 rm_pash_fifos
 mkfifo_pash_fifos
 pids_to_kill=""
-{ cat "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" >"/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" & }
+{ sort -m "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo21" "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo28" >"/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo22" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ runtime/r_split -r "/tmp/pash_p4qiBDD/c552f20f09f041f3a2a9e3e88f3d33bc/#fifo2" 1000000 "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10" "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14" & }
+{ runtime/dgsh-tee -i "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo20" -o "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo21" -I -b 5M & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ python3.9 aws/s3-get-object.py "oneliners/inputs/1M.txt" "/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo29" & }
+{ runtime/dgsh-tee -i "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo27" -o "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo28" -I -b 5M & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ /opt/pashlib send*49e60090-bea3-43fe-b3a2-039491f8f37c*0*1*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo10 send*e64098c5-470e-4972-9803-5b7b13c16ffd*0*1*/tmp/pash_p4qiBDD/5aeeab8868424403b26ff7b77f815013/#fifo14 & }
+{ /opt/pashlib recv*a1c374f7-6110-4663-b4b0-068ee47dd502*1*0*/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo20 recv*73d97ba5-5716-4324-b08a-a99255452eac*1*0*/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo27 & }
+pids_to_kill="${!} ${pids_to_kill}"
+{ python3.9 aws/s3-put-object.py oneliners/outputs/sort.sh:1M.txt:2:leashstdout.txt "/tmp/pash_QV5KeRa/e5016c76326b4158ae40be913761d0f0/#fifo22" $1 & }
 pids_to_kill="${!} ${pids_to_kill}"
 source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
 rm_pash_fifos
