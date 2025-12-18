@@ -16,7 +16,7 @@ class ServerlessRemotePipe(DFGNode):
                          parallelizer_list=parallelizer_list,
                          cmd_related_properties=cmd_related_properties)
 #here remote key is filename on s3 in our case 
-def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, output_edge=None, is_tcp=False, is_s3_lambda=False, lambda_counter=0, total_lambdas=0, byte_range=None):
+def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, output_edge=None, is_tcp=False, is_s3_lambda=False, lambda_counter=0, total_lambdas=0, byte_range=None, job_uid=None):
     """
     Generate a dfg node for serverless remote communication, now we handle these cases
     1. Remote read from tcp communication
@@ -41,14 +41,29 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             operand_list.append(Operand(Arg.string_to_arg("recv "+str(remote_key)+" 1 0")))
             implicit_use_of_streaming_output = local_fifo_id
         else:
-            remote_pipe_bin = "python3.9 aws/s3-get-object.py"
-            operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
-            if output_edge and (output_edge.get_resource() is not None):
-                # we need to redirect the output to some file or stdout
-                operand_list.append(Operand(Arg.string_to_arg("/dev/stdout")))
-                implicit_use_of_streaming_output = output_edge.get_ident() 
+            if is_s3_lambda:
+                remote_pipe_bin = "python3.9 aws/s3-shard-reader.py"
+                operand_list.append(Operand(Arg.string_to_arg(str(remote_key)))) # s3 key
+                #if output_edge and (output_edge.get_resource() is not None):
+                #    # we need to redirect the output to some file or stdout
+                #    operand_list.append(Operand(Arg.string_to_arg("/dev/stdout")))
+                #    implicit_use_of_streaming_output = output_edge.get_ident() 
+                #else:
+                operand_list.append(local_fifo_id) #out fifo # here we should also append byte range with the correct range
+                operand_list.append(Operand(Arg.string_to_arg(str(byte_range)))) # byte range
+                operand_list.append(Operand(Arg.string_to_arg(f"shard={lambda_counter}"))) # shard
+                operand_list.append(Operand(Arg.string_to_arg(f"num_shards={total_lambdas}"))) # num shards
+                operand_list.append(Operand(Arg.string_to_arg(f"job_uid={job_uid}"))) # job uid
+                operand_list.append(Operand(Arg.string_to_arg(f"debug=True")))
             else:
-                operand_list.append(local_fifo_id) # here we should also append byte range with the correct range
+                remote_pipe_bin = "python3.9 aws/s3-get-object.py"
+                operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
+                if output_edge and (output_edge.get_resource() is not None):
+                    # we need to redirect the output to some file or stdout
+                    operand_list.append(Operand(Arg.string_to_arg("/dev/stdout")))
+                    implicit_use_of_streaming_output = output_edge.get_ident() 
+                else:
+                    operand_list.append(local_fifo_id) # here we should also append byte range with the correct range
     else:
         implicit_use_of_streaming_output = output_edge.get_ident() # avoid node not found err
         if is_tcp:
@@ -61,12 +76,11 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             operand_list.append(local_fifo_id)
             operand_list.append(Arg.string_to_arg("$1"))
     
-    if is_s3_lambda:
-        operand_list.append(Operand(Arg.string_to_arg(str(byte_range))))
+
 
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=remote_pipe_bin,
-        flag_option_list=[range_opt] if False else [], # TODO. add RANGE as flag 
+        flag_option_list=[], 
         operand_list=operand_list,
         implicit_use_of_streaming_input=implicit_use_of_streaming_input,
         implicit_use_of_streaming_output=implicit_use_of_streaming_output,

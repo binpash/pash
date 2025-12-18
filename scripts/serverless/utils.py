@@ -2,6 +2,7 @@ import os
 import boto3
 import sys
 import collections
+import shutil
 from datetime import datetime
 
 logs_client = boto3.client('logs')
@@ -61,13 +62,13 @@ def save_then_delete_scripts(out_dir: str = "scripts"):
             continue
         for obj in page['Contents']:
             key = obj['Key']
-            script_count += 1
             file_name = os.path.join(out_dir, key.split('/')[-2], key.split('/')[-1])
             file_dir = os.path.dirname(file_name)
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)
             if not os.path.exists(file_name):
                 s3_client.download_file(os.environ['AWS_BUCKET'], key, file_name)
+                script_count += 1
             s3_client.delete_object(Bucket=os.environ['AWS_BUCKET'], Key=key)
     print(f"[Analysis] Total shell scripts saved: {script_count}")
 
@@ -123,15 +124,20 @@ if __name__ == "__main__":
         debug_dir_prefix = sys.argv[1]
     else:
         debug_dir_prefix = "debug"
-    if not os.path.exists(debug_dir_prefix):
-        os.makedirs(debug_dir_prefix, exist_ok=True)
-    else:
-        print(f"[Analysis] Debug directory already exists: `{debug_dir_prefix}`, skipping everything to avoid overwriting.")
-        analyze_logs(os.path.join(debug_dir_prefix, "logs"))
-        sys.exit(0)
 
+    # Create base directory
+    os.makedirs(debug_dir_prefix, exist_ok=True)
+
+    # Clear subdirectories to ensure fresh data
     logs_folder = os.path.join(debug_dir_prefix, "logs")
     scripts_folder = os.path.join(debug_dir_prefix, "scripts")
+
+    if os.path.exists(logs_folder):
+        shutil.rmtree(logs_folder)
+    if os.path.exists(scripts_folder):
+        shutil.rmtree(scripts_folder)
+
+    # Now fetch fresh data
     save_then_delete_log_streams(logs_folder)
     save_then_delete_scripts(scripts_folder)
     analyze_logs(logs_folder)
