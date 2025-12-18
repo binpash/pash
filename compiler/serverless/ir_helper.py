@@ -7,6 +7,8 @@ from typing import Dict, List, Tuple
 import sys
 import os
 from uuid import uuid4
+
+import boto3
 sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
 import definitions.ir.nodes.serverless_remote_pipe as serverless_remote_pipe
 import definitions.ir.nodes.serverless_lambda_invoke as serverless_lambda_invoke
@@ -56,6 +58,21 @@ def adjust_lambda_incoming_edges(
         file_id_gen: generator to allocate new FileId / ephemeral ids.
         s3_file_path: S3 file path to read from (e.g., "input.txt" or "s3://bucket/file.txt")
         rsplit_output_ids: List of edge IDs that were outputs from the rsplit node
+    """
+
+
+    #
+    """
+    
+    input/1M.txt -> cat -> split            fifo1 -> lambda1 (sort) -> ...
+                                             fifo -> lambda2 (sort) -> ...
+                                            
+                                            input/1M.txt -> sort
+                                             
+                            
+    
+
+    
     """
     # Convert to set as we only need to do this once per unique edge/lambda
     rsplit_output_id_set = set(rsplit_output_ids)
@@ -169,6 +186,9 @@ def adjust_lambda_incoming_edges(
 
 # cat -> split
 def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
+    if len(subgraphs) == 1: #no point in optimizing here 
+        return subgraphs, None, 0
+    
     first_subgraph = subgraphs[0]
     file_id_gen = first_subgraph.get_file_id_gen()
 
@@ -186,11 +206,14 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
         #pash posh shark 
 
     source_nodes = first_subgraph.source_nodes()    # list of ints
-    assert len(source_nodes) == 1
+    if len(source_nodes) != 1:
+        return subgraphs, None, 0
     #TODO. encode assertions to run on narrow execution path 
     for source in source_nodes:
         in_edges = first_subgraph.get_node_input_fids(source)
-        assert len(in_edges) == 1
+        if len(in_edges) != 1:
+            return subgraphs, None, 0
+        
         for in_edge in in_edges:
             # (isinstance(self.resource, FileResource))
             if in_edge.has_file_resource() or in_edge.has_file_descriptor_resource():
@@ -205,7 +228,7 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
                     #           ir obj has no attribute get edge consumers
 
                     if len(next_nodes_ids) != 1:
-                        return subgraphs
+                        return subgraphs, None, 0
                     next_node_id = next_nodes_ids[0]
                     next_node = first_subgraph.get_node(next_node_id)
 
@@ -230,6 +253,26 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
 
     return subgraphs, None, 0
 
+def change_sorting(subgraphs:List[IR]) -> List[IR]:
+    for subgraph in subgraphs:
+        source_nodes = subgraph.source_nodes()    # list of ints
+        for source in source_nodes:
+            source_node = subgraph.get_node(source)
+            if source_node.cmd_name == 'sort': #todo also do this with sort -m
+                source_node.cmd_name = 'LC_ALL=C sort'
+
+
+def get_s3_size(bucket, key):
+    #print("Came here")
+    """Get S3 object size."""
+    s3 = boto3.client('s3')
+    #print("bucket ", bucket)
+    #print("key ", key)
+    #print(boto3.client("sts").get_caller_identity())
+    response = s3.head_object(Bucket=bucket, Key=key)
+    #print("got obj")
+    return response['ContentLength']
+
 def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace, recover: bool = False):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
         read/write nodes for data movement and lambda invocation nodes to trigger
@@ -246,6 +289,15 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         subgraph_script_id_pairs: mapping from subgraph to unique script id
         main_subgraph_script_id: the script id to execute in the first lambda
     """
+    # Print subgraphs for debugging/visualization
+    print("\n" + "="*80)
+    print("DEBUG: Visualizing subgraphs before adding nodes")
+    print("="*80)
+
+    pretty_print_subgraphs(subgraphs, unified_view=True)
+
+    print("="*80)
+
     # The graph to execute in the main pash_compiler
     main_graph = IR({}, {})
     subgraph_script_id_pairs = {}
@@ -262,11 +314,26 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     #modify the first subgraph if it is a s3 -> cat -> split
     # then the loop will not even have it anymore
     # helper fn
-    
+    #subgraphs = change_sorting(subgraphs)
+
+
+
+    ec2_in_edge = None
+    total_lambdas = 0
     subgraphs, ec2_in_edge, total_lambdas = optimize_s3_lambda_direct_streaming(subgraphs)
     print("AFTER OPTIMIZATION, TOTAL LAMBDAS:", total_lambdas)
 
 
+    print("\n" + "="*80)
+    print("DEBUG: Visualizing subgraphs after S3 optimization")
+    print("="*80)
+
+    pretty_print_subgraphs(subgraphs, unified_view=True)
+
+    print("="*80)
+    exit()
+
+    
     # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
     for subgraph in subgraphs:
@@ -380,6 +447,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 matching_subgraph.add_node(remote_read)
 
     lambda_counter = 0
+    job_uid = uuid4()
     # Replace non ephemeral input edges with remote read/write
     for subgraph in subgraphs:
         if subgraph not in subgraph_script_id_pairs:
@@ -397,39 +465,45 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     # Add remote read to current subgraph
                     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
                     subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
-                    # Extract file size from filename (e.g., "oneliners/inputs/1M.txt" -> 1048576)
-                    size_multipliers = {"G": 1024**3, "M": 1024**2, "K": 1024}
+                    
 
-                    # Get basename and strip extension and quotes
-                    basename = str(filename).split("/")[-1].replace('.txt"', "").replace('"', '')
+                    if in_edge == ec2_in_edge:  # TODO how to get bucket??
+                        BUCKET=os.environ.get("AWS_BUCKET")
+                        filesize = get_s3_size(BUCKET, str(filename).strip('"'))
+                        # but filename can be covid-mts/inputs/in.csv so we need a more robust way
+                        # Extract file size from filename (e.g., "oneliners/inputs/1M.txt" -> 1048576)
+                        # size_multipliers = {"G": 1024**3, "M": 1024**2, "K": 1024}
 
-                    # Parse size with suffix (e.g., "1M" -> 1048576)
-                    filesize = None
-                    for suffix, multiplier in size_multipliers.items():
-                        if basename.endswith(suffix):
-                            filesize = int(basename.replace(suffix, "")) * multiplier
-                            break
 
-                    # Fallback: try to parse as plain integer
-                    if filesize is None:
-                        try:
-                            filesize = int(basename)
-                        except ValueError:
-                            # Default to 1MB if parsing fails
-                            print(f"Warning: Could not parse file size from '{filename}', defaulting to 1MB")
-                            assert False, "File size parsing failed" # important to know if this is possibly failing, also byte range will give incorrect results here
 
-                    print(f"File: {filename} -> Size: {filesize} bytes")
+                        # # Get basename and strip extension and quotes
+                        # basename = str(filename).split("/")[-1].replace('.txt"', "").replace('"', '')
 
-                    # Calculate byte range for this lambda
-                    chunk_size = filesize // total_lambdas
-                    start_byte = lambda_counter * chunk_size
-                    # Last lambda gets everything remaining to handle rounding
-                    end_byte = filesize - 1 if lambda_counter == total_lambdas - 1 else (lambda_counter + 1) * chunk_size - 1
-                    byte_range = f"bytes={start_byte}-{end_byte}"
-                    print(f"Lambda {lambda_counter}: {byte_range}")
+                        # # Parse size with suffix (e.g., "1M" -> 1048576)
+                        # filesize = None
+                        # for suffix, multiplier in size_multipliers.items():
+                        #     if basename.endswith(suffix):
+                        #         filesize = int(basename.replace(suffix, "")) * multiplier
+                        #         break
 
-                    if in_edge == ec2_in_edge:
+                        # # Fallback: try to parse as plain integer
+                        # if filesize is None:
+                        #     try:
+                        #         filesize = int(basename)
+                        #     except ValueError:
+                        #         # Default to 1MB if parsing fails
+                        #         print(f"Warning: Could not parse file size from '{filename}', defaulting to 1MB")
+                        #         assert False, "File size parsing failed" # important to know if this is possibly failing, also byte range will give incorrect results here
+
+                        print(f"File: {filename} -> Size: {filesize} bytes")
+
+                        # Calculate byte range for this lambda
+                        chunk_size = filesize // total_lambdas
+                        start_byte = lambda_counter * chunk_size
+                        # Last lambda gets everything remaining to handle rounding
+                        end_byte = filesize - 1 if lambda_counter == total_lambdas - 1 else (lambda_counter + 1) * chunk_size - 1
+                        byte_range = f"bytes={start_byte}-{end_byte}"
+                        print(f"Lambda {lambda_counter}: {byte_range}")
                         remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
                                                                                 is_remote_read=True,
                                                                                 remote_key=filename,
@@ -438,7 +512,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 is_s3_lambda=True,
                                                                                 lambda_counter=lambda_counter,
                                                                                 total_lambdas=total_lambdas,
-                                                                                byte_range=byte_range)
+                                                                                byte_range=byte_range, 
+                                                                                job_uid=job_uid)
+                        
+                        # s3getobj byterange=start-end -> sort   : lambda1
                         lambda_counter += 1
                     else:
                         remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
@@ -446,9 +523,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 remote_key=filename,
                                                                                 output_edge=None,
                                                                                 is_tcp=False)
-                    subgraph.add_node(remote_read) # TODO. investigate if this makes a node with a file or s3 input?
-
-                    #pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen)
+                    subgraph.add_node(remote_read) # This makes a node with an s3 input (converts the input filename to an s3 get obj cmd)
                 
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
@@ -631,3 +706,439 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
             ec2_set.add(str(id_))
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set
+
+
+def _get_node_label(node, max_width=60) -> str:
+    """
+    Extract a readable label for a node including command name and key details.
+
+    Args:
+        node: DFGNode instance
+        max_width: Maximum width for the label (default 60 chars)
+
+    Returns:
+        Human-readable string representation of the node
+    """
+    cmd_inv = node.cmd_invocation_with_io_vars
+    cmd_name = str(cmd_inv.cmd_name)
+
+    # Get basename for cleaner display
+    cmd_basename = os.path.basename(cmd_name)
+
+    # Special handling for r_wrap - extract inner command
+    if cmd_basename == "r_wrap" or "wrap" in cmd_basename.lower():
+        # Try to extract the inner command from operands
+        if hasattr(cmd_inv, 'operand_list') and cmd_inv.operand_list:
+            for op in cmd_inv.operand_list:
+                op_str = str(op)
+                # Look for bash -c followed by command
+                if "bash" in op_str and "-c" in op_str:
+                    # Skip this one, look at next
+                    continue
+                # Check if this looks like a command (has spaces or quotes)
+                if not op_str.isdigit() and ('"' in op_str or "'" in op_str or " " in op_str):
+                    # Extract command, remove quotes
+                    inner_cmd = op_str.strip().strip('"').strip("'")
+                    # Get first command name
+                    first_word = inner_cmd.split()[0] if inner_cmd.split() else inner_cmd
+                    # Truncate if needed
+                    if len(inner_cmd) > 40:
+                        inner_cmd = inner_cmd[:37] + "..."
+                    return f"wrap: {first_word}"
+        return "wrap"
+
+    # Add flags if present
+    flags = []
+    if hasattr(cmd_inv, 'flag_option_list') and cmd_inv.flag_option_list:
+        flags = [str(flag.get_name()) if hasattr(flag, 'get_name') else str(flag)
+                 for flag in cmd_inv.flag_option_list[:3]]  # Limit to first 3 flags
+
+    # Add key operands (excluding edge IDs which are usually integers)
+    operands = []
+    if hasattr(cmd_inv, 'operand_list') and cmd_inv.operand_list:
+        for op in cmd_inv.operand_list[:2]:  # Limit to first 2 operands
+            op_str = str(op)
+            # Skip if it looks like an edge ID (pure integer)
+            if not op_str.isdigit():
+                # Detect class repr and simplify
+                if "<class '" in op_str or "pash_annotations" in op_str:
+                    # Extract just the class name
+                    if "'" in op_str:
+                        parts = op_str.split("'")
+                        if len(parts) > 1:
+                            class_path = parts[1]
+                            op_str = class_path.split(".")[-1]  # Get last part
+                operands.append(op_str if len(op_str) <= 30 else op_str[:27] + "...")
+
+    # Build label
+    label = cmd_basename
+    if flags:
+        label += " " + " ".join(flags)
+    if operands:
+        label += " " + " ".join(operands)
+
+    # Apply width cap with smart truncation
+    if len(label) > max_width:
+        # Keep start and end, truncate middle
+        keep_chars = (max_width - 5) // 2  # -5 for " ... "
+        label = label[:keep_chars] + " ... " + label[-keep_chars:]
+
+    return label
+
+
+def _find_edge_connections(subgraphs: List[IR]) -> Dict[int, Tuple[int, int]]:
+    """
+    Build a map of cross-subgraph edge connections.
+
+    Args:
+        subgraphs: List of IR subgraphs
+
+    Returns:
+        Dictionary mapping edge_id -> (source_subgraph_idx, dest_subgraph_idx)
+        where -1 indicates external input/output
+    """
+    edge_to_sg = {}  # edge_id -> subgraph_idx
+    edge_connections = {}  # edge_id -> (from_sg_idx, to_sg_idx)
+
+    # First pass: map each edge to its subgraph
+    for sg_idx, subgraph in enumerate(subgraphs):
+        for edge_id in subgraph.edges.keys():
+            if edge_id not in edge_to_sg:
+                edge_to_sg[edge_id] = []
+            edge_to_sg[edge_id].append(sg_idx)
+
+    # Second pass: identify cross-subgraph edges
+    for edge_id, sg_indices in edge_to_sg.items():
+        if len(sg_indices) > 1:
+            # Edge connects multiple subgraphs
+            # Find which subgraph outputs to this edge and which inputs from it
+            for sg_idx, subgraph in enumerate(subgraphs):
+                if edge_id in subgraph.edges:
+                    _, from_node, to_node = subgraph.edges[edge_id]
+
+                    # If this subgraph has a node outputting to this edge
+                    if from_node is not None and to_node is None:
+                        # This is a source subgraph for this edge
+                        for other_idx in sg_indices:
+                            if other_idx != sg_idx:
+                                edge_connections[edge_id] = (sg_idx, other_idx)
+
+    return edge_connections
+
+
+def _draw_subgraph(sg_idx: int, subgraph: IR, edge_connections: Dict[int, Tuple[int, int]]) -> List[str]:
+    """
+    Generate ASCII art for a single subgraph.
+
+    Args:
+        sg_idx: Index of this subgraph
+        subgraph: IR object representing the subgraph
+        edge_connections: Map of edge_id -> (from_sg, to_sg)
+
+    Returns:
+        List of strings (lines) representing the ASCII visualization
+    """
+    lines = []
+
+    # Header
+    node_count = len(subgraph.nodes)
+    lines.append(f"Subgraph {sg_idx} ({node_count} node{'s' if node_count != 1 else ''}):")
+
+    if node_count == 0:
+        lines.append("  (empty)")
+        return lines
+
+    # Get source nodes (nodes with no incoming edges from other nodes in subgraph)
+    source_nodes = subgraph.source_nodes()
+
+    # Build a simple topological view
+    visited = set()
+
+    def draw_node_chain(node_id, indent=2):
+        """Recursively draw nodes in execution order"""
+        if node_id in visited:
+            return
+        visited.add(node_id)
+
+        node = subgraph.get_node(node_id)
+        label = _get_node_label(node)
+
+        # Get input edges
+        input_ids = node.get_input_list()
+        output_ids = node.get_output_list()
+
+        # Check if this node has multiple external inputs (merge pattern)
+        external_inputs = []
+        for in_id in input_ids:
+            if in_id in subgraph.edges:
+                fid, from_node, _ = subgraph.edges[in_id]
+                if from_node is None:  # External input
+                    external_inputs.append((in_id, fid))
+
+        # Show converging inputs for merge nodes
+        if len(external_inputs) > 1:
+            # Draw merge pattern: inputs converge into the node
+            box_width = max(len(label) + 4, 12)
+            for i, (in_id, fid) in enumerate(external_inputs):
+                source_info = ""
+                if in_id in edge_connections:
+                    from_sg, _ = edge_connections[in_id]
+                    source_info = f" (from Subgraph {from_sg})"
+                elif fid.has_file_resource():
+                    source_info = f" (file: {fid.get_resource().uri})"
+
+                if i == 0:
+                    # First input
+                    lines.append(" " * indent + f"[edge_{in_id}{source_info}] ─┐")
+                elif i == len(external_inputs) - 1:
+                    # Last input
+                    lines.append(" " * (indent + box_width + 3) + "├─> +" + "-" * (box_width - 2) + "+")
+                    lines.append(" " * indent + f"[edge_{in_id}{source_info}] ─┘   | " + label.ljust(box_width - 4) + " |")
+                    lines.append(" " * (indent + box_width + 7) + "+" + "-" * (box_width - 2) + "+")
+                else:
+                    # Middle inputs
+                    lines.append(" " * (indent + box_width + 3) + "│")
+                    lines.append(" " * indent + f"[edge_{in_id}{source_info}] ─┤")
+        else:
+            # Single or no external input - show normally
+            for in_id in input_ids:
+                if in_id in subgraph.edges:
+                    fid, from_node, _ = subgraph.edges[in_id]
+                    if from_node is None:  # External input
+                        source_info = ""
+                        if in_id in edge_connections:
+                            from_sg, _ = edge_connections[in_id]
+                            source_info = f" (from Subgraph {from_sg})"
+                        elif fid.has_file_resource():
+                            source_info = f" (file: {fid.get_resource().uri})"
+                        lines.append(" " * indent + f"[Input: edge_{in_id}{source_info}]")
+                        lines.append(" " * indent + "    |")
+                        lines.append(" " * indent + "    v")
+
+            # Draw the node box
+            box_width = max(len(label) + 4, 12)
+            lines.append(" " * indent + "+" + "-" * (box_width - 2) + "+")
+            lines.append(" " * indent + "| " + label.ljust(box_width - 4) + " |")
+            lines.append(" " * indent + "+" + "-" * (box_width - 2) + "+")
+
+        # Get next nodes
+        next_nodes = subgraph.get_next_nodes(node_id)
+
+        # Check if this node has multiple outputs (split pattern)
+        has_multiple_outputs = len(output_ids) > 1
+
+        if has_multiple_outputs:
+            # Draw split pattern with branches (always show as branches if multiple outputs)
+            lines.append(" " * indent + "    |")
+            for i, out_id in enumerate(output_ids):
+                dest_info = ""
+                if out_id in edge_connections:
+                    _, to_sg = edge_connections[out_id]
+                    dest_info = f" (to Subgraph {to_sg})"
+                elif out_id in subgraph.edges:
+                    fid, _, to_node = subgraph.edges[out_id]
+                    if to_node is None and fid.has_file_resource():
+                        dest_info = f" (file: {fid.get_resource().uri})"
+
+                branch_marker = "├──>" if i < len(output_ids) - 1 else "└──>"
+                lines.append(" " * indent + f"    {branch_marker} [edge_{out_id}{dest_info}]")
+        elif len(next_nodes) == 0:
+            # Sink node with single output
+            for out_id in output_ids:
+                lines.append(" " * indent + "    |")
+                lines.append(" " * indent + "    v")
+                dest_info = ""
+                if out_id in edge_connections:
+                    _, to_sg = edge_connections[out_id]
+                    dest_info = f" (to Subgraph {to_sg})"
+                elif out_id in subgraph.edges:
+                    fid, _, to_node = subgraph.edges[out_id]
+                    if to_node is None and fid.has_file_resource():
+                        dest_info = f" (file: {fid.get_resource().uri})"
+                lines.append(" " * indent + f"[Output: edge_{out_id}{dest_info}]")
+        elif len(next_nodes) == 1:
+            # Linear chain continues
+            lines.append(" " * indent + "    |")
+            lines.append(" " * indent + "    v")
+            draw_node_chain(next_nodes[0], indent)
+        else:
+            # Multiple next nodes (shouldn't happen if has_multiple_outputs handled above)
+            lines.append(" " * indent + "    |")
+            for i, next_id in enumerate(next_nodes):
+                edge_label = ""
+                for out_id in output_ids:
+                    if out_id in subgraph.edges:
+                        _, _, to_node = subgraph.edges[out_id]
+                        if to_node == next_id:
+                            edge_label = f"edge_{out_id}"
+                            if out_id in edge_connections:
+                                _, to_sg = edge_connections[out_id]
+                                edge_label += f" (to Subgraph {to_sg})"
+                            break
+
+                branch_marker = "├──>" if i < len(next_nodes) - 1 else "└──>"
+                lines.append(" " * indent + f"    {branch_marker} [{edge_label}]")
+
+    # Start from source nodes
+    for source_id in source_nodes:
+        draw_node_chain(source_id)
+        lines.append("")  # Blank line between chains
+
+    return lines
+
+
+def _create_subgraph_summary(sg_idx: int, subgraph: IR) -> str:
+    """
+    Create a one-line summary of a subgraph for compact display.
+
+    Args:
+        sg_idx: Index of the subgraph
+        subgraph: IR object
+
+    Returns:
+        String summary like "cat → r_split → [2 outputs]"
+    """
+    if len(subgraph.nodes) == 0:
+        return "(empty)"
+
+    # Get nodes in execution order
+    source_nodes = subgraph.source_nodes()
+    if not source_nodes:
+        return "(no source)"
+
+    # Build a simple chain of command names
+    visited = set()
+    chain = []
+
+    def build_chain(node_id):
+        if node_id in visited or len(chain) >= 5:  # Limit to 5 nodes
+            return
+        visited.add(node_id)
+
+        node = subgraph.get_node(node_id)
+        label = _get_node_label(node, max_width=20)
+        chain.append(label)
+
+        next_nodes = subgraph.get_next_nodes(node_id)
+        if len(next_nodes) == 1:
+            build_chain(next_nodes[0])
+        elif len(next_nodes) > 1:
+            chain.append(f"[{len(next_nodes)} outputs]")
+
+    build_chain(source_nodes[0])
+
+    if len(chain) == 0:
+        return "(no nodes)"
+
+    return " → ".join(chain)
+
+
+def _draw_unified_graph(subgraphs: List[IR], edge_connections: Dict[int, Tuple[int, int]]) -> List[str]:
+    """
+    Draw all subgraphs in a unified view with bridge connections.
+
+    Args:
+        subgraphs: List of IR subgraphs
+        edge_connections: Map of edge_id -> (from_sg, to_sg)
+
+    Returns:
+        List of lines representing the unified visualization
+    """
+    lines = []
+
+    # Build a mapping of which subgraphs connect to which
+    sg_connections = {}  # sg_idx -> {to_sg_idx: [edge_ids]}
+    for edge_id, (from_sg, to_sg) in edge_connections.items():
+        if from_sg not in sg_connections:
+            sg_connections[from_sg] = {}
+        if to_sg not in sg_connections[from_sg]:
+            sg_connections[from_sg][to_sg] = []
+        sg_connections[from_sg][to_sg].append(edge_id)
+
+    # Draw each subgraph with connections
+    for sg_idx, subgraph in enumerate(subgraphs):
+        node_count = len(subgraph.nodes)
+        summary = _create_subgraph_summary(sg_idx, subgraph)
+
+        # Create box around subgraph
+        title = f" Subgraph {sg_idx} ({node_count} node{'s' if node_count != 1 else ''}) "
+        box_width = max(len(title) + 4, len(summary) + 6, 50)
+
+        # Top border
+        lines.append("┌" + "─" * (len(title)) + "─" + "─" * (box_width - len(title) - 2) + "┐")
+        lines.append("│" + title + " " * (box_width - len(title) - 2) + "│")
+        lines.append("│" + " " * (box_width - 2) + "│")
+
+        # Content
+        lines.append("│  " + summary + " " * (box_width - len(summary) - 4) + "│")
+        lines.append("│" + " " * (box_width - 2) + "│")
+
+        # Bottom border
+        lines.append("└" + "─" * (box_width - 2) + "┘")
+
+        # Draw bridge connections to next subgraphs
+        if sg_idx in sg_connections:
+            for to_sg_idx, edge_ids in sg_connections[sg_idx].items():
+                # Draw dashed line(s) to next subgraph
+                for edge_id in edge_ids:
+                    connector = f"    ╎ edge_{edge_id} ─ ─ ─ ─> (to Subgraph {to_sg_idx})"
+                    lines.append(connector)
+            lines.append("")  # Blank line after connections
+        else:
+            lines.append("")  # Blank line between subgraphs
+
+    return lines
+
+
+def pretty_print_subgraphs(subgraphs: List[IR], show_connections: bool = True, unified_view: bool = False) -> None:
+    """
+    Print a human-readable ASCII graph representation of subgraphs.
+
+    This function visualizes the structure of IR subgraphs with ASCII art,
+    showing nodes as boxes, edges as arrows, and cross-subgraph connections.
+
+    Args:
+        subgraphs: List of IR objects (subgraphs from split_ir)
+        show_connections: Whether to show edge connections summary at end (separate view only)
+        unified_view: If True, show all subgraphs in a connected layout with bridge edges
+
+    Example:
+        >>> subgraphs, mapping = split_ir(optimized_ir)
+        >>> pretty_print_subgraphs(subgraphs)  # Detailed separate view
+        >>> pretty_print_subgraphs(subgraphs, unified_view=True)  # Compact unified view
+    """
+    # Find all cross-subgraph connections
+    edge_connections = _find_edge_connections(subgraphs)
+
+    if unified_view:
+        # Unified view: all subgraphs in connected layout
+        print("=" * 80)
+        print(" " * 20 + "UNIFIED GRAPH VISUALIZATION")
+        print("=" * 80)
+        print()
+
+        lines = _draw_unified_graph(subgraphs, edge_connections)
+        for line in lines:
+            print(line)
+    else:
+        # Separate view: each subgraph shown individually
+        print("=" * 80)
+        print(" " * 25 + "SUBGRAPH VISUALIZATION")
+        print("=" * 80)
+        print()
+
+        # Draw each subgraph
+        for sg_idx, subgraph in enumerate(subgraphs):
+            lines = _draw_subgraph(sg_idx, subgraph, edge_connections)
+            for line in lines:
+                print(line)
+            print()
+
+        # Show cross-subgraph connection summary
+        if show_connections and edge_connections:
+            print("=" * 80)
+            print(" " * 20 + "CROSS-SUBGRAPH CONNECTIONS")
+            print("=" * 80)
+            for edge_id, (from_sg, to_sg) in sorted(edge_connections.items()):
+                print(f"  edge_{edge_id}: Subgraph {from_sg} → Subgraph {to_sg}")
+            print()
