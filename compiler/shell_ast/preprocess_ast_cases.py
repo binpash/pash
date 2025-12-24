@@ -513,7 +513,7 @@ def preprocess_node_cond(ast_node, trans_options, last_object=False):
     return preprocessed_ast_node
 
 
-def preprocess_node_arith_for(ast_node, trans_options, last_object=False):
+def preprocess_node_arithfor(ast_node, trans_options, last_object=False):
     ast_node: ArithForNode = ast_node
     preprocessed_action, sth_replaced_action = preprocess_close_node(ast_node.action, trans_options, last_object=last_object)
     ast_node.action = preprocessed_action
