@@ -19,16 +19,23 @@ from ir_to_ast import to_shell
 from ir import *
 import config
 import pash_compiler
+from pash_annotations.datatypes.AccessKind import make_stream_output, make_stream_input
+from pash_annotations.datatypes.BasicDatatypes import Operand
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from definitions.ir.dfg_node import DFGNode
+from definitions.ir.arg import Arg
 
 
 # Debugpy setup - connect before main logic runs
 debug = False
 import debugpy
 if debug:
-    debugpy.listen(5683)
-    print("🐛 Debugger listening on port 5683. Attach VSCode now!")
+    debugpy.listen(5684)
+    print("🐛 Debugger listening on port 5684. Attach VSCode now!")
     debugpy.wait_for_client()
     print("✅ Debugger attached! Continuing execution...")
+
+graph = False
 
 def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
     stdout = file_id_gen.next_file_id()
@@ -253,6 +260,231 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
 
     return subgraphs, None, 0
 
+def make_tee_node(input_id, original_output_id, s3_output_id):
+    """
+    Creates a tee node that reads from input and writes to both outputs.
+
+    This duplicates the stream:
+    - Reads from input_id (rsplit temp output)
+    - Writes to original_output_id via stdout (for downstream subgraph)
+    - Writes to s3_output_id as file argument (for s3-put-object)
+
+    Args:
+        input_id: Input fifo edge ID
+        original_output_id: Output edge ID for downstream processing
+        s3_output_id: Output edge ID for file/S3 upload
+
+    Returns:
+        DFGNode configured as tee command
+    """
+    print(f"[DEBUG make_tee_node] Creating tee node:")
+    print(f"  input_id: {input_id} (type: {type(input_id)})")
+    print(f"  original_output_id: {original_output_id} (type: {type(original_output_id)})")
+    print(f"  s3_output_id: {s3_output_id} (type: {type(s3_output_id)})")
+
+    access_map = {
+        input_id: make_stream_input(),           # Input from rsplit
+        original_output_id: make_stream_output(), # Stdout → original fifo
+        s3_output_id: make_stream_output()        # File arg → s3 upload fifo
+    }
+    print(f"[DEBUG make_tee_node] access_map created: {access_map}")
+
+    # tee command: tee <file_operand>
+    # Reads stdin, writes to stdout AND to <file_operand>
+    operand_list = [s3_output_id]  # File argument for S3 copy
+    print(f"[DEBUG make_tee_node] operand_list: {operand_list}")
+
+    cmd_inv = CommandInvocationWithIOVars(
+        cmd_name="tee",
+        flag_option_list=[],
+        operand_list=operand_list,
+        implicit_use_of_streaming_input=input_id,
+        implicit_use_of_streaming_output=original_output_id,
+        access_map=access_map
+    )
+    print(f"[DEBUG make_tee_node] cmd_inv created: {cmd_inv}")
+
+    node = DFGNode(cmd_inv)
+    print(f"[DEBUG make_tee_node] DFGNode created with id: {node.get_id()}")
+    return node
+
+def make_s3_put_node(input_id, s3_key, version_arg="$1"):
+    """
+    Creates an s3-put-object node.
+
+    Command: python3.9 aws/s3-put-object.py <s3_key> <input_fifo> <version>
+
+    Args:
+        input_id: Input fifo edge ID
+        s3_key: S3 key for the uploaded object
+        version_arg: Version argument passed to s3-put-object.py (default "$1")
+
+    Returns:
+        DFGNode configured for aws/s3-put-object.py
+    """
+    print(f"[DEBUG make_s3_put_node] Creating s3-put node:")
+    print(f"  input_id: {input_id} (type: {type(input_id)})")
+    print(f"  s3_key: {s3_key}")
+    print(f"  version_arg: {version_arg}")
+
+    access_map = {input_id: make_stream_input()}
+    print(f"[DEBUG make_s3_put_node] access_map: {access_map}")
+
+    operand_list = [
+        Operand(Arg.string_to_arg(s3_key)),      # S3 key
+        input_id,                                 # Input fifo
+        Operand(Arg.string_to_arg(version_arg))  # Version ($1)
+    ]
+    print(f"[DEBUG make_s3_put_node] operand_list: {operand_list}")
+
+    full_operand_list = [Operand(Arg.string_to_arg("aws/s3-put-object.py"))] + operand_list
+    print(f"[DEBUG make_s3_put_node] full_operand_list: {full_operand_list}")
+
+    cmd_inv = CommandInvocationWithIOVars(
+        cmd_name="python3.9",
+        flag_option_list=[],
+        operand_list=full_operand_list,
+        implicit_use_of_streaming_input=None,
+        implicit_use_of_streaming_output=None,
+        access_map=access_map
+    )
+    print(f"[DEBUG make_s3_put_node] cmd_inv created: {cmd_inv}")
+
+    node = DFGNode(cmd_inv)
+    print(f"[DEBUG make_s3_put_node] DFGNode created with id: {node.get_id()}")
+    return node
+
+def add_tee_nodes_after_rsplit(
+    first_subgraph: IR,
+    file_id_gen: FileIdGen,
+    s3_output_prefix: str = "outputs/"
+) -> bool:
+    """
+    Adds tee nodes after rsplit in the first subgraph to save copies to S3.
+
+    This function:
+    1. Finds the rsplit node in the first subgraph
+    2. For each rsplit output:
+       - Creates intermediate temp edge
+       - Inserts tee node to duplicate the stream
+       - Creates s3-put-object node to save copy to S3
+    3. Rewires the graph to maintain original dataflow
+
+    Args:
+        first_subgraph: The first subgraph (typically contains rsplit)
+        file_id_gen: FileIdGen to create new edge IDs
+        s3_output_prefix: S3 prefix for output files (default "outputs/")
+
+    Returns:
+        True if tee nodes were added, False if rsplit not found or other error
+    """
+    print("\n" + "="*80)
+    print("[DEBUG add_tee_nodes_after_rsplit] STARTING")
+    print("="*80)
+
+    # Find rsplit node in the first subgraph
+    rsplit_node = None
+    rsplit_node_id = None
+
+    print(f"[DEBUG] Searching for RSplit node in first_subgraph")
+    print(f"[DEBUG] first_subgraph has {len(first_subgraph.nodes)} nodes")
+
+    for node_id in first_subgraph.nodes.keys():
+        node = first_subgraph.get_node(node_id)
+        print(f"[DEBUG] Checking node {node_id}: {type(node).__name__}")
+        if isinstance(node, RSplit):
+            rsplit_node = node
+            rsplit_node_id = node_id
+            print(f"[DEBUG] Found RSplit node with id: {rsplit_node_id}")
+            break
+
+    if rsplit_node is None:
+        print("[DEBUG] No rsplit found, returning False")
+        return False
+
+    # Get rsplit output edges
+    rsplit_output_fids = first_subgraph.get_node_output_fids(rsplit_node_id)
+    print(f"[DEBUG] RSplit has {len(rsplit_output_fids)} output edges")
+
+    if len(rsplit_output_fids) == 0:
+        print("[DEBUG] No outputs, returning False")
+        return False
+
+    # For each rsplit output edge, insert tee + s3-put
+    for idx, rsplit_output_fid in enumerate(rsplit_output_fids):
+        print(f"\n[DEBUG] Processing rsplit output {idx+1}/{len(rsplit_output_fids)}")
+        original_edge_id = rsplit_output_fid.get_ident()
+        print(f"[DEBUG]   original_edge_id: {original_edge_id}")
+
+        # Get the current consumer of the original edge
+        _fid, from_node, to_node = first_subgraph.edges[original_edge_id]
+        print(f"[DEBUG]   Edge info: from_node={from_node}, to_node={to_node}")
+
+        # 1. Create temp edge (between rsplit and tee)
+        print(f"[DEBUG] Step 1: Creating temp edge")
+        temp_edge = file_id_gen.next_ephemeral_file_id()
+        print(f"[DEBUG]   temp_edge id: {temp_edge.get_ident()}")
+        first_subgraph.add_edge(temp_edge)
+
+        # 2. Create s3 upload edge (between tee and s3-put)
+        print(f"[DEBUG] Step 2: Creating s3 edge")
+        s3_edge = file_id_gen.next_ephemeral_file_id()
+        print(f"[DEBUG]   s3_edge id: {s3_edge.get_ident()}")
+        first_subgraph.add_edge(s3_edge)
+
+        # 3. Rewire rsplit → temp_edge (instead of rsplit → original_edge)
+        print(f"[DEBUG] Step 3: Rewiring rsplit → temp_edge")
+        rsplit_node.replace_edge(original_edge_id, temp_edge.get_ident())
+        first_subgraph.set_edge_from(rsplit_node_id, temp_edge)
+
+        # 4. Create and add tee node
+        print(f"[DEBUG] Step 4: Creating tee node")
+        tee_node = make_tee_node(
+            temp_edge.get_ident(),      # Input: from rsplit
+            original_edge_id,            # Output 1: to downstream (original path)
+            s3_edge.get_ident()         # Output 2: to s3-put
+        )
+        print(f"[DEBUG]   Adding tee node to subgraph")
+        first_subgraph.add_node(tee_node)
+
+        # 5. Connect edges to/from tee
+        print(f"[DEBUG] Step 5: Connecting edges to/from tee")
+        first_subgraph.set_edge_to(temp_edge.get_ident(), tee_node.get_id())       # temp → tee (input)
+
+        # Get the actual FileId from the graph's edges for the original edge
+        original_fid = first_subgraph.edges[original_edge_id][0]
+        print(f"[DEBUG]   Retrieved original_fid from graph: {original_fid}")
+
+        first_subgraph.set_edge_from(original_fid, tee_node.get_id())               # tee → original (stdout)
+        print("HEREHERE")
+        first_subgraph.set_edge_from(s3_edge, tee_node.get_id())                    # tee → s3 (file arg)
+        print(f"[DEBUG]   Edges connected")
+
+        # 6. Original edge now flows from tee (not rsplit)
+        # Keep the downstream connection intact: original_edge → to_node
+        print(f"[DEBUG] Step 6: Setting original edge downstream connection")
+        first_subgraph.set_edge_to(original_edge_id, to_node)
+
+        # 7. Create and add s3-put node
+        print(f"[DEBUG] Step 7: Creating s3-put node")
+        fifo_name = f"fifo{original_edge_id}"
+        s3_key = f"{s3_output_prefix}{fifo_name}.out"
+        print(f"[DEBUG]   s3_key: {s3_key}")
+
+        s3_put_node = make_s3_put_node(
+            s3_edge.get_ident(),
+            s3_key
+        )
+        print(f"[DEBUG]   Adding s3-put node to subgraph")
+        first_subgraph.add_node(s3_put_node)
+        first_subgraph.set_edge_to(s3_edge.get_ident(), s3_put_node.get_id())
+        print(f"[DEBUG]   s3-put node connected")
+
+    print("\n" + "="*80)
+    print("[DEBUG add_tee_nodes_after_rsplit] COMPLETED SUCCESSFULLY")
+    print("="*80 + "\n")
+    return True
+
 def change_sorting(subgraphs:List[IR]) -> List[IR]:
     for subgraph in subgraphs:
         source_nodes = subgraph.source_nodes()    # list of ints
@@ -290,13 +522,15 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         main_subgraph_script_id: the script id to execute in the first lambda
     """
     # Print subgraphs for debugging/visualization
-    print("\n" + "="*80)
-    print("DEBUG: Visualizing subgraphs before adding nodes")
-    print("="*80)
 
-    pretty_print_subgraphs(subgraphs, unified_view=True)
+    if graph:
+        print("\n" + "="*80)
+        print("DEBUG: Visualizing subgraphs before adding nodes")
+        print("="*80)
 
-    print("="*80)
+        pretty_print_subgraphs(subgraphs, unified_view=True)
+
+        print("="*80)
 
     # The graph to execute in the main pash_compiler
     main_graph = IR({}, {})
@@ -321,18 +555,29 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     ec2_in_edge = None
     total_lambdas = 0
     subgraphs, ec2_in_edge, total_lambdas = optimize_s3_lambda_direct_streaming(subgraphs)
+
+    # Add tee nodes after rsplit in first subgraph to capture output copies
+    if len(subgraphs) > 0 and False: # todo rm after 
+        tee_added = add_tee_nodes_after_rsplit(
+            subgraphs[0],  # First subgraph
+            file_id_gen,
+            s3_output_prefix="outputs/"
+        )
+        if tee_added:
+            print("[IR Helper] Added tee nodes after rsplit for output capture")
+
     print("AFTER OPTIMIZATION, TOTAL LAMBDAS:", total_lambdas)
 
+    if graph:
+        print("\n" + "="*80)
+        print("DEBUG: Visualizing subgraphs after S3 optimization")
+        print("="*80)
 
-    print("\n" + "="*80)
-    print("DEBUG: Visualizing subgraphs after S3 optimization")
-    print("="*80)
+        pretty_print_subgraphs(subgraphs, unified_view=True)
 
-    pretty_print_subgraphs(subgraphs, unified_view=True)
-
-    print("="*80)
-    exit()
-
+        print("="*80)
+    #exit()
+    #TODO careful with this exit
     
     # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
@@ -446,6 +691,14 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 is_tcp=(not matching_subgraph is main_graph))
                 matching_subgraph.add_node(remote_read)
 
+    if graph:
+        print("\n\nAFTER FIRST FOR LOOP")
+        print("="*80)
+
+        pretty_print_subgraphs(subgraphs, unified_view=True)
+
+        print("="*80)
+
     lambda_counter = 0
     job_uid = uuid4()
     # Replace non ephemeral input edges with remote read/write
@@ -528,6 +781,15 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
+
+    if graph:
+        print("\n\nAFTER SECOND FOR LOOP (where we add s3 read nodes, i.e convert the input edges into s3 get nodes)")
+        print("="*80)
+
+        pretty_print_subgraphs(subgraphs, unified_view=True)
+
+        print("="*80)
+
     main_graph_script_id = uuid4()
     subgraph_script_id_pairs[main_graph] = main_graph_script_id
 
@@ -725,6 +987,38 @@ def _get_node_label(node, max_width=60) -> str:
     # Get basename for cleaner display
     cmd_basename = os.path.basename(cmd_name)
 
+    # Special handling for s3-shared-read - show full arguments without truncation
+    if 's3-shard-read' in cmd_basename or 's3-shar' in cmd_basename:
+        import re
+        parts = [cmd_basename]
+
+        # Extract filename and byte range from operands
+        if hasattr(cmd_inv, 'operand_list'):
+            for op in cmd_inv.operand_list:
+                op_str = str(op)
+                # Look for filename (files typically have extensions or paths)
+                if any(ext in op_str for ext in ['.csv', '.txt', '.json', 'inputs/', 'outputs/']):
+                    filename = op_str.strip('"').strip("'")
+                    if filename and not filename.startswith('bytes='):
+                        parts.append(f'"{filename}"')
+                # Look for byte range
+                elif 'bytes=' in op_str:
+                    match = re.search(r'bytes=(\d+-\d+)', op_str)
+                    if match:
+                        parts.append(match.group(0))
+                # Look for shard index
+                elif 'shard=' in op_str:
+                    match = re.search(r'shard=(\d+)', op_str)
+                    if match:
+                        parts.append(match.group(0))
+                # Look for num_shards
+                elif 'num_shards=' in op_str:
+                    match = re.search(r'num_shards=(\d+)', op_str)
+                    if match:
+                        parts.append(match.group(0))
+
+        return ' '.join(parts)  # Return without truncation
+
     # Special handling for r_wrap - extract inner command
     if cmd_basename == "r_wrap" or "wrap" in cmd_basename.lower():
         # Try to extract the inner command from operands
@@ -784,6 +1078,72 @@ def _get_node_label(node, max_width=60) -> str:
         label = label[:keep_chars] + " ... " + label[-keep_chars:]
 
     return label
+
+
+def _get_edge_info(fid, edge_id, subgraph, is_input):
+    """
+    Extract comprehensive information about an edge for display.
+
+    Args:
+        fid: FileId object for this edge
+        edge_id: The edge identifier
+        subgraph: IR subgraph containing this edge
+        is_input: True if this is an input edge, False if output
+
+    Returns:
+        Formatted string like:
+        - "edge_16 [FILE] \"covid-mts/inputs/in_tiny.csv\""
+        - "edge_17 [FIFO] '/tmp/pash_fifo_123'"
+        - "edge_18 [stdin]"
+    """
+    info_parts = [f"edge_{edge_id}"]
+
+    # Edge type indicator
+    if fid.is_ephemeral():
+        info_parts.append("[FIFO]")
+    elif fid.has_file_descriptor_resource():
+        resource = fid.get_resource()
+        if resource.is_stdin():
+            info_parts.append("[stdin]")
+        elif resource.is_stdout():
+            info_parts.append("[stdout]")
+        else:
+            info_parts.append("[fd]")
+    elif fid.has_file_resource():
+        info_parts.append("[FILE]")
+
+    # Resource details
+    if fid.has_file_resource():
+        filename = str(fid.get_resource().uri).strip('"')
+        info_parts.append(f'"{filename}"')
+
+        # Check if this edge connects to an S3 node with byte range info
+        # Look for ServerlessRemotePipe nodes in this subgraph
+        for node_id in subgraph.nodes.keys():
+            node = subgraph.get_node(node_id)
+            # Check if this node reads from this edge
+            if edge_id in node.get_input_list():
+                # Check if it's an S3 lambda node
+                if hasattr(node, 'cmd_invocation_with_io_vars'):
+                    cmd = node.cmd_invocation_with_io_vars
+                    # Look for byte range in operands
+                    if hasattr(cmd, 'operand_list'):
+                        for op in cmd.operand_list:
+                            op_str = str(op)
+                            if 'bytes=' in op_str:
+                                # Extract byte range
+                                import re
+                                match = re.search(r'bytes=(\d+-\d+)', op_str)
+                                if match:
+                                    info_parts.append(match.group(0))
+                                    break  # Found byte range, no need to continue
+    elif fid.is_ephemeral():
+        # Show FIFO name if needed
+        fifo_suffix = fid.get_fifo_suffix()
+        if fifo_suffix:
+            info_parts.append(f"'{config.PASH_TMP_PREFIX}{fifo_suffix}'")
+
+    return " ".join(info_parts)
 
 
 def _find_edge_connections(subgraphs: List[IR]) -> Dict[int, Tuple[int, int]]:
@@ -1001,36 +1361,38 @@ def _create_subgraph_summary(sg_idx: int, subgraph: IR) -> str:
     if len(subgraph.nodes) == 0:
         return "(empty)"
 
-    # Get nodes in execution order
+    # NEW APPROACH: Show all nodes starting with source nodes
+    # (Can't follow edges for s3 nodes since they have output_edge=None)
+
+    # Start with source nodes (nodes that start the pipeline)
     source_nodes = subgraph.source_nodes()
-    if not source_nodes:
-        return "(no source)"
+    node_ids_in_order = list(source_nodes)  # Source nodes first
 
-    # Build a simple chain of command names
-    visited = set()
-    chain = []
+    # Add remaining nodes in sorted order
+    for node_id in sorted(subgraph.nodes.keys()):
+        if node_id not in node_ids_in_order:
+            node_ids_in_order.append(node_id)
 
-    def build_chain(node_id):
-        if node_id in visited or len(chain) >= 5:  # Limit to 5 nodes
-            return
-        visited.add(node_id)
-
+    # Create labels
+    node_labels = []
+    for node_id in node_ids_in_order:
         node = subgraph.get_node(node_id)
-        label = _get_node_label(node, max_width=20)
-        chain.append(label)
+        label = _get_node_label(node, max_width=100)
+        node_labels.append(label)
+        if len(node_labels) >= 5:  # Limit to 5 nodes
+            break
 
-        next_nodes = subgraph.get_next_nodes(node_id)
-        if len(next_nodes) == 1:
-            build_chain(next_nodes[0])
-        elif len(next_nodes) > 1:
-            chain.append(f"[{len(next_nodes)} outputs]")
-
-    build_chain(source_nodes[0])
-
-    if len(chain) == 0:
+    if len(node_labels) == 0:
         return "(no nodes)"
 
-    return " → ".join(chain)
+    # Check if there are multiple outputs at the end
+    sink_nodes = subgraph.sink_nodes()
+    if len(sink_nodes) > 0:
+        total_outputs = sum(len(subgraph.get_node_output_fids(s)) for s in sink_nodes)
+        if total_outputs > 1:
+            node_labels.append(f"[{total_outputs} outputs]")
+
+    return " → ".join(node_labels)
 
 
 def _draw_unified_graph(subgraphs: List[IR], edge_connections: Dict[int, Tuple[int, int]]) -> List[str]:
@@ -1060,6 +1422,19 @@ def _draw_unified_graph(subgraphs: List[IR], edge_connections: Dict[int, Tuple[i
         node_count = len(subgraph.nodes)
         summary = _create_subgraph_summary(sg_idx, subgraph)
 
+        # NEW: Find and display external INPUT edges
+        source_nodes = subgraph.source_nodes()
+        for source_id in source_nodes:
+            input_fids = subgraph.get_node_input_fids(source_id)
+            for fid in input_fids:
+                edge_id = fid.get_ident()
+                if edge_id in subgraph.edges:
+                    _, from_node, _ = subgraph.edges[edge_id]
+                    if from_node is None:  # External input
+                        edge_info = _get_edge_info(fid, edge_id, subgraph, is_input=True)
+                        lines.append(f"[Input: {edge_info}]")
+                        lines.append("    ↓")
+
         # Create box around subgraph
         title = f" Subgraph {sg_idx} ({node_count} node{'s' if node_count != 1 else ''}) "
         box_width = max(len(title) + 4, len(summary) + 6, 50)
@@ -1075,6 +1450,23 @@ def _draw_unified_graph(subgraphs: List[IR], edge_connections: Dict[int, Tuple[i
 
         # Bottom border
         lines.append("└" + "─" * (box_width - 2) + "┘")
+
+        # NEW: Find and display external OUTPUT edges
+        sink_nodes = subgraph.sink_nodes()
+        has_external_output = False
+        for sink_id in sink_nodes:
+            output_fids = subgraph.get_node_output_fids(sink_id)
+            for fid in output_fids:
+                edge_id = fid.get_ident()
+                if edge_id in subgraph.edges:
+                    _, _, to_node = subgraph.edges[edge_id]
+                    if to_node is None and edge_id not in edge_connections:
+                        # External output (not to another subgraph)
+                        if not has_external_output:
+                            lines.append("    ↓")
+                            has_external_output = True
+                        edge_info = _get_edge_info(fid, edge_id, subgraph, is_input=False)
+                        lines.append(f"[Output: {edge_info}]")
 
         # Draw bridge connections to next subgraphs
         if sg_idx in sg_connections:
