@@ -947,8 +947,9 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         export_path = "export PATH=$PATH:runtime\n"
         export_rust_trace = "export RUST_BACKTRACE=1\n"
         export_lib_path = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib\n"
+        export_locale_path = "export LOCPATH=/var/task/runtime/locale\n"
         add_version = "version=$2\n"
-        script = export_path+export_lib_path+export_rust_trace+add_version+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
+        script = export_path+export_lib_path+export_locale_path+export_rust_trace+add_version+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
         # generate scripts
         if recover and subgraph in fifo_to_be_replaced:
             for new_fifo, recover_fifo in fifo_to_be_replaced[subgraph]:
