@@ -3,7 +3,7 @@ service: pash
 provider:
   name: aws
   region: us-east-1
-  runtime: python3.9
+  runtime: python3.12
   memorySize: 1769
   timeout: 30
   stage: release
