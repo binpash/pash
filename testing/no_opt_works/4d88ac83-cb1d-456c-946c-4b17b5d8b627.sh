@@ -1,6 +1,9 @@
 export PATH=$PATH:runtime
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib
 export RUST_BACKTRACE=1
+export LC_ALL=C
+export LANG=C
+
 version=$2
 mkdir -p /tmp/pash_8Z86Ixy/ 
 mkdir -p /tmp/pash_8Z86Ixy/6e9e138c3e834eb78417be4b5ac285a0/ 

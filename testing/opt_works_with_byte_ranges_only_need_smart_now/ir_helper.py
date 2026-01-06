@@ -416,7 +416,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                             filesize = int(basename)
                         except ValueError:
                             # Default to 1MB if parsing fails
-                            print(f"Warning: Could not parse file size from '{filename}', defaulting to 1MB")
+                            print(f"Warning: Could not parse file size from '{filename}', going to FAIL")
                             assert False, "File size parsing failed" # important to know if this is possibly failing, also byte range will give incorrect results here
 
                     print(f"File: {filename} -> Size: {filesize} bytes")

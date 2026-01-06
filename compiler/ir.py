@@ -307,6 +307,7 @@ class IR:
 
     def set_edge_from(self, edge_id, from_node_id):
         edge_fid, old_from_node, to_node = self.edges[edge_id]
+        #print("SET EDGE FROM:", edge_id, from_node_id, to_node)
         self.edges[edge_id] = (edge_fid, from_node_id, to_node)
 
     def get_edge_fid(self, fid_id):
