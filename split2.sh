@@ -71,7 +71,7 @@ tee "$DEBUGDIR/s3_raw_stream.txt" < "$S3_STREAM_PIPE" > "$SPLIT_INPUT_PIPE" &
 PID_TEE_S3=$!
 
 # 2) Split stream
-runtime/r_split -r \
+runtime/r_split \
   "$SPLIT_INPUT_PIPE" \
   "$SPLIT_SIZE_BYTES" \
   "$SPLIT_FIRST_PIPE" \

@@ -14,6 +14,8 @@ import definitions.ir.nodes.serverless_remote_pipe as serverless_remote_pipe
 import definitions.ir.nodes.serverless_lambda_invoke as serverless_lambda_invoke
 from definitions.ir.nodes.r_wrap import RWrap
 from definitions.ir.nodes.r_split import RSplit
+from definitions.ir.nodes.r_merge import RMerge
+from definitions.ir.nodes.cat import make_cat_node
 from dspash.ir_helper import split_ir
 from ir_to_ast import to_shell
 from ir import *
@@ -191,8 +193,202 @@ def adjust_lambda_incoming_edges(
                     """
     return total_lambdas
 
+
+# ============================================================================
+# Byte-range optimization helpers (for S3 direct lambda streaming)
+# ============================================================================
+
+def unwrap_rwrap_node(rwrap_node: RWrap) -> DFGNode:
+    """
+    Extract the inner command from an RWrap node and create a plain DFGNode
+    that runs it directly without the r_wrap wrapper.
+
+    RWrap structure: r_wrap bash -c 'command'
+    Unwrapped:       bash -c 'command'
+    """
+    cmd_inv = rwrap_node.cmd_invocation_with_io_vars
+
+    # operand_list = ["bash -c", "'command args...'"]
+    # We want to run: bash -c 'command args...'
+    operand_list = cmd_inv.operand_list
+
+    # Extract the inner command string (operand_list[1])
+    inner_cmd = operand_list[1] if len(operand_list) > 1 else operand_list[0]
+
+    input_id = cmd_inv.implicit_use_of_streaming_input
+    output_id = cmd_inv.implicit_use_of_streaming_output
+
+    access_map = {
+        input_id: make_stream_input(),
+        output_id: make_stream_output()
+    }
+
+    # Create bash -c command
+    new_cmd_inv = CommandInvocationWithIOVars(
+        cmd_name="bash",
+        flag_option_list=[],
+        operand_list=[Operand(Arg.string_to_arg("-c")), inner_cmd],
+        implicit_use_of_streaming_input=input_id,
+        implicit_use_of_streaming_output=output_id,
+        access_map=access_map
+    )
+
+    return DFGNode(new_cmd_inv,
+                   com_redirs=rwrap_node.com_redirs,
+                   com_assignments=rwrap_node.com_assignments)
+
+
+def unwrap_rwraps_in_subgraph(subgraph: IR) -> int:
+    """
+    Find all RWrap nodes in a subgraph and replace them with unwrapped
+    versions that run the inner command directly.
+
+    Returns: Number of RWrap nodes unwrapped
+    """
+    unwrapped_count = 0
+
+    # Collect RWrap node IDs first (avoid modifying dict during iteration)
+    rwrap_ids = [nid for nid, node in subgraph.nodes.items() if isinstance(node, RWrap)]
+
+    for rwrap_id in rwrap_ids:
+        rwrap_node = subgraph.get_node(rwrap_id)
+
+        # Create unwrapped node with same edges
+        unwrapped_node = unwrap_rwrap_node(rwrap_node)
+
+        # Remove old RWrap node (disconnects edges)
+        subgraph.remove_node(rwrap_id)
+
+        # Add new unwrapped node (reconnects edges)
+        subgraph.add_node(unwrapped_node)
+
+        unwrapped_count += 1
+
+    return unwrapped_count
+
+
+def replace_rmerge_with_cat(subgraph: IR) -> bool:
+    """
+    Replace RMerge nodes (runtime/r_merge) with cat nodes.
+
+    Returns: True if any replacement was made
+    """
+    replaced = False
+
+    # Collect RMerge node IDs
+    rmerge_ids = [nid for nid, node in subgraph.nodes.items() if isinstance(node, RMerge)]
+
+    for rmerge_id in rmerge_ids:
+        rmerge_node = subgraph.get_node(rmerge_id)
+
+        input_ids = rmerge_node.get_input_list()
+        output_ids = rmerge_node.get_output_list()
+
+        if len(output_ids) != 1:
+            continue  # Unexpected structure
+
+        output_id = output_ids[0]
+
+        # Create cat node with same inputs and output
+        cat_node = make_cat_node(input_ids, output_id)
+
+        # Remove old RMerge
+        subgraph.remove_node(rmerge_id)
+
+        # Add cat node (this reconnects the edges)
+        subgraph.add_node(cat_node)
+
+        replaced = True
+
+    return replaced
+
+
+def is_merger_subgraph(subgraph: IR) -> bool:
+    """
+    Check if a subgraph is a merger/EC2 node by looking for RMerge nodes.
+    """
+    for node in subgraph.nodes.values():
+        if isinstance(node, RMerge):
+            return True
+    return False
+
+
+def get_downstream_subgraphs(subgraph: IR, input_fifo_map: Dict[int, Tuple]) -> List[IR]:
+    """
+    Find all subgraphs that consume outputs from the given subgraph.
+
+    Args:
+        subgraph: The source subgraph
+        input_fifo_map: Mapping from output edge id to (consuming_subgraph, ...)
+
+    Returns:
+        List of downstream subgraphs
+    """
+    downstream = []
+    sink_nodes = subgraph.sink_nodes()
+
+    for sink_id in sink_nodes:
+        out_edges = subgraph.get_node_output_fids(sink_id)
+        for out_edge in out_edges:
+            out_edge_id = out_edge.get_ident()
+            if out_edge_id in input_fifo_map:
+                downstream_subgraph = input_fifo_map[out_edge_id][0]
+                if downstream_subgraph not in downstream:
+                    downstream.append(downstream_subgraph)
+
+    return downstream
+
+
+def apply_byte_range_optimizations(
+    worker_subgraphs: List[IR],
+    all_subgraphs: List[IR],
+    input_fifo_map: Dict[int, Tuple]
+) -> None:
+    """
+    Apply byte-range optimizations (unwrap RWrap, replace RMerge) to:
+    1. Worker subgraphs (fed by rsplit outputs)
+    2. Their consumer subgraphs (may be multiple consecutive workers)
+    3. Continue until reaching a merger subgraph (contains RMerge)
+    4. Apply to merger, then STOP (don't process downstream of merger)
+
+    Example pipeline:
+      rsplit -> worker1 -> worker2 -> worker3 -> merger (RMerge) -> downstream
+                ↑          ↑          ↑          ↑
+                process    process    process    process & STOP
+    """
+    processed = set()  # Track processed subgraphs by id
+    queue = list(worker_subgraphs)  # BFS queue
+
+    while queue:
+        subgraph = queue.pop(0)
+        sg_id = id(subgraph)
+
+        if sg_id in processed:
+            continue
+        processed.add(sg_id)
+
+        # Apply optimizations to this subgraph
+        rwraps_unwrapped = unwrap_rwraps_in_subgraph(subgraph)
+        if rwraps_unwrapped > 0:
+            print(f"[IR Helper] Unwrapped {rwraps_unwrapped} RWrap nodes")
+
+        # Check if this is a merger subgraph
+        if is_merger_subgraph(subgraph):
+            # Replace RMerge with cat in the merger
+            if replace_rmerge_with_cat(subgraph):
+                print("[IR Helper] Replaced RMerge with cat in merger subgraph")
+            # STOP - don't process downstream of merger
+            continue
+
+        # Not a merger - continue to downstream subgraphs
+        downstream = get_downstream_subgraphs(subgraph, input_fifo_map)
+        for ds in downstream:
+            if id(ds) not in processed:
+                queue.append(ds)
+
+
 # cat -> split
-def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
+def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict[int, Tuple] = None):
     if len(subgraphs) == 1: #no point in optimizing here 
         return subgraphs, None, 0
     
@@ -255,6 +451,21 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR]):
                             rsplit_output_ids,  # rsplit output edge IDs,
                             in_edge
                         )
+
+                        # Apply byte-range optimizations (unwrap RWrap, replace RMerge with cat)
+                        # from workers through to the merger subgraph
+                        if total_lambdas > 0 and input_fifo_map is not None:
+                            # Worker subgraphs are those that receive rsplit output edges
+                            worker_subgraphs = []
+                            for rsplit_output_id in rsplit_output_ids:
+                                if rsplit_output_id in input_fifo_map:
+                                    worker_sg = input_fifo_map[rsplit_output_id][0]
+                                    if worker_sg not in worker_subgraphs:
+                                        worker_subgraphs.append(worker_sg)
+
+                            # Apply optimizations from workers through to merger
+                            if worker_subgraphs:
+                                apply_byte_range_optimizations(worker_subgraphs, subgraphs, input_fifo_map)
 
                         return subgraphs[1:], in_edge, total_lambdas
 
@@ -516,6 +727,11 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         subgraphs: list of sub sections of an optimized IR (returned from split_ir)
         file_id_gen: file id generator of the original ir
         input_fifo_map: mapping from input idge id to subgraph (returned from split_ir)
+        args: command-line arguments including:
+            - args.sls_output: S3 output location for final results
+            - args.no_eager: Disable eager prefetching nodes
+            - args.enable_s3_direct: Enable S3 direct lambda streaming optimization
+        recover: whether to use recovery mode (default False)
     Returns:
         main_graph_script_id: the script id to execute on main shell
         subgraph_script_id_pairs: mapping from subgraph to unique script id
@@ -554,7 +770,16 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
 
     ec2_in_edge = None
     total_lambdas = 0
-    subgraphs, ec2_in_edge, total_lambdas = optimize_s3_lambda_direct_streaming(subgraphs)
+    if args.enable_s3_direct:
+        print("[IR Helper] S3 direct streaming optimization ENABLED")
+        subgraphs, ec2_in_edge, total_lambdas = optimize_s3_lambda_direct_streaming(subgraphs, input_fifo_map)
+    else:
+        print("[IR Helper] S3 direct streaming optimization DISABLED (use --enable_s3_direct to enable)")
+        # Keep original subgraphs unchanged - matching the "no optimization" return pattern
+
+    #generate graphviz here so we can see the diff
+    # actually not trivial as we have a list of IRs here :( not a single IR 
+
 
     # Add tee nodes after rsplit in first subgraph to capture output copies
     if len(subgraphs) > 0 and False: # todo rm after 
@@ -566,7 +791,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         if tee_added:
             print("[IR Helper] Added tee nodes after rsplit for output capture")
 
-    print("AFTER OPTIMIZATION, TOTAL LAMBDAS:", total_lambdas)
+    print("AFTER OPTIMIZATION, TOTAL LAMBDAS STREAMING DIRECTLY FROM S3:", total_lambdas)
 
     if graph:
         print("\n" + "="*80)
@@ -947,9 +1172,11 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         export_path = "export PATH=$PATH:runtime\n"
         export_rust_trace = "export RUST_BACKTRACE=1\n"
         export_lib_path = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib\n"
-        export_locale_path = "export LOCPATH=/var/task/runtime/locale\n"
+        export_locale_path = "export LOCPATH=/var/task/runtime/locale\n" 
+        export_lang = "export LANG=C.UTF-8\n"
+        export_locale_all = "export LOCALE_ALL=C.UTF-8\n"
         add_version = "version=$2\n"
-        script = export_path+export_lib_path+export_locale_path+export_rust_trace+add_version+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
+        script = export_path+export_lib_path+export_locale_path+export_lang+export_locale_all+export_rust_trace+add_version+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
         # generate scripts
         if recover and subgraph in fifo_to_be_replaced:
             for new_fifo, recover_fifo in fifo_to_be_replaced[subgraph]:
