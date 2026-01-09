@@ -42,7 +42,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             implicit_use_of_streaming_output = local_fifo_id
         else:
             if is_s3_lambda:
-                remote_pipe_bin = "python3.9 aws/s3-shard-reader.py"
+                remote_pipe_bin = "python3 aws/s3-shard-reader.py"
                 operand_list.append(Operand(Arg.string_to_arg(str(remote_key)))) # s3 key
                 #if output_edge and (output_edge.get_resource() is not None):
                 #    # we need to redirect the output to some file or stdout

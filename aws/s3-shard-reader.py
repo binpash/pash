@@ -24,7 +24,67 @@ import os
 import sys
 import subprocess
 import threading
+import time
+from botocore.exceptions import ClientError
 from io import BytesIO
+
+
+def _now_ts():
+    return f"{time.time():.3f}"
+
+
+def _get_env_timeout(name, default_seconds):
+    raw = os.environ.get(name)
+    if not raw:
+        return default_seconds
+    try:
+        value = float(raw)
+    except ValueError:
+        return default_seconds
+    return max(0.0, value)
+
+
+RENDEZVOUS_PREFIX = os.environ.get("PASH_S3_RENDEZVOUS_PREFIX", "rendezvous")
+
+
+def _rendezvous_key(job_uid, requester_index, target_index, kind):
+    return f"{RENDEZVOUS_PREFIX}/{job_uid}/{kind}_{requester_index}_to_{target_index}"
+
+
+def _s3_marker_exists(s3, bucket, key):
+    try:
+        s3.head_object(Bucket=bucket, Key=key)
+        return True
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "")
+        if code in ("404", "NoSuchKey", "NotFound"):
+            return False
+        raise
+
+
+def _s3_put_marker(s3, bucket, key, body=b"1"):
+    s3.put_object(Bucket=bucket, Key=key, Body=body)
+
+
+def _s3_delete_marker(s3, bucket, key):
+    try:
+        s3.delete_object(Bucket=bucket, Key=key)
+    except ClientError:
+        pass
+
+
+def _wait_for_marker(s3, bucket, key, timeout_secs, poll_secs, debug=False, log_prefix=""):
+    deadline = time.time() + timeout_secs
+    while True:
+        if _s3_marker_exists(s3, bucket, key):
+            if debug and log_prefix:
+                print(f"[{_now_ts()}]{log_prefix} Found marker: {key}", file=sys.stderr)
+            return True
+        if time.time() >= deadline:
+            if debug and log_prefix:
+                print(f"[{_now_ts()}]{log_prefix} Timeout waiting for marker: {key}", file=sys.stderr)
+            return False
+        time.sleep(poll_secs)
 
 
 # Dynamic pashlib path detection
@@ -197,7 +257,7 @@ def upload_to_s3(bucket, key, data, debug=False):
         return False
 
 
-def start_single_server_thread(shard_index, requester_index, job_uid, s3_bucket, s3_key, byte_range_str, debug=False):
+def start_single_server_thread(shard_index, requester_index, job_uid, s3_bucket, s3_key, byte_range_str, debug=False, request_key=None, ready_key=None):
     """
     Background thread that serves requester_index's request for tail bytes.
     Uses pashlib send to transmit bytes until newline.
@@ -221,13 +281,13 @@ def start_single_server_thread(shard_index, requester_index, job_uid, s3_bucket,
             os.mkfifo(send_fifo)
 
             if debug:
-                print(f"[SERVER {shard_index}] Created FIFO for requester {requester_index}: {send_fifo}", file=sys.stderr)
-                print(f"[SERVER {shard_index}] UID: {comm_uid}", file=sys.stderr)
+                print(f"[{_now_ts()}][SERVER {shard_index}] Created FIFO for requester {requester_index}: {send_fifo}", file=sys.stderr)
+                print(f"[{_now_ts()}][SERVER {shard_index}] UID: {comm_uid}", file=sys.stderr)
 
             # Start pashlib send (blocks until recv side connects)
             pashlib_cmd = [PASHLIB_PATH, f"send*{comm_uid}*0*1*{send_fifo}"]
             if debug:
-                print(f"[SERVER {shard_index}] Starting: {' '.join(pashlib_cmd)}", file=sys.stderr)
+                print(f"[{_now_ts()}][SERVER {shard_index}] Starting: {' '.join(pashlib_cmd)}", file=sys.stderr)
 
             proc = subprocess.Popen(pashlib_cmd, stderr=subprocess.PIPE if not debug else None)
 
@@ -235,14 +295,16 @@ def start_single_server_thread(shard_index, requester_index, job_uid, s3_bucket,
             start_byte = parse_byte_range(byte_range_str)[0]
 
             if debug:
-                print(f"[SERVER {shard_index}] Streaming from S3 byte {start_byte} to requester {requester_index}...", file=sys.stderr)
+                print(f"[{_now_ts()}][SERVER {shard_index}] Streaming from S3 byte {start_byte} to requester {requester_index}...", file=sys.stderr)
 
-            with open(send_fifo, 'wb') as f:
+            fifo_fd = os.open(send_fifo, os.O_WRONLY)
+
+            with os.fdopen(fifo_fd, 'wb', buffering=0) as f:
                 for byte in stream_s3_bytes(s3_bucket, s3_key, start_byte):
                     f.write(bytes([byte]))
                     if byte == ord('\n'):
                         if debug:
-                            print(f"[SERVER {shard_index}] Found newline, stopping send to requester {requester_index}", file=sys.stderr)
+                            print(f"[{_now_ts()}][SERVER {shard_index}] Found newline, stopping send to requester {requester_index}", file=sys.stderr)
                         break
 
             # Cleanup
@@ -250,11 +312,20 @@ def start_single_server_thread(shard_index, requester_index, job_uid, s3_bucket,
             os.unlink(send_fifo)
 
             if debug:
-                print(f"[SERVER {shard_index}] Complete serving requester {requester_index}", file=sys.stderr)
+                print(f"[{_now_ts()}][SERVER {shard_index}] Complete serving requester {requester_index}", file=sys.stderr)
 
         except Exception as e:
-            print(f"[SERVER {shard_index}] Error serving requester {requester_index}: {e}", file=sys.stderr)
+            print(f"[{_now_ts()}][SERVER {shard_index}] Error serving requester {requester_index}: {e}", file=sys.stderr)
             # Don't raise - let other server threads continue
+        finally:
+            if request_key or ready_key:
+                s3 = boto3.client('s3')
+                if request_key:
+                    _s3_delete_marker(s3, s3_bucket, request_key)
+                if ready_key:
+                    _s3_delete_marker(s3, s3_bucket, ready_key)
+                if debug:
+                    print(f"[{_now_ts()}][SERVER {shard_index}] Cleaned rendezvous markers for requester {requester_index}", file=sys.stderr)
 
     # Run server in background thread
     thread = threading.Thread(target=server, daemon=True)
@@ -263,43 +334,75 @@ def start_single_server_thread(shard_index, requester_index, job_uid, s3_bucket,
     return thread
 
 
-def start_server_threads(shard_index, job_uid, s3_bucket, s3_key, byte_range_str, debug=False):
+def start_request_listener(shard_index, job_uid, s3_bucket, s3_key, byte_range_str, debug=False):
     """
-    Start multiple server threads to serve requests from all previous lambdas.
-    Lambda k starts servers for requests from: 0, 1, 2, ..., k-1
+    Start a background listener that launches server threads only when requested.
     """
-    threads = []
+    def listener():
+        s3 = boto3.client('s3')
+        served = set()
+        poll_secs = max(0.05, _get_env_timeout("PASH_S3_TAIL_DISCOVERY_POLL_SECS", 0.2))
 
-    # Start one server thread for each potential requester
-    for requester_index in range(shard_index):
-        thread = start_single_server_thread(
-            shard_index,
-            requester_index,
-            job_uid,
-            s3_bucket,
-            s3_key,
-            byte_range_str,
-            debug
-        )
-        threads.append(thread)
+        while True:
+            for requester_index in range(shard_index):
+                if requester_index in served:
+                    continue
+                req_key = _rendezvous_key(job_uid, requester_index, shard_index, "req")
+                if _s3_marker_exists(s3, s3_bucket, req_key):
+                    ready_key = _rendezvous_key(job_uid, requester_index, shard_index, "ready")
+                    if debug:
+                        print(f"[{_now_ts()}][SERVER {shard_index}] Request detected from {requester_index}", file=sys.stderr)
+                    start_single_server_thread(
+                        shard_index,
+                        requester_index,
+                        job_uid,
+                        s3_bucket,
+                        s3_key,
+                        byte_range_str,
+                        debug,
+                        request_key=req_key,
+                        ready_key=ready_key
+                    )
+                    _s3_put_marker(s3, s3_bucket, ready_key, b"ready")
+                    if debug:
+                        print(f"[{_now_ts()}][SERVER {shard_index}] Ready marker written for requester {requester_index}", file=sys.stderr)
+                    served.add(requester_index)
+            if len(served) == shard_index:
+                break
+            time.sleep(poll_secs)
 
-    if debug:
-        print(f"[SERVER {shard_index}] Started {len(threads)} server threads for potential requesters 0-{shard_index-1}", file=sys.stderr)
+    thread = threading.Thread(target=listener, daemon=True)
+    thread.start()
+    return [thread]
 
-    return threads
 
-
-def request_tail_bytes_pashlib(shard_index, num_shards, job_uid, debug=False):
+def request_tail_bytes_pashlib(shard_index, num_shards, job_uid, s3_bucket, debug=False):
     """
     Request bytes from subsequent processes until newline using pashlib recv.
-    Multi-hop: reads from i+1, then i+2, ... until newline OR last lambda.
+    Strict semantics:
+      - If the next shard never replies, stop immediately.
+      - If it replies but has no newline, continue to the next shard.
     Port from Go lines 62-82 (byte-by-byte reading).
     """
     accumulated_bytes = bytearray()
+    s3 = boto3.client('s3')
+    discovery_timeout = _get_env_timeout("PASH_S3_TAIL_DISCOVERY_TIMEOUT_SECS", 10.0)
+    poll_secs = max(0.05, _get_env_timeout("PASH_S3_TAIL_DISCOVERY_POLL_SECS", 0.2))
 
     # Loop through subsequent shards: i+1, i+2, ..., n-1
     for target_shard in range(shard_index + 1, num_shards):
         comm_uid = f"{job_uid}-split-{shard_index}-to-{target_shard}"
+        req_key = _rendezvous_key(job_uid, shard_index, target_shard, "req")
+        ready_key = _rendezvous_key(job_uid, shard_index, target_shard, "ready")
+        _s3_put_marker(s3, s3_bucket, req_key, b"req")
+        if debug:
+            print(f"[{_now_ts()}][CLIENT {shard_index}] Requested tail from shard {target_shard}", file=sys.stderr)
+
+        if not _wait_for_marker(s3, s3_bucket, ready_key, discovery_timeout, poll_secs, debug, f"[CLIENT {shard_index}]"):
+            if debug:
+                print(f"[{_now_ts()}][CLIENT {shard_index}] No reply from shard {target_shard}; stopping tail search", file=sys.stderr)
+            _s3_delete_marker(s3, s3_bucket, req_key)
+            break
         recv_fifo = f"/tmp/pash_recv_{shard_index}_to_{target_shard}_{os.getpid()}"
 
         # Clean up any existing FIFO
@@ -311,15 +414,15 @@ def request_tail_bytes_pashlib(shard_index, num_shards, job_uid, debug=False):
         os.mkfifo(recv_fifo)
 
         if debug:
-            print(f"[CLIENT {shard_index}] Attempting to read from shard {target_shard}", file=sys.stderr)
-            print(f"[CLIENT {shard_index}] Created FIFO: {recv_fifo}", file=sys.stderr)
-            print(f"[CLIENT {shard_index}] UID: {comm_uid}", file=sys.stderr)
+            print(f"[{_now_ts()}][CLIENT {shard_index}] Attempting to read from shard {target_shard}", file=sys.stderr)
+            print(f"[{_now_ts()}][CLIENT {shard_index}] Created FIFO: {recv_fifo}", file=sys.stderr)
+            print(f"[{_now_ts()}][CLIENT {shard_index}] UID: {comm_uid}", file=sys.stderr)
 
         try:
             # Start pashlib recv for this hop
             pashlib_cmd = [PASHLIB_PATH, f"recv*{comm_uid}*1*0*{recv_fifo}"]
             if debug:
-                print(f"[CLIENT {shard_index}] Starting: {' '.join(pashlib_cmd)}", file=sys.stderr)
+                print(f"[{_now_ts()}][CLIENT {shard_index}] Starting: {' '.join(pashlib_cmd)}", file=sys.stderr)
 
             proc = subprocess.Popen(pashlib_cmd, stderr=subprocess.PIPE if not debug else None)
 
@@ -328,14 +431,15 @@ def request_tail_bytes_pashlib(shard_index, num_shards, job_uid, debug=False):
             bytes_from_this_shard = 0
 
             if debug:
-                print(f"[CLIENT {shard_index}] Reading tail bytes from shard {target_shard}...", file=sys.stderr)
+                print(f"[{_now_ts()}][CLIENT {shard_index}] Reading tail bytes from shard {target_shard}...", file=sys.stderr)
 
-            with open(recv_fifo, 'rb') as f:
+            recv_fd = os.open(recv_fifo, os.O_RDONLY)
+            try:
                 while True:
-                    byte = f.read(1)
+                    byte = os.read(recv_fd, 1)
                     if not byte:  # EOF from this shard
                         if debug:
-                            print(f"[CLIENT {shard_index}] EOF from shard {target_shard} after {bytes_from_this_shard} bytes", file=sys.stderr)
+                            print(f"[{_now_ts()}][CLIENT {shard_index}] EOF from shard {target_shard} after {bytes_from_this_shard} bytes", file=sys.stderr)
                         break
 
                     accumulated_bytes.append(byte[0])
@@ -344,20 +448,22 @@ def request_tail_bytes_pashlib(shard_index, num_shards, job_uid, debug=False):
                     if byte == b'\n':  # Found newline!
                         found_newline = True
                         if debug:
-                            print(f"[CLIENT {shard_index}] Found newline in shard {target_shard}", file=sys.stderr)
+                            print(f"[{_now_ts()}][CLIENT {shard_index}] Found newline in shard {target_shard}", file=sys.stderr)
                         break
+            finally:
+                os.close(recv_fd)
 
             proc.wait()
 
             # If we found newline, we're done - break out of loop
             if found_newline:
                 if debug:
-                    print(f"[CLIENT {shard_index}] Total received: {len(accumulated_bytes)} bytes across {target_shard - shard_index} hop(s)", file=sys.stderr)
+                    print(f"[{_now_ts()}][CLIENT {shard_index}] Total received: {len(accumulated_bytes)} bytes across {target_shard - shard_index} hop(s)", file=sys.stderr)
                 break
 
             # Otherwise, continue to next shard
             if debug:
-                print(f"[CLIENT {shard_index}] No newline in shard {target_shard}, continuing to next shard...", file=sys.stderr)
+                print(f"[{_now_ts()}][CLIENT {shard_index}] No newline in shard {target_shard}, continuing to next shard...", file=sys.stderr)
 
         finally:
             # Cleanup FIFO for this hop
@@ -365,10 +471,12 @@ def request_tail_bytes_pashlib(shard_index, num_shards, job_uid, debug=False):
                 os.unlink(recv_fifo)
             except FileNotFoundError:
                 pass
+            _s3_delete_marker(s3, s3_bucket, req_key)
+            _s3_delete_marker(s3, s3_bucket, ready_key)
 
     # After loop: either found newline OR exhausted all shards
     if not accumulated_bytes.endswith(b'\n') and debug:
-        print(f"[CLIENT {shard_index}] WARNING: No newline found in any subsequent shard", file=sys.stderr)
+        print(f"[{_now_ts()}][CLIENT {shard_index}] WARNING: No newline found in any subsequent shard", file=sys.stderr)
 
     return bytes(accumulated_bytes)
 
@@ -399,30 +507,30 @@ def main():
         sys.exit(1)
 
     if debug:
-        print(f"[MAIN {shard_index}] Starting", file=sys.stderr)
-        print(f"[MAIN {shard_index}] S3: {s3_bucket}/{s3_key}", file=sys.stderr)
-        print(f"[MAIN {shard_index}] Range: {byte_range_str}", file=sys.stderr)
-        print(f"[MAIN {shard_index}] split: {shard_index}/{num_shards}", file=sys.stderr)
-        print(f"[MAIN {shard_index}] UID: {job_uid}", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] Starting", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] S3: {s3_bucket}/{s3_key}", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] Range: {byte_range_str}", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] split: {shard_index}/{num_shards}", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] UID: {job_uid}", file=sys.stderr)
 
-    # 1. Start server threads (if split > 0)
+    # 1. Start request listener (if split > 0)
     server_threads = []
     if shard_index > 0:
         if debug:
-            print(f"[MAIN {shard_index}] Starting {shard_index} server threads for potential requesters 0-{shard_index-1}", file=sys.stderr)
-        server_threads = start_server_threads(
+            print(f"[{_now_ts()}][MAIN {shard_index}] Starting request listener for {shard_index} potential requesters", file=sys.stderr)
+        server_threads = start_request_listener(
             shard_index, job_uid, s3_bucket, s3_key, byte_range_str, debug
         )
 
     # 2. Download S3 chunk
     start_byte, end_byte = parse_byte_range(byte_range_str)
     if debug:
-        print(f"[MAIN {shard_index}] Downloading bytes {start_byte}-{end_byte}", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] Downloading bytes {start_byte}-{end_byte}", file=sys.stderr)
 
     my_data = download_s3_range(s3_bucket, s3_key, start_byte, end_byte)
 
     if debug:
-        print(f"[MAIN {shard_index}] Downloaded {len(my_data)} bytes", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] Downloaded {len(my_data)} bytes", file=sys.stderr)
 
     # 3. Skip first line (if split > 0)
     if shard_index > 0:
@@ -430,9 +538,9 @@ def main():
         my_data = skip_until_newline(s3_bucket, s3_key, start_byte, end_byte, my_data)
         if debug:
             skipped_bytes = original_len - len(my_data)
-            print(f"[MAIN {shard_index}] Skipped first line: {skipped_bytes} bytes", file=sys.stderr)
+            print(f"[{_now_ts()}][MAIN {shard_index}] Skipped first line: {skipped_bytes} bytes", file=sys.stderr)
             if skipped_bytes > original_len:
-                print(f"[MAIN {shard_index}] (Read {skipped_bytes - original_len} additional bytes from S3 to find newline)", file=sys.stderr)
+                print(f"[{_now_ts()}][MAIN {shard_index}] (Read {skipped_bytes - original_len} additional bytes from S3 to find newline)", file=sys.stderr)
 
     # 4. Build output buffer
     output_buffer = BytesIO()
@@ -443,17 +551,17 @@ def main():
     # If my_data is empty, the entire shard was part of a previous line - don't request tail bytes
     if shard_index < num_shards - 1 and my_data and not my_data.endswith(b'\n'):
         if debug:
-            print(f"[MAIN {shard_index}] Requesting tail bytes (multi-hop from {shard_index+1} onwards)", file=sys.stderr)
+            print(f"[{_now_ts()}][MAIN {shard_index}] Requesting tail bytes (multi-hop from {shard_index+1} onwards)", file=sys.stderr)
 
-        tail_bytes = request_tail_bytes_pashlib(shard_index, num_shards, job_uid, debug)
+        tail_bytes = request_tail_bytes_pashlib(shard_index, num_shards, job_uid, s3_bucket, debug)
         output_buffer.write(tail_bytes)
 
         if debug:
-            print(f"[MAIN {shard_index}] Appended {len(tail_bytes)} tail bytes", file=sys.stderr)
+            print(f"[{_now_ts()}][MAIN {shard_index}] Appended {len(tail_bytes)} tail bytes", file=sys.stderr)
 
     # 6. Write to output FIFO (BLOCKS until downstream consumer reads)
     if debug:
-        print(f"[MAIN {shard_index}] Writing {output_buffer.tell()} bytes to {output_fifo}", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] Writing {output_buffer.tell()} bytes to {output_fifo}", file=sys.stderr)
 
     output_data = output_buffer.getvalue()
 
@@ -470,19 +578,17 @@ def main():
     output_s3_key = f"outputs/{stem}-shard-{shard_index}{ext}"
 
     if debug:
-        print(f"[MAIN {shard_index}] Uploading to S3: {output_s3_key}", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] Uploading to S3: {output_s3_key}", file=sys.stderr)
 
     upload_to_s3(s3_bucket, output_s3_key, output_data, debug)
 
-    # Wait for all server threads to complete (if started)
-    if server_threads:
-        for i, thread in enumerate(server_threads):
-            thread.join(timeout=5)
-            if debug:
-                print(f"[MAIN {shard_index}] Server thread {i} joined", file=sys.stderr)
+    # Server threads are daemon threads - they'll be terminated automatically on exit
+    # No need to wait for them since our work (upload) is complete
+    if debug and server_threads:
+        print(f"[{_now_ts()}][MAIN {shard_index}] {len(server_threads)} server threads still running (will terminate on exit)", file=sys.stderr)
 
     if debug:
-        print(f"[MAIN {shard_index}] Complete", file=sys.stderr)
+        print(f"[{_now_ts()}][MAIN {shard_index}] Complete", file=sys.stderr)
 
 
 if __name__ == '__main__':
