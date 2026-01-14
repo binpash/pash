@@ -130,17 +130,15 @@ fi
 PASH_FROM_SH="pa.sh" "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash.py" --output "$preprocessed_output" "$@"
 
 ## If preprocessing succeeded, execute with runner.sh
-if [ $pash_exit_code -eq 0 ]; then
-    "$PASH_TOP/runtime/runner.sh" \
-        "$preprocessed_output" \
-        "$shell_name" \
-        "${script_args[@]}" \
-        $allexport_flag \
-        $verbose_flag \
-        $xtrace_flag \
-        --debug "$PASH_DEBUG_LEVEL"
-    pash_exit_code=$?
-fi
+"$PASH_TOP/runtime/runner.sh" \
+      "$preprocessed_output" \
+      "$shell_name" \
+      "${script_args[@]}" \
+      $allexport_flag \
+      $verbose_flag \
+      $xtrace_flag \
+      --debug "$PASH_DEBUG_LEVEL"
+pash_exit_code=$?
 
 ## Clean up the preprocessed file
 rm -f "$preprocessed_output"

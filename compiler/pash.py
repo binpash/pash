@@ -27,17 +27,16 @@ def main():
         input_script_path = args.input[0]
         input_script_arguments = args.input[1:]
 
-        ## Preprocess and execute the parsed ASTs
-        return_code = preprocess_and_execute_asts(
+        ## Preprocess
+        preprocess_asts(
             input_script_path, args, input_script_arguments, shell_name
         )
 
         log("-" * 40)  # log end marker
-        ## Return the exit code of the executed script
-        sys.exit(return_code)
+        sys.exit()
 
 
-def preprocess_and_execute_asts(
+def preprocess_asts(
     input_script_path, args, input_script_arguments, shell_name
 ):
     preprocessed_shell_script = preprocess(input_script_path, args)
@@ -58,19 +57,6 @@ def preprocess_and_execute_asts(
             "utf-8", errors="replace"
         )
         new_shell_file.write(preprocessed_shell_script)
-
-    ## 4. Execute the preprocessed version of the input script
-    ## If --output is specified, just return (execution will be handled by pa.sh)
-    if args.output:
-        return_code = 0
-    elif not args.preprocess_only:
-        return_code = execute_script(
-            fname, args.command, input_script_arguments, shell_name
-        )
-    else:
-        return_code = 0
-    return return_code
-
 
 def parse_args():
     prog_name = sys.argv[0]
@@ -122,56 +108,6 @@ def parse_args():
     return args, shell_name
 
 
-def shell_env(shell_name: str):
-    new_env = os.environ.copy()
-    new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
-    new_env["pash_shell_name"] = shell_name
-    return new_env
-
-
-## The following two functions need to correspond completely
-def bash_prefix_args():
-    subprocess_args = ["/usr/bin/env", "bash"]
-    ## Add shell specific arguments
-    if config.pash_args.a:
-        subprocess_args.append("-a")
-    else:
-        subprocess_args.append("+a")
-    if config.pash_args.v:
-        subprocess_args.append("-v")
-    if config.pash_args.x:
-        subprocess_args.append("-x")
-    return subprocess_args
-
-
-def bash_exec_string(shell_name):
-    flags = []
-    if config.pash_args.a:
-        flags.append("-a")
-    if config.pash_args.v:
-        flags.append("-v")
-    if config.pash_args.x:
-        flags.append("-x")
-    return "exec -a{} bash {} -s $@\n".format(shell_name, " ".join(flags))
-
-
-def execute_script(compiled_script_filename, command, arguments, shell_name):
-    new_env = shell_env(shell_name)
-    subprocess_args = bash_prefix_args()
-    subprocess_args += [
-        "-c",
-        "source {}".format(compiled_script_filename),
-        shell_name,
-    ] + arguments
-    # subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
-    log(
-        "Executing:",
-        "PASH_TMP_PREFIX={} pash_shell_name={} {}".format(
-            config.PASH_TMP_PREFIX, shell_name, " ".join(subprocess_args)
-        ),
-    )
-    exec_obj = subprocess.run(subprocess_args, env=new_env, close_fds=False)
-    return exec_obj.returncode
 
 
 if __name__ == "__main__":

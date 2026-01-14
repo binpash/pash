@@ -6,8 +6,6 @@
 # appropriate bash flags and arguments.
 #
 
-set -e
-
 # Default values
 script_path=""
 shell_name=""
