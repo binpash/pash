@@ -225,7 +225,7 @@ else
     ## Exports $daemon_pid
     start_server()
     {
-        python3 -S "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
+        "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
         export daemon_pid=$!
         ## Wait until daemon has established connection
         pash_wait_until_daemon_listening
