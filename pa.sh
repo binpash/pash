@@ -60,8 +60,90 @@ fi
 
 ## Restore the umask before executing
 umask "$old_umask"
-PASH_FROM_SH="pa.sh" "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash.py" "$@"
-pash_exit_code=$?
+
+## Create temporary file for preprocessed output
+preprocessed_output=$(mktemp "${PASH_TMP_PREFIX}/preprocessed_XXXXXX.sh")
+
+## Parse arguments to extract input script and shell name
+## This is needed to pass the right arguments to runner.sh later
+input_script=""
+shell_name="pash"
+declare -a script_args=()
+command_mode=""
+command_text=""
+allexport_flag="+a"
+verbose_flag=""
+xtrace_flag=""
+
+## Simple argument parsing to extract shell name and script args
+i=1
+while [ $i -le $# ]; do
+    arg="${!i}"
+    next_i=$((i+1))
+    next_arg="${!next_i}"
+
+    case "$arg" in
+        -c|--command)
+            command_mode="-c"
+            command_text="$next_arg"
+            i=$next_i
+            ;;
+        -a)
+            allexport_flag="-a"
+            ;;
+        +a)
+            allexport_flag="+a"
+            ;;
+        -v)
+            verbose_flag="-v"
+            ;;
+        -x)
+            xtrace_flag="-x"
+            ;;
+        -d|--debug|--log_file|--config_path|--local-annotations-dir)
+            ## Skip PaSh-specific flags that take arguments
+            i=$next_i
+            ;;
+        --*)
+            ## Skip other PaSh flags
+            ;;
+        *)
+            ## This is either the input script or a script argument
+            if [ -z "$input_script" ] && [ -z "$command_mode" ]; then
+                input_script="$arg"
+                shell_name="$arg"
+            else
+                script_args+=("$arg")
+            fi
+            ;;
+    esac
+    i=$((i+1))
+done
+
+## If -c mode, first arg in script_args becomes shell_name
+if [ -n "$command_mode" ] && [ ${#script_args[@]} -gt 0 ]; then
+    shell_name="${script_args[0]}"
+    script_args=("${script_args[@]:1}")
+fi
+
+## Call pash.py to preprocess
+PASH_FROM_SH="pa.sh" "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash.py" --output "$preprocessed_output" "$@"
+
+## If preprocessing succeeded, execute with runner.sh
+if [ $pash_exit_code -eq 0 ]; then
+    "$PASH_TOP/runtime/runner.sh" \
+        "$preprocessed_output" \
+        "$shell_name" \
+        "${script_args[@]}" \
+        $allexport_flag \
+        $verbose_flag \
+        $xtrace_flag \
+        --debug "$PASH_DEBUG_LEVEL"
+    pash_exit_code=$?
+fi
+
+## Clean up the preprocessed file
+rm -f "$preprocessed_output"
 if [ "$show_version" -eq 0 ]; then
   cleanup_server "${daemon_pid}"
 fi

@@ -46,7 +46,12 @@ def preprocess_and_execute_asts(
         log(preprocessed_shell_script)
 
     ## Write the new shell script to a file to execute
-    fname = ptempfile()
+    ## Use --output path if provided, otherwise create temp file
+    if args.output:
+        fname = args.output
+    else:
+        fname = ptempfile()
+
     log("Preprocessed script stored in:", fname)
     with open(fname, "wb") as new_shell_file:
         preprocessed_shell_script = preprocessed_shell_script.encode(
@@ -55,7 +60,10 @@ def preprocess_and_execute_asts(
         new_shell_file.write(preprocessed_shell_script)
 
     ## 4. Execute the preprocessed version of the input script
-    if not args.preprocess_only:
+    ## If --output is specified, just return (execution will be handled by pa.sh)
+    if args.output:
+        return_code = 0
+    elif not args.preprocess_only:
         return_code = execute_script(
             fname, args.command, input_script_arguments, shell_name
         )
