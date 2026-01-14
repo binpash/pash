@@ -15,7 +15,7 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
     - name: Inject slug/short variables
-      uses: rlespinasse/github-slug-action@v3.x
+      uses: rlespinasse/github-slug-action@v4.x
     - name: Trigger Posix CI
       run: |
         # get the current commit
@@ -56,7 +56,7 @@ jobs:
         name: correctness-artifact
         path: ~/artifact
     - name: Comment on PR
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
         script: |
           let body = `${{ env.OUTPUT }}`
