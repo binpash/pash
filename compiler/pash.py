@@ -2,8 +2,6 @@ import sys
 import os
 import subprocess
 
-from ir import *
-from pash_graphviz import maybe_init_graphviz_dir
 from preprocessor.preprocessor import preprocess
 from speculative import util_spec
 from util import *
@@ -78,9 +76,6 @@ def parse_args():
     config.init_log_file()
     if not config.config:
         config.load_config(args.config_path)
-
-    ## Initialize the graphviz directory
-    maybe_init_graphviz_dir(args)
 
     ## Print all the arguments before they are modified below
     log("Arguments:")
