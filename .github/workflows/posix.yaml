@@ -51,7 +51,7 @@ jobs:
         mkdir ~/artifact
         echo $results | jq -r 'select(.commit=='\"$commit\"') | .tests' | jq . | jq -r '.[].posix_log' > ~/artifact/posix.log
         mv t ~/artifact/all_tests.log
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: correctness-artifact
         path: ~/artifact
