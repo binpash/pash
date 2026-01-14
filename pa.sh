@@ -2,8 +2,6 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-# point to the local downloaded folders
-export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
 ## Register the signal handlers, we can add more signals here
 trap kill_all SIGTERM SIGINT
 
@@ -62,7 +60,7 @@ fi
 
 ## Restore the umask before executing
 umask "$old_umask"
-PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "$@"
+PASH_FROM_SH="pa.sh" "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash.py" "$@"
 pash_exit_code=$?
 if [ "$show_version" -eq 0 ]; then
   cleanup_server "${daemon_pid}"
