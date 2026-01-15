@@ -79,18 +79,18 @@ class Parser(argparse.ArgumentParser):
 @logging_prefix(LOGGING_PREFIX)
 def main():
     ## Parse arguments
-    args, shell_name = parse_args()    
+    args = parse_args()    
     input_script_path = args.input[0]
 
     ## Preprocess
     preprocess_asts(
-        input_script_path, args, shell_name
+        input_script_path, args
     )
 
     log("-" * 40)  # log end marker
 
 def preprocess_asts(
-    input_script_path, args, shell_name
+    input_script_path, args
 ):
     preprocessed_shell_script = preprocess(input_script_path, args)
 
@@ -131,10 +131,6 @@ def parse_args():
     log("-" * 40)
 
     ## TODO: Can the following code be removed?
-
-    ## TODO: We might need to have a better default (like $0 of pa.sh)
-    shell_name = "pash"
-
     if args.command is not None:
         fname = ptempfile()
         with open(fname, "w") as f:
@@ -143,13 +139,10 @@ def parse_args():
         ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
         if len(args.input) > 0:
             ## Assign $0
-            shell_name = args.input[0]
             args.input = args.input[1:]
         args.input = [fname] + args.input
-    elif len(args.input) > 0:
-        shell_name = args.input[0]
 
-    return args, shell_name
+    return args
 
 
 
