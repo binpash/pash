@@ -111,17 +111,16 @@ def main():
     ## Parse arguments
     args, shell_name = parse_args()    
     input_script_path = args.input[0]
-    input_script_arguments = args.input[1:]
 
     ## Preprocess
     preprocess_asts(
-        input_script_path, args, input_script_arguments, shell_name
+        input_script_path, args, shell_name
     )
 
     log("-" * 40)  # log end marker
 
 def preprocess_asts(
-    input_script_path, args, input_script_arguments, shell_name
+    input_script_path, args, shell_name
 ):
     preprocessed_shell_script = preprocess(input_script_path, args)
 
@@ -160,6 +159,8 @@ def parse_args():
     for arg_name, arg_val in vars(args).items():
         log(arg_name, arg_val)
     log("-" * 40)
+
+    ## TODO: Can the following code be removed?
 
     ## TODO: We might need to have a better default (like $0 of pa.sh)
     shell_name = "pash"
