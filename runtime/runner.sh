@@ -118,4 +118,5 @@ bash_flags="$allexport_flag $verbose_flag $xtrace_flag"
 # Uses: bash [flags] -c "source script" shell_name [args...]
 log "Executing: $bash_cmd $bash_flags -c \"source $script_path\" $shell_name ${script_args[*]}"
 
+# shellcheck disable=SC2086
 exec $bash_cmd $bash_flags -c "source $script_path" "$shell_name" "${script_args[@]}"
