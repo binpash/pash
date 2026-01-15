@@ -31,14 +31,7 @@ def config_from_args(pash_args):
     elif pash_args.debug >= 2:
         logging.getLogger().setLevel(logging.DEBUG)
 
-class BaseParser(argparse.ArgumentParser):
-    """
-    Base class for all Argument Parsers used by PaSh. It has two configurable flags
-    by default: debug and log_file.
-
-    Other flags are available by classes which inherit BaseParser
-    """
-
+class Parser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_argument(
@@ -53,27 +46,6 @@ class BaseParser(argparse.ArgumentParser):
             help="configure where to write the log; defaults to stderr.",
             default="",
         )
-
-    def add_pash_args(self):
-        self.add_argument(
-            "--config_path",
-            help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
-            default="",
-        )
-
-
-
-
-## TODO: Remove most of them
-class RunnerParser(BaseParser):
-    """
-    Parser for the PaSh Runner in compiler/pash.py
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_pash_args()
-
         self.add_argument(
             "input",
             nargs="*",
@@ -103,8 +75,6 @@ class RunnerParser(BaseParser):
         )
 
         self.set_defaults(preprocess_mode="pash")
-
-
 
 @logging_prefix(LOGGING_PREFIX)
 def main():
@@ -139,7 +109,7 @@ def parse_args():
     if "PASH_FROM_SH" in os.environ:
         prog_name = os.environ["PASH_FROM_SH"]
     ## We need to set `+` as a prefix char too
-    parser = RunnerParser(prog_name, prefix_chars="-+")
+    parser = Parser(prog_name, prefix_chars="-+")
     ## Use parse_known_args to allow pa.sh to pass arguments meant for other components
     ## (e.g., compilation server arguments like --width, --no_optimize)
     args, unknown_args = parser.parse_known_args()
