@@ -46,156 +46,13 @@ class BaseParser(argparse.ArgumentParser):
 
     def add_pash_args(self):
         self.add_argument(
-            "-w",
-            "--width",
-            type=int,
-            default=self._get_width(),
-            help="set data-parallelism factor",
-        )
-        self.add_argument(
-            "--no_optimize",
-            help="not apply transformations over the DFG",
-            action="store_true",
-        )
-        self.add_argument(
-            "--dry_run_compiler",
-            help="not execute the compiled script, even if the compiler succeeded",
-            action="store_true",
-        )
-        self.add_argument(
-            "--assert_compiler_success",
-            help="assert that the compiler succeeded with no general error occuring",
-            action="store_true",
-        )
-        self.add_argument(
-            "--assert_all_regions_parallelizable",
-            help="assert that the compiler succeeded with all regions being parallelizable and no general error occuring (used to make tests more robust); more strict than --assert_compiler_success flag",
-            action="store_true",
-        )
-        self.add_argument(
-            "--avoid_pash_runtime_completion",
-            help="avoid the pash_runtime execution completion (only relevant when --debug > 0)",
-            action="store_true",
-        )
-        self.add_argument(
-            "-p",
-            "--output_optimized",  # FIXME: --print
-            help="output the parallel shell script for inspection",
-            action="store_true",
-        )
-        self.add_argument(
-            "--graphviz",
-            help="generates graphical representations of the dataflow graphs. The option argument corresponds to the format. PaSh stores them in a timestamped directory in the argument of --graphviz_dir",
-            choices=["no", "dot", "svg", "pdf", "png"],
-            default="no",
-        )
-        ## TODO: To discuss: Do we maybe want to have graphviz to always be included
-        ##       in the temp directory (under a graphviz subdirectory) instead of in its own?
-        ##   kk: I think that ideally we want a log-directory where we can put logs, graphviz,
-        ##       and other observability and monitoring info (instead of putting them in the temp).
-        self.add_argument(
-            "--graphviz_dir",
-            help="the directory in which to store graphical representations",
-            default="/tmp",
-        )
-        self.add_argument(
-            "--no_parallel_pipelines",
-            help="Disable parallel running of independent pipelines",
-            action="store_true",
-            default=False,
-        )
-        self.add_argument(
-            "--parallel_pipelines_limit",
-            help="Maximum number of parallel independent pipelines",
-            type=int,
-            default=2,
-        )
-        self.add_argument(
-            "--r_split_batch_size",
-            type=int,
-            help="configure the batch size of r_split (default: 1MB)",
-            default=1000000,
-        )
-        self.add_argument(
             "--config_path",
             help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
             default="",
         )
-        self.add_argument(
-            "--version",
-            action="version",
-            version="%(prog)s {version}".format(
-                version="0.12.2"
-            ),  # What does this version mean?
-        )
 
-        self.add_experimental_args()
-        self.add_obsolete_args()
 
-    def add_obsolete_args(self):
-        self.add_argument(
-            "--no_daemon",
-            help="(obsolete) does nothing -- Run the compiler everytime we need a compilation instead of using the daemon",
-            action="store_true",
-            default=False,
-        )
-        self.add_argument(
-            "--parallel_pipelines",
-            help="(obsolete) Run multiple pipelines in parallel if they are safe to run. Now true by default. See --no_parallel_pipelines.",
-            action="store_true",
-            default=True,
-        )
-        self.add_argument(
-            "--r_split",
-            help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
-            action="store_true",
-        )
-        self.add_argument(
-            "--dgsh_tee",
-            help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
-            action="store_true",
-        )
-        self.add_argument(
-            "--speculation",
-            help="(obsolete) does nothing -- run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
-            choices=["no_spec", "quick_abort"],
-            default="no_spec",
-        )
 
-    def add_experimental_args(self):
-        self.add_argument(
-            "--no_eager",
-            help="(experimental) disable eager nodes before merging nodes",
-            action="store_true",
-        )
-        self.add_argument(
-            "--profile_driven",
-            help="(experimental) use profiling information when optimizing",
-            action="store_true",
-        )
-        self.add_argument(
-            "--speculative",
-            help="(experimental) use the speculative execution preprocessing and runtime (NOTE: this has nothing to do with --speculation, which is actually misnamed, and should be named concurrent compilation/execution and is now obsolete)",
-            action="store_true",
-            default=False,
-        )
-        self.add_argument(
-            "--termination",
-            help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
-            choices=["clean_up_graph", "drain_stream"],
-            default="clean_up_graph",
-        )
-        self.add_argument(
-            "--daemon_communicates_through_unix_pipes",
-            help="(experimental) the daemon communicates through unix pipes instead of sockets",
-            action="store_true",
-        )
-        self.add_argument(
-            "--distributed_exec",
-            help="(experimental) execute the script in a distributed environment. Remote machines should be configured and ready",
-            action="store_true",
-            default=False,
-        )
 
 
 class RunnerParser(BaseParser):
@@ -228,48 +85,21 @@ class RunnerParser(BaseParser):
             default=None,
         )
         self.add_argument(
-            "--local-annotations-dir",
-            default=None,
-        )
-        self.add_argument(
-            "--interactive",
-            help="Executes the script using an interactive internal shell session (experimental)",
+            "--bash",
+            help="(experimental) interpret the input as a bash script file",
             action="store_true",
         )
         self.add_argument(
             "-c",
             "--command",
-            help="Evaluate the following as a script, rather than a file",
+            help="evaluate the following as a script, rather than a file",
             default=None,
         )
-        ## This is not the correct way to parse these, because more than one option can be given together, e.g., -ae
         self.add_argument(
-            "-a",
-            help="Enabling the `allexport` shell option",
+            "--speculative",
+            help="(experimental) use the speculative execution preprocessing and runtime",
             action="store_true",
             default=False,
-        )
-        self.add_argument(
-            "+a",
-            help="Disabling the `allexport` shell option",
-            action="store_false",
-            default=False,
-        )
-        ## These two are here for compatibility with respect to bash
-        self.add_argument(
-            "-v",
-            help="(experimental) prints shell input lines as they are read",
-            action="store_true",
-        )
-        self.add_argument(
-            "-x",
-            help="(experimental) prints commands and their arguments as they execute",
-            action="store_true",
-        )
-        self.add_argument(
-            "--bash",
-            help="(experimental) interpret the input as a bash script file",
-            action="store_true",
         )
 
         self.set_defaults(preprocess_mode="pash")
@@ -283,9 +113,7 @@ def main():
     ## Parse arguments
     args, shell_name = parse_args()
     ## If it is interactive we need a different execution mode
-    ##
-    ## The user can also ask for an interactive mode irregardless of whether pash was invoked in interactive mode.
-    if len(args.input) == 0 or args.interactive:
+    if len(args.input) == 0:
         log("ERROR: --interactive option is not supported!", level=0)
         assert False
     else:
@@ -329,7 +157,11 @@ def parse_args():
         prog_name = os.environ["PASH_FROM_SH"]
     ## We need to set `+` as a prefix char too
     parser = RunnerParser(prog_name, prefix_chars="-+")
-    args = parser.parse_args()
+    ## Use parse_known_args to allow pa.sh to pass arguments meant for other components
+    ## (e.g., compilation server arguments like --width, --no_optimize)
+    args, unknown_args = parser.parse_known_args()
+    if unknown_args:
+        log(f"Ignoring unknown arguments: {' '.join(unknown_args)}", level=1)
     config.set_config_globals_from_pash_args(args)
 
     ## Modify the preprocess mode and the partial order file if we are in speculative mode
