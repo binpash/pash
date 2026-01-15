@@ -127,7 +127,7 @@ if [ -n "$command_mode" ] && [ ${#script_args[@]} -gt 0 ]; then
 fi
 
 ## Call pash.py to preprocess
-PASH_FROM_SH="pa.sh" "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash.py" --output "$preprocessed_output" "$@"
+PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash_preprocessor.py" --output "$preprocessed_output" "$@"
 
 ## If preprocessing succeeded, execute with runner.sh
 "$PASH_TOP/runtime/runner.sh" \
