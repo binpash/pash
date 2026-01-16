@@ -48,24 +48,17 @@ class Parser(argparse.ArgumentParser):
         )
         self.add_argument(
             "input",
-            nargs="*",
-            help="the script to be compiled and executed (followed by any command-line arguments",
+            help="the script file to be preprocessed",
         )
         self.add_argument(
             "--output",
-            help="path where the preprocessed script will be saved (used with preprocessing mode)",
+            help="path where the preprocessed script will be saved",
             required=True,
         )
         self.add_argument(
             "--bash",
             help="(experimental) interpret the input as a bash script file",
             action="store_true",
-        )
-        self.add_argument(
-            "-c",
-            "--command",
-            help="evaluate the following as a script, rather than a file",
-            default=None,
         )
         self.add_argument(
             "--speculative",
@@ -79,8 +72,8 @@ class Parser(argparse.ArgumentParser):
 @logging_prefix(LOGGING_PREFIX)
 def main():
     ## Parse arguments
-    args = parse_args()    
-    input_script_path = args.input[0]
+    args = parse_args()
+    input_script_path = args.input
 
     ## Preprocess
     preprocess_asts(
@@ -108,14 +101,9 @@ def parse_args():
     prog_name = sys.argv[0]
     if "PASH_FROM_SH" in os.environ:
         prog_name = os.environ["PASH_FROM_SH"]
-    ## We need to set `+` as a prefix char too
-    parser = Parser(prog_name, prefix_chars="-+")
-    ## Use parse_known_args to allow pa.sh to pass arguments meant for other components
-    ## (e.g., compilation server arguments like --width, --no_optimize)
-    args, unknown_args = parser.parse_known_args()
+    parser = Parser(prog_name)
+    args = parser.parse_args()
     config_from_args(args)
-    if unknown_args:
-        log(f"Ignoring unknown arguments: {' '.join(unknown_args)}", level=1)
 
     ## Modify the preprocess mode and the partial order file if we are in speculative mode
     if args.speculative:
@@ -124,23 +112,11 @@ def parse_args():
         args.__dict__["partial_order_file"] = util_spec.partial_order_file_path()
         log(" -- Its partial order file will be stored in:", args.partial_order_file)
 
-    ## Print all the arguments before they are modified below
+    ## Print all the arguments
     log("Arguments:")
     for arg_name, arg_val in vars(args).items():
         log(arg_name, arg_val)
     log("-" * 40)
-
-    ## TODO: Can the following code be removed?
-    if args.command is not None:
-        fname = ptempfile()
-        with open(fname, "w") as f:
-            f.write(args.command)
-        ## If the shell is invoked with -c and arguments after it, then these arguments
-        ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
-        if len(args.input) > 0:
-            ## Assign $0
-            args.input = args.input[1:]
-        args.input = [fname] + args.input
 
     return args
 

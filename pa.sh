@@ -259,16 +259,23 @@ if [ -n "$command_mode" ] && [ ${#script_args[@]} -gt 0 ]; then
     script_args=("${script_args[@]:1}")
 fi
 
+## Handle -c command mode: write command to temp file and use that as input
+## This was previously done in pash_preprocessor.py (lines 133-143)
+if [ -n "$command_text" ]; then
+    command_file=$(mktemp "${PASH_TMP_PREFIX}/command_XXXXXX.sh")
+    printf '%s' "$command_text" > "$command_file"
+    input_script="$command_file"
+fi
+
 ## Build preprocessor arguments array
+## The preprocessor now takes a single required input file (no -c flag)
 declare -a preprocessor_args=()
 preprocessor_args+=("--output" "$preprocessed_output")
 [ -n "$arg_debug" ] && preprocessor_args+=("-d" "$arg_debug")
 [ -n "$arg_log_file" ] && preprocessor_args+=("--log_file" "$arg_log_file")
 [ -n "$arg_bash" ] && preprocessor_args+=("$arg_bash")
 [ -n "$arg_speculative" ] && preprocessor_args+=("$arg_speculative")
-[ -n "$command_text" ] && preprocessor_args+=("-c" "$command_text")
-[ -n "$input_script" ] && preprocessor_args+=("$input_script")
-preprocessor_args+=("${script_args[@]}")
+preprocessor_args+=("$input_script")
 
 ## Build server arguments array
 declare -a server_args=()
