@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from sh_expand import env_vars_util
 
 import config
-from pash_graphviz import maybe_generate_graphviz
+from pash_graphviz import maybe_init_graphviz_dir, maybe_generate_graphviz
 import ast_to_ir
 import pash_compiler
 from util import *
@@ -54,6 +54,9 @@ def init():
         config.load_config(args.config_path)
 
     pash_compiler.runtime_config = config.config["distr_planner"]
+
+    ## Initialize the graphviz directory
+    maybe_init_graphviz_dir(args)
 
     return args
 

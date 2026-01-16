@@ -39,7 +39,6 @@ if [[ "$install_eval" == 1 ]]; then
     $PYTHON_PKG_DIR/bin/pip install numpy matplotlib
 fi
 
-
 # Build runtime tools: eager, split
 echo "Building runtime tools..."
 cd "$PASH_TOP/runtime/"

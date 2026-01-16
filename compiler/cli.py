@@ -216,6 +216,11 @@ class RunnerParser(BaseParser):
             action="store_true",
         )
         self.add_argument(
+            "--output",
+            help="path where the preprocessed script will be saved (used with preprocessing mode)",
+            default=None,
+        )
+        self.add_argument(
             "--local-annotations-dir",
             default=None,
         )
