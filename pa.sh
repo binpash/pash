@@ -331,16 +331,14 @@ PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" \
     "$PASH_TOP/compiler/pash_preprocessor.py" "${preprocessor_args[@]}"
 pash_exit_code=$?
 
-## If preprocessing succeeded, execute with runner.sh
+## If preprocessing succeeded, execute the preprocessed script
 if [ "$pash_exit_code" -eq 0 ]; then
-    "$PASH_TOP/shell-runner/runner.sh" \
-        "$preprocessed_output" \
-        "$shell_name" \
-        "${script_args[@]}" \
-        $allexport_flag \
-        $verbose_flag \
-        $xtrace_flag \
-        --debug "$PASH_DEBUG_LEVEL"
+    # Build bash flags
+    bash_flags="$allexport_flag $verbose_flag $xtrace_flag"
+    echo "Bash flags: $bash_flags"
+    echo "Script args:" "${script_args[@]}"
+    # shellcheck disable=SC2086
+    bash $bash_flags -c "source $preprocessed_output" "$shell_name" "${script_args[@]}"
     pash_exit_code=$?
 fi
 
