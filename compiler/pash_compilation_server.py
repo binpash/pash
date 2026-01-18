@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 from sh_expand import env_vars_util
 
 import config
-from pash_graphviz import maybe_generate_graphviz
+from pash_graphviz import maybe_init_graphviz_dir, maybe_generate_graphviz
+import ast_to_ir
 import pash_compiler
 from util import *
 from dspash.worker_manager import WorkersManager
@@ -53,6 +54,9 @@ def init():
         config.load_config(args.config_path)
 
     pash_compiler.runtime_config = config.config["distr_planner"]
+
+    ## Initialize the graphviz directory
+    maybe_init_graphviz_dir(args)
 
     return args
 
@@ -379,6 +383,7 @@ class Scheduler:
                 ]
             )
 
+        assert self.running_procs > 0
         self.running_procs -= 1
         if self.running_procs == 0:
             self.unsafe_running = False
@@ -513,6 +518,14 @@ class Scheduler:
 
 
 def shutdown():
+    # in-bash expansion server, if it exists
+    try:
+        ast_to_ir.BASH_EXP_STATE
+    except AttributeError:
+        pass
+    else:
+        ast_to_ir.BASH_EXP_STATE.close()
+
     ## There may be races since this is called through the signal handling
     log("PaSh daemon is shutting down...")
     log("PaSh daemon shut down successfully...")

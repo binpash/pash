@@ -73,7 +73,7 @@ def to_shell_file(graph: IR, args) -> str:
         graph = pash_compiler.add_eager_nodes(graph)
 
     script = to_shell(graph, args)
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(script)
     return filename
 
@@ -84,7 +84,7 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     
     Example: given the following optimized IR
                       - tr -- grep -
-                    /                \
+                    /                \\
     cat - uniq -split                    cat - wc
                     \                /
                       - tr -- grep -

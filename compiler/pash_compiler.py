@@ -149,7 +149,7 @@ def compile_optimize_output_script(
             script_to_execute = to_shell(optimized_ast_or_ir, args)
 
         log("Optimized script saved in:", compiled_script_file)
-        with open(compiled_script_file, "w") as f:
+        with open(compiled_script_file, "w", encoding="utf-8") as f:
             f.write(script_to_execute)
 
         ret = optimized_ast_or_ir
@@ -199,7 +199,7 @@ def maybe_log_optimized_script(script_to_execute, args):
     ## Output the optimized shell script for inspection
     if args.output_optimized:
         output_script_path = runtime_config["optimized_script_filename"]
-        with open(output_script_path, "w") as output_script_file:
+        with open(output_script_path, "w", encoding="utf-8") as output_script_file:
             log("Optimized script:")
             log(script_to_execute)
             output_script_file.write(script_to_execute)

@@ -21,6 +21,8 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization de
 ./pa.sh ./evaluation/intro/hello-world.sh
 ```
 
+If the script contains bash specific syntax, add the beta `--bash` flag to enable support.
+
 Run `./pa.sh --help` to get more information about the available commands.
 Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
 
@@ -36,6 +38,10 @@ export PASH_TOP="$PWD/pash/"
 ```
 
 For more details, manual installation, or other platforms see [installation instructions](./docs/install).
+
+## Running with a local annotations library
+
+To run with a local version of the library, please refer to the documentation [local annotations setup and usage](docs/local-annotations-library-documentation.md) 
 
 ## Repo Structure
 

@@ -9,6 +9,9 @@ export PASH_LOG=1
 ## Determines whether the experimental pash flags will be tested. 
 ## By default they are not.
 export EXPERIMENTAL=0
+
+SHELL_CONF=()
+
 for item in $@
 do
     if [ "--debug" == "$item" ] || [ "-d" == "$item" ]; then
@@ -20,7 +23,17 @@ do
     if [ "--experimental" == "$item" ]; then
         export EXPERIMENTAL=1
     fi
+    if [ "--bash" == "$item" ]; then
+        SHELL_CONF+=("--bash")
+    fi
+    if [ "--dash" == "$item" ]; then
+        SHELL_CONF+=("")
+    fi
 done
+
+if [[ "${#SHELL_CONF[@]}" == 0 ]]; then
+    SHELL_CONF+=("--bash" "")
+fi
 
 microbenchmarks_dir="${PASH_TOP}/evaluation/tests"
 intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary"
@@ -45,16 +58,19 @@ n_inputs=(
     8
 )
 
+configurations=()
+flags=("")
 if [ "$EXPERIMENTAL" -eq 1 ]; then
-    configurations=(
-        ""
-    )
-else
-    configurations=(
+    flags=(
         "--profile_driven"
     )
 fi
 
+for conf in "${SHELL_CONF[@]}"; do
+    for flag in "${flags[@]}"; do
+        configurations+=("$conf $flag")
+    done
+done
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
 script_microbenchmarks=(
@@ -90,6 +106,13 @@ pipeline_microbenchmarks=(
     ann-agg              # Tests custom aggregators in annotations
     # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
+bash_skip=(
+    # have '*' characters in the regex which is conservatively caught as a glob
+    # by the bash expansion
+    sed-test
+    minimal_grep_stdin
+    minimal_grep
+)
 
 
 
@@ -99,19 +122,18 @@ execute_pash_and_check_diff() {
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
-
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
-        b=$(cat "$pash_time"); 
+        b="$(cat "$pash_time")";
         test_diff_ec=$(cmp -s "$seq_output" "$pash_output" && echo 0 || echo 1)
         # differ
         script=$(basename $script_to_execute)
         if [ $test_diff_ec -ne 0 ]; then
             c=$(diff -s "$seq_output" "$pash_output" | head)
             echo "$c$b" > "${pash_time}"
-            echo "$script are not identical" >> $test_results_dir/result_status
+            echo "$script are not identical with flags $@" >> $test_results_dir/result_status
         else
             echo "Files $seq_output and $pash_output are identical" > "${pash_time}"
-            echo "$script are identical" >> $test_results_dir/result_status
+            echo "$script are identical with flags $@" >> $test_results_dir/result_status
         fi
 
     fi
@@ -173,6 +195,9 @@ execute_tests() {
         echo "   exited with $?"
         tail -n1 ${seq_time} >> ${results_time_bash}
         for conf in "${configurations[@]}"; do
+            if [[ "${conf[*]}" =~ "bash" ]] && [[ "${bash_skip[*]}" =~ "$microbenchmark" ]]; then
+                continue
+            fi
             for n_in in "${n_inputs[@]}"; do
                 echo "|-- Executing with pash --width ${n_in} ${conf}..."
                 export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_$(echo ${conf} | tr -d ' ').time"
@@ -221,7 +246,10 @@ paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | 
 #grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
 
 echo "Below follow the non-identical outputs:"     
-grep "are not identical" "$test_results_dir"/result_status | awk '{print $1}'
+# WARNING: Fragile
+sed -nE \
+  's/^([^ ]+).*are not identical.*-d 1 (.*) --output_time.*/\1 with relevant flags \2/p' \
+  "$test_results_dir"/result_status
 
 TOTAL_TESTS=$(cat "$test_results_dir"/result_status | wc -l)
 PASSED_TESTS=$(grep -c "are identical" "$test_results_dir"/result_status)

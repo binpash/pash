@@ -5,9 +5,9 @@ on:
     types: [published]
 
 env:
-  DEBIAN: pash/debian-10
-  UBUNTU: pash/ubuntu-18.04
-  FEDORA: pash/fedora-35
+  DEBIAN: pash/debian-12
+  UBUNTU: pash/ubuntu-24.04
+  FEDORA: pash/fedora-41
   IMAGENAME: pash/pash
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Log in to registry
         # This is where you will update the PAT to GITHUB_TOKEN
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin

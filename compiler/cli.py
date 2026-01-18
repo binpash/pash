@@ -216,6 +216,15 @@ class RunnerParser(BaseParser):
             action="store_true",
         )
         self.add_argument(
+            "--output",
+            help="path where the preprocessed script will be saved (used with preprocessing mode)",
+            default=None,
+        )
+        self.add_argument(
+            "--local-annotations-dir",
+            default=None,
+        )
+        self.add_argument(
             "--interactive",
             help="Executes the script using an interactive internal shell session (experimental)",
             action="store_true",
@@ -250,6 +259,12 @@ class RunnerParser(BaseParser):
             help="(experimental) prints commands and their arguments as they execute",
             action="store_true",
         )
+        self.add_argument(
+            "--bash",
+            help="(experimental) interpret the input as a bash script file",
+            action="store_true",
+        )
+
         self.set_defaults(preprocess_mode="pash")
 
 
