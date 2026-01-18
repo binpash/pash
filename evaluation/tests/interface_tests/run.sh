@@ -348,6 +348,12 @@ test_IFS()
     $shell test-IFS.sh
 }
 
+test_shell_args()
+{
+    local shell=$1
+    $shell -c "echo hi" -x 2>&1
+}
+
 run_test test1
 run_test test2
 run_test test3
@@ -391,6 +397,7 @@ run_test test_star
 run_test test_env_vars
 run_test test_redir_dup
 run_test test_IFS
+# run_test test_shell_args # Bug that needs to be fixed with arg parsing
 
 if type lsb_release >/dev/null 2>&1 ; then
    distro=$(lsb_release -i -s)

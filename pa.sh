@@ -15,18 +15,6 @@ kill_all() {
 old_umask=$(umask)
 umask u=rwx,g=rx,o=rx
 
-## Handle --init early exit
-if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
-    "$PASH_TOP"/compiler/superoptimize.sh
-    exit
-fi
-
-## Check Python availability
-if ! command -v python3 &> /dev/null; then
-    echo "Python >=3 could not be found"
-    exit 1
-fi
-
 ## Get bash version for pash
 export PASH_BASH_VERSION="${BASH_VERSINFO[@]:0:3}"
 
@@ -343,16 +331,13 @@ PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" \
     "$PASH_TOP/compiler/pash_preprocessor.py" "${preprocessor_args[@]}"
 pash_exit_code=$?
 
-## If preprocessing succeeded, execute with runner.sh
+## If preprocessing succeeded, execute the preprocessed script
 if [ "$pash_exit_code" -eq 0 ]; then
-    "$PASH_TOP/runtime/runner.sh" \
-        "$preprocessed_output" \
-        "$shell_name" \
-        "${script_args[@]}" \
-        $allexport_flag \
-        $verbose_flag \
-        $xtrace_flag \
-        --debug "$PASH_DEBUG_LEVEL"
+    ## The underlying shell needs to be invoked correctly
+    ## with all shell-specific arguments.
+    bash_flags="$allexport_flag $verbose_flag $xtrace_flag"
+    # shellcheck disable=SC2086
+    bash $bash_flags -c "source $preprocessed_output" "$shell_name" "${script_args[@]}"
     pash_exit_code=$?
 fi
 
