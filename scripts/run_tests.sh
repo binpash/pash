@@ -22,6 +22,7 @@ cd "$PASH_TOP/evaluation/tests/"
 ./test_evaluation_scripts.sh
 
 # bash only
-echo "Running bash interface tests..."
-cd "$PASH_TOP/evaluation/tests/interface_tests"
-./run_bash_tests.sh
+# Note: These should only run nightly and not in the main workflow
+# echo "Running bash interface tests..."
+# cd "$PASH_TOP/evaluation/tests/interface_tests"
+# ./run_bash_tests.sh
