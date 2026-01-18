@@ -333,7 +333,8 @@ pash_exit_code=$?
 
 ## If preprocessing succeeded, execute the preprocessed script
 if [ "$pash_exit_code" -eq 0 ]; then
-    # Build bash flags
+    ## The underlying shell needs to be invoked correctly
+    ## with all shell-specific arguments.
     bash_flags="$allexport_flag $verbose_flag $xtrace_flag"
     # shellcheck disable=SC2086
     bash $bash_flags -c "source $preprocessed_output" "$shell_name" "${script_args[@]}"
