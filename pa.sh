@@ -335,8 +335,6 @@ pash_exit_code=$?
 if [ "$pash_exit_code" -eq 0 ]; then
     # Build bash flags
     bash_flags="$allexport_flag $verbose_flag $xtrace_flag"
-    echo "Bash flags: $bash_flags"
-    echo "Script args:" "${script_args[@]}"
     # shellcheck disable=SC2086
     bash $bash_flags -c "source $preprocessed_output" "$shell_name" "${script_args[@]}"
     pash_exit_code=$?

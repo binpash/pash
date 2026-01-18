@@ -348,49 +348,56 @@ test_IFS()
     $shell test-IFS.sh
 }
 
-run_test test1
-run_test test2
-run_test test3
-run_test test4
-run_test test5
-run_test test6
-# run_test test7
-run_test test8
-run_test test9
-run_test test10
-run_test test11
-run_test test12
-run_test test13
-run_test test14
-run_test test15
-run_test test16
-run_test test17
-run_test test18
-run_test test_set
-run_test test_set_e
-run_test test_redirect
-run_test test_unparsing
-run_test test_set_e_2
-run_test test_set_e_3
-run_test test_new_line_in_var
-run_test test_cmd_sbst
-run_test test_cmd_sbst2
-run_test test_exec_redirections
-run_test test_cat_hyphen
-run_test test_trap
-run_test test_set-dash
-run_test test_cat_redir_fail
-run_test test_umask
-run_test test_expand_u
-run_test test_expand_u_positional
-run_test test_quoting
-run_test test_var_assgn_default
-run_test test_exclam
-run_test test_redir_var_test
-run_test test_star
-run_test test_env_vars
-run_test test_redir_dup
-run_test test_IFS
+test_shell_args()
+{
+    local shell=$1
+    $shell -c "echo hi" -x 2>&1
+}
+
+# run_test test1
+# run_test test2
+# run_test test3
+# run_test test4
+# run_test test5
+# run_test test6
+# # run_test test7
+# run_test test8
+# run_test test9
+# run_test test10
+# run_test test11
+# run_test test12
+# run_test test13
+# run_test test14
+# run_test test15
+# run_test test16
+# run_test test17
+# run_test test18
+# run_test test_set
+# run_test test_set_e
+# run_test test_redirect
+# run_test test_unparsing
+# run_test test_set_e_2
+# run_test test_set_e_3
+# run_test test_new_line_in_var
+# run_test test_cmd_sbst
+# run_test test_cmd_sbst2
+# run_test test_exec_redirections
+# run_test test_cat_hyphen
+# run_test test_trap
+# run_test test_set-dash
+# run_test test_cat_redir_fail
+# run_test test_umask
+# run_test test_expand_u
+# run_test test_expand_u_positional
+# run_test test_quoting
+# run_test test_var_assgn_default
+# run_test test_exclam
+# run_test test_redir_var_test
+# run_test test_star
+# run_test test_env_vars
+# run_test test_redir_dup
+# run_test test_IFS
+run_test test_shell_args
 
 if type lsb_release >/dev/null 2>&1 ; then
    distro=$(lsb_release -i -s)
