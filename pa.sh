@@ -2,6 +2,9 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+export RUNTIME_DIR="$PASH_TOP/compiler/orchestrator_runtime"
+export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"
+export RUNTIME_LIBRARY_DIR="$RUNTIME_DIR/../../runtime/"
 
 ## Register the signal handlers
 trap kill_all SIGTERM SIGINT
@@ -27,6 +30,22 @@ rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
+
+## Default values for exported flags (used by runtime scripts)
+export pash_output_time_flag=1
+export pash_execute_flag=1
+export pash_dry_run_compiler_flag=0
+export pash_assert_compiler_success_flag=0
+export pash_assert_all_regions_parallelizable_flag=0
+export pash_avoid_pash_runtime_completion_flag=0
+export pash_profile_driven_flag=1
+export pash_no_parallel_pipelines=0
+export pash_daemon_communicates_through_unix_pipes_flag=0
+export pash_speculative_flag=0
+export show_version=0
+export distributed_exec=0
+export PASH_DEBUG_LEVEL=0
+export PASH_REDIR="&2"
 
 ###############################################################################
 # Argument Parsing
@@ -84,7 +103,7 @@ pash_init_arg_defaults() {
     arg_speculation=""
 }
 
-## Parse all command-line arguments into variables
+## Parse all command-line arguments into variables and set exported flags
 pash_parse_args() {
     local i=1
     local arg next_i next_arg
@@ -117,14 +136,17 @@ pash_parse_args() {
             # Shared arguments (preprocessor + server)
             -d|--debug)
                 arg_debug="$next_arg"
+                export PASH_DEBUG_LEVEL="$next_arg"
                 i=$next_i
                 ;;
             --log_file)
                 arg_log_file="$next_arg"
+                export PASH_REDIR="$next_arg"
                 i=$next_i
                 ;;
             --speculative)
                 arg_speculative="--speculative"
+                export pash_speculative_flag=1
                 ;;
             --config_path)
                 arg_config_path="$next_arg"
@@ -132,12 +154,15 @@ pash_parse_args() {
                 ;;
             --local-annotations-dir)
                 arg_local_annotations_dir="$next_arg"
+                export ANNOTATIONS_PATH=$(realpath "$next_arg")
+                export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
                 i=$next_i
                 ;;
 
             # Preprocessor-specific
             --bash)
                 arg_bash="--bash"
+                export pash_shell="bash"
                 ;;
 
             # Server-specific arguments
@@ -150,15 +175,19 @@ pash_parse_args() {
                 ;;
             --dry_run_compiler)
                 arg_dry_run_compiler="--dry_run_compiler"
+                export pash_dry_run_compiler_flag=1
                 ;;
             --assert_compiler_success)
                 arg_assert_compiler_success="--assert_compiler_success"
+                export pash_assert_compiler_success_flag=1
                 ;;
             --assert_all_regions_parallelizable)
                 arg_assert_all_regions_parallelizable="--assert_all_regions_parallelizable"
+                export pash_assert_all_regions_parallelizable_flag=1
                 ;;
             --avoid_pash_runtime_completion)
                 arg_avoid_pash_runtime_completion="--avoid_pash_runtime_completion"
+                export pash_avoid_pash_runtime_completion_flag=1
                 ;;
             -p|--output_optimized)
                 arg_output_optimized="--output_optimized"
@@ -173,6 +202,7 @@ pash_parse_args() {
                 ;;
             --no_parallel_pipelines)
                 arg_no_parallel_pipelines="--no_parallel_pipelines"
+                export pash_no_parallel_pipelines=1
                 ;;
             --parallel_pipelines_limit)
                 arg_parallel_pipelines_limit="$next_arg"
@@ -184,12 +214,14 @@ pash_parse_args() {
                 ;;
             --version)
                 arg_version="--version"
+                export show_version=1
                 ;;
             --no_eager)
                 arg_no_eager="--no_eager"
                 ;;
             --profile_driven)
                 arg_profile_driven="--profile_driven"
+                export pash_profile_driven_flag=1
                 ;;
             --termination)
                 arg_termination="$next_arg"
@@ -197,9 +229,11 @@ pash_parse_args() {
                 ;;
             --daemon_communicates_through_unix_pipes)
                 arg_daemon_communicates_through_unix_pipes="--daemon_communicates_through_unix_pipes"
+                export pash_daemon_communicates_through_unix_pipes_flag=1
                 ;;
             --distributed_exec)
                 arg_distributed_exec="--distributed_exec"
+                export distributed_exec=1
                 ;;
 
             # Obsolete arguments (still accept for backward compatibility)
@@ -303,51 +337,7 @@ pash_build_server_args() {
 }
 
 ###############################################################################
-# Environment Setup (previously in pash_init_setup.sh)
-###############################################################################
-
-pash_setup_environment() {
-    # Source local pash config if it exists
-    ## TODO: Is this used ever?
-    [ -f ~/.pash_init ] && source ~/.pash_init
-
-    # Directory exports
-    export RUNTIME_DIR="$PASH_TOP/compiler/orchestrator_runtime"
-    export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"
-    export RUNTIME_LIBRARY_DIR="$RUNTIME_DIR/../../runtime/"
-
-    # Debug/logging setup
-    export PASH_DEBUG_LEVEL="${arg_debug:-0}"
-    if [ -n "$arg_log_file" ]; then
-        export PASH_REDIR="$arg_log_file"
-    else
-        export PASH_REDIR="&2"
-    fi
-
-    # Local annotations setup
-    if [ -n "$arg_local_annotations_dir" ]; then
-        export ANNOTATIONS_PATH=$(realpath "$arg_local_annotations_dir")
-        export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
-    fi
-
-    # Export flags used by runtime scripts
-    export pash_output_time_flag=1
-    export pash_execute_flag=1
-    export pash_dry_run_compiler_flag=$( [ -n "$arg_dry_run_compiler" ] && echo 1 || echo 0 )
-    export pash_assert_compiler_success_flag=$( [ -n "$arg_assert_compiler_success" ] && echo 1 || echo 0 )
-    export pash_assert_all_regions_parallelizable_flag=$( [ -n "$arg_assert_all_regions_parallelizable" ] && echo 1 || echo 0 )
-    export pash_avoid_pash_runtime_completion_flag=$( [ -n "$arg_avoid_pash_runtime_completion" ] && echo 1 || echo 0 )
-    export pash_profile_driven_flag=$( [ -n "$arg_profile_driven" ] && echo 1 || echo 1 )  # Default 1
-    export pash_no_parallel_pipelines=$( [ -n "$arg_no_parallel_pipelines" ] && echo 1 || echo 0 )
-    export pash_daemon_communicates_through_unix_pipes_flag=$( [ -n "$arg_daemon_communicates_through_unix_pipes" ] && echo 1 || echo 0 )
-    export pash_speculative_flag=$( [ -n "$arg_speculative" ] && echo 1 || echo 0 )
-    export show_version=$( [ -n "$arg_version" ] && echo 1 || echo 0 )
-    export distributed_exec=$( [ -n "$arg_distributed_exec" ] && echo 1 || echo 0 )
-    [ -n "$arg_bash" ] && export pash_shell="bash"
-}
-
-###############################################################################
-# Logging Functions (previously in pash_init_setup.sh)
+# Logging Functions
 ###############################################################################
 
 pash_setup_logging() {
@@ -397,11 +387,11 @@ pash_setup_logging() {
 }
 
 ###############################################################################
-# Communication Functions (previously in pash_orch_lib.sh and pash_init_setup.sh)
+# Communication Functions
 ###############################################################################
 
 pash_setup_communication() {
-    ## Socket communication utilities (from pash_orch_lib.sh)
+    ## Socket communication utilities
     pash_wait_until_unix_socket_listening() {
         local server_name=$1
         local socket=$2
@@ -520,12 +510,11 @@ pash_setup_server_functions() {
 # Main Execution
 ###############################################################################
 
-## 1. Parse arguments
+## 1. Parse arguments (also sets exported flags)
 pash_init_arg_defaults
 pash_parse_args "$@"
 
-## 2. Setup environment and functions based on parsed arguments
-pash_setup_environment
+## 2. Setup functions based on parsed arguments
 pash_setup_logging
 pash_setup_communication
 pash_setup_server_functions
