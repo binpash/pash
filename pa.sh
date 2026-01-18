@@ -2,6 +2,9 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+export RUNTIME_DIR="$PASH_TOP/compiler/orchestrator_runtime"
+export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"
+export RUNTIME_LIBRARY_DIR="$RUNTIME_DIR/../../runtime/"
 
 ## Register the signal handlers
 trap kill_all SIGTERM SIGINT
@@ -28,8 +31,24 @@ mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 
+## Default values for exported flags (used by runtime scripts)
+export pash_output_time_flag=1
+export pash_execute_flag=1
+export pash_dry_run_compiler_flag=0
+export pash_assert_compiler_success_flag=0
+export pash_assert_all_regions_parallelizable_flag=0
+export pash_avoid_pash_runtime_completion_flag=0
+export pash_profile_driven_flag=1
+export pash_no_parallel_pipelines=0
+export pash_daemon_communicates_through_unix_pipes_flag=0
+export pash_speculative_flag=0
+export show_version=0
+export distributed_exec=0
+export PASH_DEBUG_LEVEL=0
+export PASH_REDIR="&2"
+
 ###############################################################################
-# Argument Parsing Functions
+# Argument Parsing
 ###############################################################################
 
 ## Initialize all argument variables with default values
@@ -41,7 +60,7 @@ pash_init_arg_defaults() {
     command_mode=""
     command_text=""
 
-    # Shell flags (for runner.sh)
+    # Shell flags
     allexport_flag="+a"
     verbose_flag=""
     xtrace_flag=""
@@ -51,6 +70,7 @@ pash_init_arg_defaults() {
     arg_log_file=""
     arg_speculative=""
     arg_config_path=""
+    arg_local_annotations_dir=""
 
     # Preprocessor-specific arguments
     arg_bash=""
@@ -83,7 +103,7 @@ pash_init_arg_defaults() {
     arg_speculation=""
 }
 
-## Parse all command-line arguments into variables
+## Parse all command-line arguments into variables and set exported flags
 pash_parse_args() {
     local i=1
     local arg next_i next_arg
@@ -94,7 +114,7 @@ pash_parse_args() {
         next_arg="${!next_i}"
 
         case "$arg" in
-            # Shell flags (for runner.sh)
+            # Shell flags
             -c|--command)
                 command_mode="-c"
                 command_text="$next_arg"
@@ -116,27 +136,33 @@ pash_parse_args() {
             # Shared arguments (preprocessor + server)
             -d|--debug)
                 arg_debug="$next_arg"
+                export PASH_DEBUG_LEVEL="$next_arg"
                 i=$next_i
                 ;;
             --log_file)
                 arg_log_file="$next_arg"
+                export PASH_REDIR="$next_arg"
                 i=$next_i
                 ;;
             --speculative)
                 arg_speculative="--speculative"
+                export pash_speculative_flag=1
                 ;;
             --config_path)
                 arg_config_path="$next_arg"
                 i=$next_i
                 ;;
             --local-annotations-dir)
-                # Handled by pash_init_setup.sh, not passed to Python scripts
+                arg_local_annotations_dir="$next_arg"
+                export ANNOTATIONS_PATH=$(realpath "$next_arg")
+                export PYTHONPATH="$ANNOTATIONS_PATH:$PYTHONPATH"
                 i=$next_i
                 ;;
 
             # Preprocessor-specific
             --bash)
                 arg_bash="--bash"
+                export pash_shell="bash"
                 ;;
 
             # Server-specific arguments
@@ -149,15 +175,19 @@ pash_parse_args() {
                 ;;
             --dry_run_compiler)
                 arg_dry_run_compiler="--dry_run_compiler"
+                export pash_dry_run_compiler_flag=1
                 ;;
             --assert_compiler_success)
                 arg_assert_compiler_success="--assert_compiler_success"
+                export pash_assert_compiler_success_flag=1
                 ;;
             --assert_all_regions_parallelizable)
                 arg_assert_all_regions_parallelizable="--assert_all_regions_parallelizable"
+                export pash_assert_all_regions_parallelizable_flag=1
                 ;;
             --avoid_pash_runtime_completion)
                 arg_avoid_pash_runtime_completion="--avoid_pash_runtime_completion"
+                export pash_avoid_pash_runtime_completion_flag=1
                 ;;
             -p|--output_optimized)
                 arg_output_optimized="--output_optimized"
@@ -172,6 +202,7 @@ pash_parse_args() {
                 ;;
             --no_parallel_pipelines)
                 arg_no_parallel_pipelines="--no_parallel_pipelines"
+                export pash_no_parallel_pipelines=1
                 ;;
             --parallel_pipelines_limit)
                 arg_parallel_pipelines_limit="$next_arg"
@@ -183,12 +214,14 @@ pash_parse_args() {
                 ;;
             --version)
                 arg_version="--version"
+                export show_version=1
                 ;;
             --no_eager)
                 arg_no_eager="--no_eager"
                 ;;
             --profile_driven)
                 arg_profile_driven="--profile_driven"
+                export pash_profile_driven_flag=1
                 ;;
             --termination)
                 arg_termination="$next_arg"
@@ -196,9 +229,11 @@ pash_parse_args() {
                 ;;
             --daemon_communicates_through_unix_pipes)
                 arg_daemon_communicates_through_unix_pipes="--daemon_communicates_through_unix_pipes"
+                export pash_daemon_communicates_through_unix_pipes_flag=1
                 ;;
             --distributed_exec)
                 arg_distributed_exec="--distributed_exec"
+                export distributed_exec=1
                 ;;
 
             # Obsolete arguments (still accept for backward compatibility)
@@ -302,46 +337,220 @@ pash_build_server_args() {
 }
 
 ###############################################################################
+# Logging Functions
+###############################################################################
+
+pash_setup_logging() {
+    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+        pash_redir_output() {
+            :
+        }
+
+        pash_redir_all_output() {
+            :
+        }
+
+        pash_redir_all_output_always_execute() {
+            > /dev/null 2>&1 "$@"
+        }
+    else
+        if [ "$PASH_REDIR" == '&2' ]; then
+            pash_redir_output() {
+                >&2 "$@"
+            }
+
+            pash_redir_all_output() {
+                >&2 "$@"
+            }
+
+            pash_redir_all_output_always_execute() {
+                >&2 "$@"
+            }
+        else
+            pash_redir_output() {
+                >>"$PASH_REDIR" "$@"
+            }
+
+            pash_redir_all_output() {
+                >>"$PASH_REDIR" 2>&1 "$@"
+            }
+
+            pash_redir_all_output_always_execute() {
+                >>"$PASH_REDIR" 2>&1 "$@"
+            }
+        fi
+    fi
+
+    export -f pash_redir_output
+    export -f pash_redir_all_output
+    export -f pash_redir_all_output_always_execute
+}
+
+###############################################################################
+# Communication Functions
+###############################################################################
+
+pash_setup_communication() {
+    ## Socket communication utilities
+    pash_wait_until_unix_socket_listening() {
+        local server_name=$1
+        local socket=$2
+        local i=0
+        local maximum_retries=1000
+        until echo "Daemon Start" 2> /dev/null | nc -U "$socket" >/dev/null 2>&1; do
+            sleep 0.01
+            i=$((i+1))
+            if [ $i -eq $maximum_retries ]; then
+                echo "Error: Maximum retries: $maximum_retries exceeded when waiting for server: ${server_name} to bind to socket: ${socket}!" 1>&2
+                echo "Exiting..." 1>&2
+                exit 1
+            fi
+        done
+    }
+
+    pash_communicate_unix_socket() {
+        local server_name=$1
+        local socket=$2
+        local message=$3
+        pash_redir_output echo "Sending msg to ${server_name}: $message"
+        daemon_response=$(echo "$message" | nc -U "${socket}")
+        pash_redir_output echo "Got response from ${server_name}: $daemon_response"
+        echo "$daemon_response"
+    }
+
+    export -f pash_wait_until_unix_socket_listening
+    export -f pash_communicate_unix_socket
+
+    ## Daemon communication (conditional on unix pipes flag)
+    if [ "$pash_daemon_communicates_through_unix_pipes_flag" -eq 1 ]; then
+        pash_communicate_daemon() {
+            local message=$1
+            pash_redir_output echo "Sending msg to daemon: $message"
+            echo "$message" > "$RUNTIME_IN_FIFO"
+            daemon_response=$(cat "$RUNTIME_OUT_FIFO")
+            pash_redir_output echo "Got response from daemon: $daemon_response"
+            echo "$daemon_response"
+        }
+
+        pash_communicate_daemon_just_send() {
+            local message=$1
+            pash_redir_output echo "Sending msg to daemon: $message"
+            echo "$message" > "$RUNTIME_IN_FIFO"
+        }
+
+        pash_wait_until_daemon_listening() {
+            :
+        }
+    else
+        pash_communicate_daemon() {
+            local message=$1
+            pash_communicate_unix_socket "compilation-server" "${DAEMON_SOCKET}" "${message}"
+        }
+
+        pash_communicate_daemon_just_send() {
+            pash_communicate_daemon "$1"
+        }
+
+        pash_wait_until_daemon_listening() {
+            pash_wait_until_unix_socket_listening "compilation-server" "${DAEMON_SOCKET}"
+        }
+    fi
+
+    export -f pash_communicate_daemon
+    export -f pash_communicate_daemon_just_send
+    export -f pash_wait_until_daemon_listening
+
+    ## Worker manager communication (for distributed execution)
+    if [ "$distributed_exec" -eq 1 ]; then
+        pash_communicate_worker_manager() {
+            local message=$1
+            pash_redir_output echo "Sending msg to worker manager: $message"
+            manager_response=$(echo "$message" | nc -U "$DSPASH_SOCKET")
+            pash_redir_output echo "Got response from worker manager: $manager_response"
+            echo "$manager_response"
+        }
+        export -f pash_communicate_worker_manager
+    fi
+}
+
+###############################################################################
+# Server Functions
+###############################################################################
+
+pash_setup_server_functions() {
+    if [ "${pash_speculative_flag}" -eq 1 ]; then
+        ## Speculative mode - source the speculative setup
+        source "$PASH_TOP/compiler/orchestrator_runtime/speculative/pash_spec_init_setup.sh"
+    else
+        ## Normal PaSh mode
+        start_server() {
+            "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
+            export daemon_pid=$!
+            pash_wait_until_daemon_listening
+        }
+
+        cleanup_server() {
+            local daemon_pid=$1
+            if ps -p "$daemon_pid" > /dev/null 2>&1; then
+                msg="Done"
+                daemon_response=$(pash_communicate_daemon "$msg")
+                if [ "$distributed_exec" -eq 1 ]; then
+                    manager_response=$(pash_communicate_worker_manager "$msg")
+                fi
+                wait 2> /dev/null 1>&2
+            fi
+        }
+
+        export -f start_server
+        export -f cleanup_server
+    fi
+}
+
+###############################################################################
 # Main Execution
 ###############################################################################
 
-## Initialize pash (logging, functions, environment flags)
-source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
-
-## Create temporary file for preprocessed output
-preprocessed_output=$(mktemp "${PASH_TMP_PREFIX}/preprocessed_XXXXXX.sh")
-
-## Parse and prepare arguments
+## 1. Parse arguments (also sets exported flags)
 pash_init_arg_defaults
 pash_parse_args "$@"
+
+## 2. Setup functions based on parsed arguments
+pash_setup_logging
+pash_setup_communication
+pash_setup_server_functions
+
+## 3. Handle -c command mode
 pash_handle_command_mode
+
+## 4. Create temporary file for preprocessed output
+preprocessed_output=$(mktemp "${PASH_TMP_PREFIX}/preprocessed_XXXXXX.sh")
+
+## 5. Build argument arrays for preprocessor and server
 pash_build_preprocessor_args
 pash_build_server_args
 
-## Start the compilation server
+## 6. Start the compilation server
 if [ "$show_version" -eq 0 ]; then
     start_server "${server_args[@]}"
 fi
 
-## Restore umask before executing user scripts
+## 7. Restore umask before executing user scripts
 umask "$old_umask"
 
-## Run the preprocessor
+## 8. Run the preprocessor
 PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" \
     "$PASH_TOP/compiler/pash_preprocessor.py" "${preprocessor_args[@]}"
 pash_exit_code=$?
 
-## If preprocessing succeeded, execute the preprocessed script
+## 9. If preprocessing succeeded, execute the preprocessed script
 if [ "$pash_exit_code" -eq 0 ]; then
-    ## The underlying shell needs to be invoked correctly
-    ## with all shell-specific arguments.
     bash_flags="$allexport_flag $verbose_flag $xtrace_flag"
     # shellcheck disable=SC2086
     bash $bash_flags -c "source $preprocessed_output" "$shell_name" "${script_args[@]}"
     pash_exit_code=$?
 fi
 
-## Cleanup
+## 10. Cleanup
 rm -f "$preprocessed_output"
 if [ "$show_version" -eq 0 ]; then
     cleanup_server "${daemon_pid}"
