@@ -41,7 +41,8 @@ EOF
 # Logging function
 log() {
     if [ "$debug_level" -ge 1 ]; then
-        echo "PaSh: $*" >&2
+        local prefix="${RUNNER_LOG_PREFIX:-Runner}"
+        echo "$prefix: $*" >&2
     fi
 }
 

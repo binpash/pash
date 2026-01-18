@@ -15,18 +15,6 @@ kill_all() {
 old_umask=$(umask)
 umask u=rwx,g=rx,o=rx
 
-## Handle --init early exit
-if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
-    "$PASH_TOP"/compiler/superoptimize.sh
-    exit
-fi
-
-## Check Python availability
-if ! command -v python3 &> /dev/null; then
-    echo "Python >=3 could not be found"
-    exit 1
-fi
-
 ## Get bash version for pash
 export PASH_BASH_VERSION="${BASH_VERSINFO[@]:0:3}"
 
@@ -345,7 +333,7 @@ pash_exit_code=$?
 
 ## If preprocessing succeeded, execute with runner.sh
 if [ "$pash_exit_code" -eq 0 ]; then
-    "$PASH_TOP/runtime/runner.sh" \
+    "$PASH_TOP/shell-runner/runner.sh" \
         "$preprocessed_output" \
         "$shell_name" \
         "${script_args[@]}" \
