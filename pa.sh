@@ -320,9 +320,6 @@ pash_build_server_args() {
 ## Initialize pash (logging, functions, environment flags)
 source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
-## Restore umask before executing user scripts
-umask "$old_umask"
-
 ## Create temporary file for preprocessed output
 preprocessed_output=$(mktemp "${PASH_TMP_PREFIX}/preprocessed_XXXXXX.sh")
 
@@ -337,6 +334,9 @@ pash_build_server_args
 if [ "$show_version" -eq 0 ]; then
     start_server "${server_args[@]}"
 fi
+
+## Restore umask before executing user scripts
+umask "$old_umask"
 
 ## Run the preprocessor
 PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" \
