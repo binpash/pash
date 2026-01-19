@@ -8,7 +8,7 @@ cd $(dirname $0)
 
 
 if [ ! -f ./100M.txt ]; then
-  curl -sf --connect-timeout 10 'ndr.md/data/dummy/100M.txt' > 100M.txt
+  curl -sf --connect-timeout 10 'atlas.cs.brown.edu/data/dummy/100M.txt' > 100M.txt
   if [ $? -ne 0 ]; then
     # Pipe curl through tac (twice) in order to consume all the output from curl.
     # This way, curl can write the whole page and not emit an error code.
@@ -23,7 +23,7 @@ if [ ! -f ./100M.txt ]; then
 fi
 
 if [ ! -f ./words ]; then
-  curl -sf --connect-timeout 10 'http://ndr.md/data/dummy/words' > words
+  curl -sf --connect-timeout 10 'atlas.cs.brown.edu/data/dummy/words' > words
   if [ $? -ne 0 ]; then
     curl -sf 'https://zenodo.org/record/7650885/files/words' > words
     if [ $? -ne 0 ]; then

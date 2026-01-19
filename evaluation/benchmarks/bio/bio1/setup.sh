@@ -8,7 +8,7 @@ mkdir -p input
 mkdir -p output
 cd input
 if [[ ! -f R1.fastq ]]; then
-  wget ndr.md/data/bio/{R1.fastq.gz,R2.fastq.gz,ref.fa}
+  wget atlas.cs.brown.edu/data/bio/{R1.fastq.gz,R2.fastq.gz,ref.fa}
 
   gunzip R1.fastq.gz
   gunzip R2.fastq.gz
