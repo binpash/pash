@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+import os
 import pickle
 
 from shell_ast.ast_util import *
 from shasta.json_to_ast import to_ast_node
 from speculative import util_spec
 from parse import from_ast_objects_to_shell
+
+# Runtime executable path - constructed from PASH_TOP environment variable
+PASH_TOP = os.environ.get("PASH_TOP", "")
+RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
 
 ## There are two types of ast_to_ast transformations
@@ -126,7 +131,7 @@ class TransformationState(AbstractTransformationState):
         ## Call the runtime
         arguments = [
             string_to_argument("source"),
-            string_to_argument(config.RUNTIME_EXECUTABLE),
+            string_to_argument(RUNTIME_EXECUTABLE),
         ]
         runtime_node = make_command(arguments, assignments=assignments)
         return runtime_node
@@ -196,7 +201,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
         ## Call the runtime
         arguments = [
             string_to_argument("source"),
-            string_to_argument(config.RUNTIME_EXECUTABLE),
+            string_to_argument(RUNTIME_EXECUTABLE),
         ]
         ## Pass all relevant argument to the planner
         runtime_node = make_command(arguments, assignments=assignments)

@@ -5,7 +5,7 @@ import argparse
 import json
 import logging
 
-from preprocessor.preprocessor import preprocess
+from preprocessor import preprocess
 from speculative import util_spec
 from util import *
 

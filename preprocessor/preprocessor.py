@@ -1,13 +1,11 @@
 from datetime import datetime
 import os
+import socket
 
-import config
 from shell_ast import transformation_options, ast_to_ast
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
-import server_util
 from speculative import util_spec
-from cli import PreprocessorParser
 
 LOGGING_PREFIX = "PaSh Preprocessor: "
 
@@ -76,25 +74,19 @@ def preprocess_asts(ast_objects, args):
         msg = util_spec.scheduler_server_init_po_msg(
             trans_options.get_partial_order_file()
         )
-        server_util.unix_socket_send_and_forget(unix_socket_file, msg)
+        _unix_socket_send_and_forget(unix_socket_file, msg)
 
     return preprocessed_asts
 
 
-def main():
-    parser = PreprocessorParser()
-    args = parser.parse_args()
-    config.set_config_globals_from_pash_args(args)
-
-    ## Initialize the log file
-    ## TODO: Can we move this somewhere where there is no need for copy paste?
-    config.init_log_file()
-
-    ## Choose the transformation node based on the argument given
-    log("Preprocesing mode:", args.preprocess_mode)
-    preprocessed_shell_script = preprocess(args.input, args)
-    print(preprocessed_shell_script)
-
-
-if __name__ == "__main__":
-    main()
+def _unix_socket_send_and_forget(socket_file, msg):
+    """Send a message to a Unix socket without waiting for a response."""
+    if socket_file is None:
+        return
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(socket_file)
+        sock.sendall(msg.encode())
+        sock.close()
+    except Exception as e:
+        log(f"Warning: Failed to send message to scheduler socket: {e}")

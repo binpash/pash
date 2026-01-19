@@ -21,7 +21,7 @@ os.environ.setdefault("PASH_BASH_VERSION", "5 2 21")
 from parse import parse_shell_to_asts
 from shell_ast.transformation_options import TransformationState
 from shell_ast.preprocess_ast_cases import preprocess_node, preprocess_close_node
-from preprocessor.preprocessor import preprocess
+from preprocessor import preprocess
 
 
 class MockArgs:
