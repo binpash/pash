@@ -12,11 +12,10 @@ import config
 from pash_graphviz import maybe_init_graphviz_dir, maybe_generate_graphviz
 import ast_to_ir
 import pash_compiler
-from util import log, print_time_delta
 from dspash.worker_manager import WorkersManager
 
 from cli import BaseParser
-from util import NotAllRegionParallelizableError
+from util import log, print_time_delta, NotAllRegionParallelizableError
 
 ##
 ## A Daemon (not with the strict Unix sense)

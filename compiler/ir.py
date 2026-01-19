@@ -41,7 +41,6 @@ import ir_defs.nodes.r_unwrap as r_unwrap
 
 from shell_ast.ast_util import *
 from util import *
-from util import *
 
 import config
 
