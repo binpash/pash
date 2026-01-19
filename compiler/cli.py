@@ -148,12 +148,6 @@ class BaseParser(argparse.ArgumentParser):
             help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
             action="store_true",
         )
-        self.add_argument(
-            "--speculation",
-            help="(obsolete) does nothing -- run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
-            choices=["no_spec", "quick_abort"],
-            default="no_spec",
-        )
 
     def add_experimental_args(self):
         self.add_argument(
