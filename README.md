@@ -3,13 +3,8 @@
 > _A system for parallelizing POSIX shell scripts._
 > _Hosted by the [Linux Foundation](https://linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/)._
 
-
-| Service      | Main | Develop |
-| :---         |    :----:   |          :----: |
-| Tests      | [![Tests](https://github.com/binpash/pash/actions/workflows/tests.yaml/badge.svg?branch=main&event=push)](https://github.com/binpash/pash/actions/workflows/tests.yaml?query=branch%3Amain++)     | [![Tests](https://github.com/binpash/pash/actions/workflows/tests.yaml/badge.svg?branch=future&event=push)](https://github.com/binpash/pash/actions/workflows/tests.yaml?query=branch%3Afuture++)   |
-| Build   | [![Build](https://github.com/binpash/pash/actions/workflows/build.yaml/badge.svg?branch=main&event=push)](https://github.com/binpash/pash/actions/workflows/build.yaml?query=branch%3Amain++)        | [![Build](https://github.com/binpash/pash/actions/workflows/build.yaml/badge.svg?branch=future&event=push)](https://github.com/binpash/pash/actions/workflows/build.yaml?query=branch%3Afuture++)      |
-| Pages     | [![DeployPublish](https://github.com/binpash/web/actions/workflows/pages.yaml/badge.svg)](https://github.com/binpash/web/actions/workflows/pages.yaml) | [![DeployPublish](https://github.com/binpash/web/actions/workflows/pages.yaml/badge.svg)](https://github.com/binpash/web/actions/workflows/pages.yaml) |
-
+[![Tests](https://github.com/binpash/pash/actions/workflows/tests.yaml/badge.svg?branch=main&event=push)](https://github.com/binpash/pash/actions/workflows/tests.yaml?query=branch%3Amain++)
+[![Build](https://github.com/binpash/pash/actions/workflows/build.yaml/badge.svg?branch=main&event=push)](https://github.com/binpash/pash/actions/workflows/build.yaml?query=branch%3Amain++)
 
 Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more) | [Citing](#citing)
 
@@ -20,6 +15,8 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization de
 ```sh
 ./pa.sh ./evaluation/intro/hello-world.sh
 ```
+
+If the script contains bash specific syntax, add the beta `--bash` flag to enable support.
 
 Run `./pa.sh --help` to get more information about the available commands.
 Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
@@ -36,6 +33,10 @@ export PASH_TOP="$PWD/pash/"
 ```
 
 For more details, manual installation, or other platforms see [installation instructions](./docs/install).
+
+## Running with a local annotations library
+
+To run with a local version of the library, please refer to the documentation [local annotations setup and usage](docs/local-annotations-library-documentation.md) 
 
 ## Repo Structure
 

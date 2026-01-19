@@ -3,8 +3,8 @@
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 # time: print real in seconds, to simplify parsing
 
-bash="bash"
-pash="$PASH_TOP/pa.sh --parallel_pipelines --profile_driven"
+pash="$PASH_TOP/pa.sh --profile_driven"
+pash_with_bash="$PASH_TOP/pa.sh --profile_driven --bash"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
@@ -39,11 +39,32 @@ run_test()
         echo -n "$test exit code mismatch "
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_ec -ne 0 ]; then
-        echo "$test are not identical" >> $output_dir/result_status
+        echo "$test are not identical (pash)" >> "$output_dir/result_status"
+        echo -e '\t\tFAIL'
+        return 1
+    fi
+
+    { time $test "$pash_with_bash" > "$output_dir/$test.pash_bash.out"; } 2>> "$output_dir/results.time_pash_bash"
+    test_pash_bash_ec=$?
+    diff "$output_dir/$test.bash.out" "$output_dir/$test.pash_bash.out"
+    test_diff_bash_ec=$?
+
+    # Check if exit codes both succeed or both fail
+    { [ $test_bash_ec -eq 0 ] && [ $test_pash_bash_ec -eq 0 ]; } || { [ $test_bash_ec -ne 0 ] && [ $test_pash_bash_ec -ne 0 ]; }
+    test_ec_bash=$?
+
+    if [ $test_diff_bash_ec -ne 0 ]; then
+        echo -n "$test output mismatch "
+    fi
+    if [ $test_ec_bash -ne 0 ]; then
+        echo -n "$test exit code mismatch "
+    fi
+    if [ $test_diff_bash_ec -ne 0 ] || [ $test_ec_bash -ne 0 ]; then
+        echo "$test are not identical (pash --bash)" >> "$output_dir/result_status"
         echo -e '\t\tFAIL'
         return 1
     else
-        echo "$test are identical" >> $output_dir/result_status
+        echo "$test are identical" >> "$output_dir/result_status"
         echo -e '\t\tOK'
         return 0
     fi
@@ -321,56 +342,62 @@ test_redir_dup()
     $shell redir-dup.sh
 }
 
-## We run all tests composed with && to exit on the first that fails
-if [ "$#" -eq 0 ]; then
-    run_test test1
-    run_test test2
-    run_test test3
-    run_test test4
-    run_test test5
-    run_test test6
-    # run_test test7
-    run_test test8
-    run_test test9
-    run_test test10
-    run_test test11
-    run_test test12
-    run_test test13
-    run_test test14
-    run_test test15
-    run_test test16
-    run_test test17
-    run_test test18
-    run_test test_set
-    run_test test_set_e
-    run_test test_redirect
-    run_test test_unparsing
-    run_test test_set_e_2
-    run_test test_set_e_3
-    run_test test_new_line_in_var
-    run_test test_cmd_sbst
-    run_test test_cmd_sbst2
-    run_test test_exec_redirections
-    run_test test_cat_hyphen
-    run_test test_trap
-    run_test test_set-dash
-    run_test test_cat_redir_fail
-    run_test test_umask
-    run_test test_expand_u
-    run_test test_expand_u_positional
-    run_test test_quoting
-    run_test test_var_assgn_default
-    run_test test_exclam
-    run_test test_redir_var_test
-    run_test test_star
-    run_test test_env_vars
-    run_test test_redir_dup
-else
-    for testname in $@
-    do
-        run_test "$testname"
-    done
-fi
+test_IFS()
+{
+    local shell=$1
+    $shell test-IFS.sh
+}
+
+test_shell_args()
+{
+    local shell=$1
+    $shell -c "echo hi" -x 2>&1
+}
+
+run_test test1
+run_test test2
+run_test test3
+run_test test4
+run_test test5
+run_test test6
+# run_test test7
+run_test test8
+run_test test9
+run_test test10
+run_test test11
+run_test test12
+run_test test13
+run_test test14
+run_test test15
+run_test test16
+run_test test17
+run_test test18
+run_test test_set
+run_test test_set_e
+run_test test_redirect
+run_test test_unparsing
+run_test test_set_e_2
+run_test test_set_e_3
+run_test test_new_line_in_var
+run_test test_cmd_sbst
+run_test test_cmd_sbst2
+run_test test_exec_redirections
+run_test test_cat_hyphen
+run_test test_trap
+run_test test_set-dash
+run_test test_cat_redir_fail
+run_test test_umask
+run_test test_expand_u
+run_test test_expand_u_positional
+run_test test_quoting
+run_test test_var_assgn_default
+run_test test_exclam
+run_test test_redir_var_test
+run_test test_star
+run_test test_env_vars
+run_test test_redir_dup
+run_test test_IFS
+# run_test test_shell_args # Bug that needs to be fixed with arg parsing
 
 if type lsb_release >/dev/null 2>&1 ; then
    distro=$(lsb_release -i -s)
@@ -384,21 +411,21 @@ case "$distro" in
     freebsd*)  
         # change sed to gsed
         sed () {
-            gsed $@
+            gsed "$@"
         }
         ;;
     *)
         ;;
 esac
 
-echo "group,Bash,Pash-DRY_COMP" > $output_dir/results.time
-paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
+echo "group,Bash,Pash-DRY_COMP" > "$output_dir/results.time"
+paste "$output_dir"/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> "$output_dir/results.time"
 
 echo "Below follow the identical outputs:"
-grep "are identical" "$output_dir"/result_status | awk '{print $1}'
+grep "are identical" "$output_dir"/result_status | awk '{print $1, $5}'
 
 echo "Below follow the non-identical outputs:"     
-grep "are not identical" "$output_dir"/result_status | awk '{print $1}'
+grep "are not identical" "$output_dir"/result_status | awk '{print $1, $5}'
 
 TOTAL_TESTS=$(cat "$output_dir"/result_status | wc -l)
 PASSED_TESTS=$(grep -c "are identical" "$output_dir"/result_status)

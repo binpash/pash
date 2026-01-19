@@ -26,7 +26,7 @@ setup_dataset() {
   fi
 
     if [ ! -f ./1M.txt ]; then
-        curl -sf 'atlas.cs.brown.edu/data/dummy/1M.txt' > 1M.txt
+        curl -sfk 'https://atlas.cs.brown.edu/data/dummy/1M.txt' > 1M.txt
         if [ $? -ne 0 ]; then
             echo 'cannot find 1M.txt -- please contact the developers of pash'
             exit 1
@@ -51,7 +51,7 @@ setup_dataset() {
     fi
 
     if [ ! -f ./1G.txt ]; then
-        curl -sf 'atlas.cs.brown.edu/data/dummy/1G.txt' > 1G.txt
+        curl -sfk 'https://atlas.cs.brown.edu/data/dummy/1G.txt' > 1G.txt
         if [ $? -ne 0 ]; then
             echo 'cannot find 1G.txt -- please contact the developers of pash'
             exit 1
@@ -91,13 +91,13 @@ setup_dataset() {
             "$PASH_TOP/scripts/append_nl_if_not.sh" ./3G.txt
         fi
 
-        if [ ! -f ./10G.txt ]; then
-            touch 10G.txt
-            for (( i = 0; i < 10; i++ )); do
-                cat 1G.txt >> 10G.txt
-            done
-            "$PASH_TOP/scripts/append_nl_if_not.sh" ./10G.txt
-        fi
+        # if [ ! -f ./10G.txt ]; then
+        #     touch 10G.txt
+        #     for (( i = 0; i < 10; i++ )); do
+        #         cat 1G.txt >> 10G.txt
+        #     done
+        #     "$PASH_TOP/scripts/append_nl_if_not.sh" ./10G.txt
+        # fi
 
         if [ ! -f ./all_cmdsx100.txt ]; then
             touch all_cmdsx100.txt

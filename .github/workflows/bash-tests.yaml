@@ -1,0 +1,78 @@
+name: Bash Tests
+
+on:
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened, ready_for_review]
+    paths:
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+      - scripts/**
+  push:
+    branches:
+      - main
+      - future
+    paths:
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+      - scripts/**
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  bash-interface-tests:
+    runs-on: ubuntu-24.04
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install dependencies and PaSh
+        run: |
+          sudo touch /.githubenv
+          sudo -E bash scripts/distro-deps.sh -o
+          sudo -E bash scripts/setup-pash.sh -o
+
+      - name: Run Bash interface tests
+        run: |
+          export PASH_TOP=$PWD
+          export PATH=$PATH:$PASH_TOP
+          export TMPDIR="${TMPDIR:-/tmp/}"
+          cd evaluation/tests/interface_tests
+          ./run_bash_tests.sh
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "=== Bash Interface Tests Results ==="
+          output_dir="$PWD/evaluation/tests/interface_tests/output"
+          if [ -f "$output_dir/result_status" ]; then
+            echo ""
+            echo "Passed tests:"
+            grep "are identical" "$output_dir/result_status" | awk '{print "  ✓", $1}' || echo "  (none)"
+            echo ""
+            echo "Failed tests:"
+            grep "are not identical" "$output_dir/result_status" | awk '{print "  ✗", $1}' || echo "  (none)"
+            echo ""
+            TOTAL=$(cat "$output_dir/result_status" | wc -l)
+            PASSED=$(grep -c "are identical" "$output_dir/result_status" || echo 0)
+            echo "Summary: ${PASSED}/${TOTAL} tests passed"
+          else
+            echo "No test results found"
+            exit 1
+          fi
+
+      - name: Check for failures
+        run: |
+          output_dir="$PWD/evaluation/tests/interface_tests/output"
+          if [ -f "$output_dir/result_status" ]; then
+            FAILED=$(grep -c "are not identical" "$output_dir/result_status" || echo 0)
+            if [ "$FAILED" -gt 0 ]; then
+              echo "::error::$FAILED test(s) failed"
+              exit 1
+            fi
+          fi

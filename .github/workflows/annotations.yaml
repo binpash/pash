@@ -1,0 +1,58 @@
+name: annotations
+
+on:
+  push:
+    branches:
+      - future
+      - main
+      - local-annotations-library
+    paths:
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+      - scripts/**
+
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened, ready_for_review]
+    paths:
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+      - scripts/**
+
+jobs:
+  custom-tests:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install Dependencies
+        run: |
+          set -e
+          sudo touch /.githubenv
+          # Install system dependencies
+          sudo -E bash scripts/distro-deps.sh -o
+          # Install PaSh
+          sudo -E bash scripts/setup-pash.sh -o
+          export PASH_TOP=$PWD
+          export PATH=$PATH:$PASH_TOP
+
+      - name: Run Custom Test Scripts
+        run: |
+          export PASH_TOP=$PWD
+          export PATH=$PATH:$PASH_TOP
+
+          $PASH_TOP/scripts/setup-annotations.sh
+          $PASH_TOP/scripts/ci/test_local_annotations.sh
+          test_exit_code=$?
+          mkdir -p artifact
+          echo "$test_exit_code=$?" | tee artifact/custom_results.log
+
+          exit $test_exit_code
+
+

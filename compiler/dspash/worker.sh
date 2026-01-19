@@ -5,8 +5,6 @@ trap cleanup INT
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-# point to the local downloaded folders
-export PYTHONPATH=${PASH_TOP}/python_pkgs/
 export PASH_TIMESTAMP="$(date +"%y-%m-%d-%T")"
 
 # add hdfs directory if hdfs command exist
@@ -30,4 +28,4 @@ cleanup() {
 FILEREADER_PID=$!
 "$PASH_TOP/runtime/dspash/file_reader/discovery_server" &
 DISCOVERY_PID=$!
-python3 "$PASH_TOP/compiler/dspash/worker.py" "$@"
+"$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/dspash/worker.py" "$@"

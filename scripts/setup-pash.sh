@@ -15,30 +15,29 @@ read_cmd_args $@
 LOG_DIR=$PASH_TOP/install_logs
 mkdir -p $LOG_DIR
 PYTHON_PKG_DIR=$PASH_TOP/python_pkgs
-# remove the folder in case it exists
-rm -rf $PYTHON_PKG_DIR
-# create the new folder
-mkdir -p $PYTHON_PKG_DIR
 
-echo "Installing python dependencies..."
-
-python3 -m pip install -r "$PASH_TOP/requirements.txt" --no-cache-dir --root $PYTHON_PKG_DIR --ignore-installed
-
-## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
-if [[ "$install_eval" == 1 ]];  then
-    python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
-    python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
+# Check if venv module is available
+if ! python3 -m venv --help &> /dev/null; then
+    echo "Error: python3-venv module not found. Please install it:" >&2
+    echo "  Ubuntu/Debian: sudo apt install python3-venv" >&2
+    echo "  Fedora/RHEL: sudo dnf install python3" >&2
+    exit 1
 fi
 
-# clean the python packages
-cd $PYTHON_PKG_DIR
-# can we find a better alternative to that                                      
-pkg_path=$(find . \( -name "site-packages" -or -name "dist-packages" \) -type d)
-for directory in $pkg_path; do
-  # using which to avoid the `-i` alias in many distros
-  $(which cp) -r $directory/* ${PYTHON_PKG_DIR}/
-done
 
+# Create virtual environment
+echo "Creating virtual environment..."
+python3 -m venv $PYTHON_PKG_DIR
+
+# Install dependencies
+echo "Installing Python dependencies..."
+$PYTHON_PKG_DIR/bin/pip install --upgrade pip
+$PYTHON_PKG_DIR/bin/pip install -r "$PASH_TOP/requirements.txt"
+
+## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
+if [[ "$install_eval" == 1 ]]; then
+    $PYTHON_PKG_DIR/bin/pip install numpy matplotlib
+fi
 
 # Build runtime tools: eager, split
 echo "Building runtime tools..."

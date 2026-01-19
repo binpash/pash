@@ -15,7 +15,7 @@ export internal_exec_status=$?
 # This value may contains multiple pids as a whitespace-separated string, and
 # we must split it as multiple pids by shell's field splitting.
 # shellcheck disable=SC2086
-(> /dev/null 2>&1 kill -SIGPIPE $pids_to_kill || true)
+(unset IFS; > /dev/null 2>&1 kill -SIGPIPE $pids_to_kill || true)
 
 ##
 ## Old way of waiting, very inefficient.

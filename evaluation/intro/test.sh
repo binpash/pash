@@ -3,9 +3,9 @@
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
-## TODO: Make the compiler work too.
 bash="bash"
 pash="$PASH_TOP/pa.sh -w 2"
+pash_with_bash="$PASH_TOP/pa.sh -w 2 --bash"
 
 output_dir="$PASH_TOP/evaluation/intro/output"
 rm -rf "$output_dir"
@@ -15,12 +15,13 @@ mkdir -p "$output_dir"
 run_test()
 {
     local test=$1
+    local args="$2"
     echo -n "Running $test..."
     TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
     { time $bash "$test" > "$output_dir/$test.bash.out"; } 2> >(tee -a $output_dir/results.time_bash)
     test_bash_ec=$?
     TIMEFORMAT="%3R" # %3U %3S"
-    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2> >(tee -a $output_dir/results.time_pash)
+    { time $pash $args "$test" > "$output_dir/$test.pash.out"; } 2> >(tee -a $output_dir/results.time_pash)
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
@@ -34,6 +35,22 @@ run_test()
         echo "$test are not identical" >> $output_dir/result_status
         echo -e '\t\tFAIL'
         return 1
+    fi
+    TIMEFORMAT="%3R"
+    { time $pash_with_bash "$test" > "$output_dir/$test.pash_bash.out"; } 2> >(tee -a $output_dir/results.time_pash_bash)
+    test_pash_bash_ec=$?
+    diff "$output_dir/$test.bash.out" "$output_dir/$test.pash_bash.out"
+    test_diff_bash_ec=$?
+    if [ $test_diff_bash_ec -ne 0 ]; then
+        echo -n "$test output mismatch"
+    fi
+    if [ $test_bash_ec -ne $test_pash_bash_ec ]; then
+        echo -n "$test exit code mismatch"
+    fi
+    if [ $test_diff_bash_ec -ne 0 ] || [ $test_bash_ec -ne $test_pash_bash_ec ]; then
+        echo "$test are not identical" >> $output_dir/result_status
+        echo -e '\t\tFAIL'
+        return 1
     else
         echo "$test are identical" >> $output_dir/result_status
         echo -e '\t\tOK'
@@ -43,6 +60,7 @@ run_test()
 
 run_test "demo-spell.sh"
 run_test "hello-world.sh"
+run_test "hello-world-bash.sh" "--bash"
 
 if type lsb_release >/dev/null 2>&1 ; then
    distro=$(lsb_release -i -s)
@@ -51,7 +69,6 @@ elif [ -e /etc/os-release ] ; then
 fi
 
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
-# now do different things depending on distro
 case "$distro" in
     freebsd*)  
         # change sed to gsed

@@ -1,4 +1,4 @@
-FROM debian:10
+FROM debian:12
 SHELL ["/bin/bash", "-c"]
 ## Necessary to avoid interactive responses in installations
 ENV DEBIAN_FRONTEND=noninteractive
