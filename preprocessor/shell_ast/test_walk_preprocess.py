@@ -20,8 +20,18 @@ os.environ.setdefault("PASH_BASH_VERSION", "5 2 21")
 
 from parse import parse_shell_to_asts
 from shell_ast.transformation_options import TransformationState
-from shell_ast.preprocess_ast_cases import preprocess_node, preprocess_close_node
-from preprocessor import preprocess
+from shell_ast.ast_to_ast import preprocess_node
+from shell_ast.walk_preprocess import WalkPreprocess, PreprocessContext
+from pash_preprocessor import preprocess
+
+
+def preprocess_close_node(ast_node, trans_options, last_object=False):
+    """Preprocess a node with close-node semantics (for backward compatibility with tests)."""
+    from shell_ast.handlers.loop_tracking import for_node_with_loop_tracking
+    handlers = {"for": for_node_with_loop_tracking}
+    walker = WalkPreprocess(handlers=handlers)
+    ctx = PreprocessContext(trans_options=trans_options, last_object=last_object)
+    return walker.walk_close(ast_node, ctx)
 
 
 class MockArgs:

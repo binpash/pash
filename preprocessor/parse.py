@@ -1,24 +1,21 @@
-import os
-import subprocess
+"""
+Shell script parsing and unparsing utilities.
+"""
+
 import sys
 
 from shell_ast.ast_util import UnparsedScript
-from shasta.ast_node import ast_node_to_untyped_deep
 from shasta.json_to_ast import to_ast_node
-from shasta.ast_node import string_of_arg
 from shasta.bash_to_shasta_ast import to_ast_node as bash_to_shasta_ast
 
-from util import *
+from util import log
 
 import libdash.parser
 import libbash
 
 
-## Parses straight a shell script to an AST
-## through python without calling it as an executable
-
-
 def parse_shell_to_asts(input_script_path, bash_mode=False):
+    """Parse a shell script to a list of AST objects."""
     if bash_mode:
         return parse_shell_to_asts_bash(input_script_path)
     else:
@@ -29,11 +26,12 @@ INITIALIZE_LIBDASH = True
 
 
 def parse_shell_to_asts_dash(input_script_path):
+    """Parse a POSIX shell script using libdash."""
     global INITIALIZE_LIBDASH
     try:
         new_ast_objects = libdash.parser.parse(input_script_path, INITIALIZE_LIBDASH)
         INITIALIZE_LIBDASH = False
-        ## Transform the untyped ast objects to typed ones
+        # Transform the untyped ast objects to typed ones
         typed_ast_objects = []
         for (
             untyped_ast,
@@ -53,10 +51,11 @@ def parse_shell_to_asts_dash(input_script_path):
 
 
 def parse_shell_to_asts_bash(input_script_path):
+    """Parse a bash script using libbash."""
     try:
         new_ast_objects = libbash.bash_to_ast(input_script_path, with_linno_info=True)
 
-        ## convert the libbash AST to a shasta AST
+        # Convert the libbash AST to a shasta AST
         typed_ast_objects = []
         for (
             untyped_ast,
@@ -79,14 +78,10 @@ def parse_shell_to_asts_bash(input_script_path):
         sys.exit(1)
 
 
-def parse_shell_to_asts_interactive(input_script_path: str):
-    return libdash.parser.parse(input_script_path)
-
-
 def from_ast_objects_to_shell(asts):
+    """Convert AST objects back to shell script text."""
     shell_list = []
     for ast in asts:
-        # log("Ast:", ast)
         if isinstance(ast, UnparsedScript):
             shell_list.append(ast.text)
         else:
@@ -97,14 +92,3 @@ def from_ast_objects_to_shell(asts):
         for x in shell_list
     ]
     return "\n".join(shell_list) + "\n"
-
-
-def from_ast_objects_to_shell_file(asts, new_shell_filename):
-    script = from_ast_objects_to_shell(asts)
-    with open(new_shell_filename, "w", encoding="utf-8") as new_shell_file:
-        new_shell_file.write(script)
-
-
-## Simply wraps the string_of_arg
-def pash_string_of_arg(arg, quoted=False):
-    return string_of_arg(arg, quoted)

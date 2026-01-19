@@ -1,46 +1,45 @@
+"""
+Utility functions for the speculative execution component.
+"""
+
 import os
 
-from shell_ast.ast_util import *
-from util import PASH_TMP_PREFIX
-
-##
-## This file contains utility functions useful for the speculative execution component
-##
+from util import log, PASH_TMP_PREFIX
 
 
 def initialize(trans_options) -> None:
-    ## Make the directory that contains the files in the partial order
+    """Initialize the partial order directory."""
     dir_path = partial_order_directory()
     os.makedirs(dir_path)
-    # ## Initialize the po file
-    # initialize_po_file(trans_options, dir_path)
 
 
 def partial_order_directory() -> str:
+    """Return the path to the partial order directory."""
     return f"{PASH_TMP_PREFIX}/speculative/partial_order/"
 
 
 def partial_order_file_path():
+    """Return the path to the partial order file."""
     return f"{PASH_TMP_PREFIX}/speculative/partial_order_file"
 
 
 def initialize_po_file(trans_options, dir_path) -> None:
-    ## Initializae the partial order file
+    """Initialize the partial order file."""
     with open(trans_options.get_partial_order_file(), "w") as f:
         f.write(f"# Partial order files path:\n")
         f.write(f"{dir_path}\n")
 
 
 def scheduler_server_init_po_msg(partial_order_file: str) -> str:
+    """Create message to initialize scheduler with partial order file."""
     return f"Init:{partial_order_file}"
 
 
-## TODO: To support partial orders, we need to pass some more context here,
-##       i.e., the connections of this node. Now it assumes we have a sequence.
 def save_df_region(
     text_to_output: str, trans_options, df_region_id: int, predecessor_ids: int
 ) -> None:
-    ## To support loops we also need to associate nodes with their surrounding loops
+    """Save a dataflow region to a file."""
+    # Associate nodes with their surrounding loops
     current_loop_context = trans_options.get_current_loop_context()
     log("Df region:", df_region_id, "loop context:", current_loop_context)
 
@@ -52,62 +51,61 @@ def save_df_region(
     with open(df_region_path, "w", encoding="utf-8") as f:
         f.write(text_to_output)
 
-    ## Save the edges in the partial order state
+    # Save the edges in the partial order state
     for predecessor in predecessor_ids:
         trans_options.add_edge(predecessor, df_region_id)
 
 
-## TODO: Figure out a way to put all serialization/deserialization of messages
-##       and parsing/unparsing in a specific module.
-
-
-## TODO: Move serialization to a partial_order_file.py
 def serialize_edge(from_id: int, to_id: int) -> str:
+    """Serialize an edge in the partial order."""
     return f"{from_id} -> {to_id}\n"
 
 
 def serialize_number_of_nodes(number_of_ids: int) -> str:
+    """Serialize the number of nodes."""
     return f"{number_of_ids}\n"
 
 
 def serialize_loop_context(node_id: int, loop_contexts) -> str:
-    ## Galaxy brain serialization
+    """Serialize a loop context."""
     loop_contexts_str = ",".join([str(loop_ctx) for loop_ctx in loop_contexts])
     return f"{node_id}-loop_ctx-{loop_contexts_str}\n"
 
 
-## TODO: Eventually we might want to retrieve the number_of_ids from trans_options
 def save_number_of_nodes(trans_options):
+    """Save the number of nodes to the partial order file."""
     number_of_ids = trans_options.get_number_of_ids()
-    partial_order_file_path = trans_options.get_partial_order_file()
-    with open(partial_order_file_path, "a") as po_file:
+    po_file_path = trans_options.get_partial_order_file()
+    with open(po_file_path, "a") as po_file:
         po_file.write(serialize_number_of_nodes(number_of_ids))
 
 
 def save_loop_contexts(trans_options):
+    """Save loop contexts to the partial order file."""
     loop_context_dict = trans_options.get_all_loop_contexts()
     log("Loop context dict:", loop_context_dict)
-    partial_order_file_path = trans_options.get_partial_order_file()
-    with open(partial_order_file_path, "a") as po_file:
+    po_file_path = trans_options.get_partial_order_file()
+    with open(po_file_path, "a") as po_file:
         for node_id in sorted(loop_context_dict.keys()):
             loop_ctx = loop_context_dict[node_id]
             po_file.write(serialize_loop_context(node_id, loop_ctx))
 
 
 def serialize_partial_order(trans_options):
-    ## Initialize the po file
+    """Serialize the complete partial order to a file."""
+    # Initialize the po file
     dir_path = partial_order_directory()
     initialize_po_file(trans_options, dir_path)
 
-    ## Save the number of nodes
+    # Save the number of nodes
     save_number_of_nodes(trans_options)
 
-    ## Save loop contexts
+    # Save loop contexts
     save_loop_contexts(trans_options)
 
     # Save the edges in the partial order file
-    partial_order_file_path = trans_options.get_partial_order_file()
+    po_file_path = trans_options.get_partial_order_file()
     edges = trans_options.get_all_edges()
-    with open(partial_order_file_path, "a") as po_file:
+    with open(po_file_path, "a") as po_file:
         for from_id, to_id in edges:
             po_file.write(serialize_edge(from_id, to_id))
