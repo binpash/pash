@@ -1,6 +1,27 @@
+import os
 import subprocess
 
-from shasta.ast_node import *
+from shasta.ast_node import (
+    AstNode,
+    ArgChar,
+    CArgChar,
+    EArgChar,
+    BArgChar,
+    QArgChar,
+    NotNode,
+    DefunNode,
+    WhileNode,
+    IfNode,
+    CaseNode,
+    SelectNode,
+    ArithNode,
+    CondNode,
+    ArithForNode,
+    CoprocNode,
+    TimeNode,
+    GroupNode,
+    ast_match,
+)
 from sh_expand.expand import expand_command, ExpansionState
 
 import config
@@ -8,7 +29,7 @@ from sh_expand.bash_expand import (
     BashExpansionState,
     expand_command as expand_command_bash,
 )
-from ir import *
+from ir import IR, compile_command_to_DFG
 from parse import from_ast_objects_to_shell
 from util import (
     log,
