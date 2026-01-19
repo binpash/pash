@@ -1,3 +1,5 @@
+from typing import List
+
 import pash_annotations.datatypes
 
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
@@ -20,6 +22,9 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
+from shasta.ast_node import ast_node_to_untyped_deep
+from shasta.json_to_ast import to_ast_node
+
 from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
 from annotations_utils.util_cmd_invocations import (
     get_input_output_info_from_cmd_invocation_util,
@@ -27,18 +32,29 @@ from annotations_utils.util_cmd_invocations import (
 )
 from annotations_utils.util_file_descriptors import resource_from_file_descriptor
 
-from definitions.ir.file_id import *
-from definitions.ir.nodes.cat import *
+from ir_defs.file_id import *
+from ir_defs.nodes.cat import *
 
-import definitions.ir.nodes.pash_split as pash_split
-import definitions.ir.nodes.r_merge as r_merge
-import definitions.ir.nodes.r_split as r_split
-import definitions.ir.nodes.r_wrap as r_wrap
-import definitions.ir.nodes.r_unwrap as r_unwrap
+import ir_defs.nodes.pash_split as pash_split
+import ir_defs.nodes.r_merge as r_merge
+import ir_defs.nodes.r_split as r_split
+import ir_defs.nodes.r_wrap as r_wrap
+import ir_defs.nodes.r_unwrap as r_unwrap
 
-from shell_ast.ast_util import *
-from util import *
-from custom_error import *
+from util import (
+    log,
+    flatten_list,
+    UnparallelizableError,
+    AdjLineNotImplementedError,
+    format_arg_chars,
+    string_to_argument,
+    char_to_arg_char,
+    standard_var_ast,
+    quote_arg,
+    make_background,
+    make_command,
+    make_assignment,
+)
 
 import config
 

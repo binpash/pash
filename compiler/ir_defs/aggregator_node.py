@@ -1,9 +1,10 @@
-from definitions.ir.dfg_node import *
+from ir_defs.dfg_node import DFGNode
+from ir_defs.arg import Arg
 
-# from definitions.ir.nodes.arg import Arg
 from annotations_utils.util_cmd_invocations import (
     get_command_invocation_prefix_from_dfg_node,
 )
+from util import log
 
 
 ## This class corresponds to a generic n-ary aggregator
@@ -26,7 +27,7 @@ class MapperAggregatorNode(DFGNode):
         com_category = "pure"
 
         ## TODO: Not sure if redirections need to be copied to new function.
-        com_redirs = [redir.to_ast() for redir in old_node.com_redirs]
+        com_redirs = [redir_defs.to_ast() for redir in old_node.com_redirs]
         super().__init__(
             input_ids,
             output_ids,

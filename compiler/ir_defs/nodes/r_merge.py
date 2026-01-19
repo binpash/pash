@@ -3,10 +3,13 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
-from definitions.ir.dfg_node import *
+import config
+import os
+
+from ir_defs.dfg_node import DFGNode
 
 
-class RUnwrap(DFGNode):
+class RMerge(DFGNode):
     def __init__(
         self,
         cmd_invocation_with_io_vars,
@@ -18,7 +21,7 @@ class RUnwrap(DFGNode):
         com_redirs = [] if com_redirs is None else com_redirs
         com_assignments = [] if com_assignments is None else com_assignments
         super().__init__(
-            cmd_invocation_with_io_vars,
+            cmd_invocation_with_io_vars=cmd_invocation_with_io_vars,
             com_redirs=com_redirs,
             com_assignments=com_assignments,
             parallelizer_list=parallelizer_list,
@@ -26,19 +29,19 @@ class RUnwrap(DFGNode):
         )
 
 
-def make_unwrap_node(inputs, output):
-    assert len(inputs) == 1
-    input_id = inputs[0]
-    access_map = {input_id: make_stream_input(), output: make_stream_output()}
-    r_unwrap_bin = os.path.join(
-        config.PASH_TOP, config.config["runtime"]["r_unwrap_binary"]
+def make_r_merge_node(inputs, output):
+    r_merge_bin = os.path.join(
+        config.PASH_TOP, config.config["runtime"]["r_merge_binary"]
     )
+    # TODO: assume that the inputs and output is provided as operands
+    access_map = {input_id: make_stream_input() for input_id in inputs}
+    access_map[output] = make_stream_output()
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
-        cmd_name=r_unwrap_bin,
+        cmd_name=r_merge_bin,
         flag_option_list=[],
-        operand_list=[],
-        implicit_use_of_streaming_input=input_id,
+        operand_list=inputs,
+        implicit_use_of_streaming_input=None,
         implicit_use_of_streaming_output=output,
         access_map=access_map,
     )
-    return RUnwrap(cmd_inv_with_io_vars)
+    return RMerge(cmd_inv_with_io_vars)

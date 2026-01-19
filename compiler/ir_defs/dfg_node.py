@@ -1,6 +1,8 @@
 import copy
-from definitions.ir.redirection import *
-from definitions.ir.resource import *
+import os
+
+from ir_defs.redirection import Redirection
+from ir_defs.resource import FileResource
 
 from annotations_utils.util_cmd_invocations import (
     to_node_cmd_inv_with_io_vars,
@@ -8,6 +10,7 @@ from annotations_utils.util_cmd_invocations import (
 )
 
 from util import (
+    log,
     return_empty_list_if_none_else_itself,
     return_default_if_none_else_itself,
 )
@@ -118,7 +121,7 @@ class DFGNode:
         ## It seems that if we have already applied redirections we might not need to
         ## care about them anymore (since they will be created in new_redirs.)
         ##
-        ## redirs = [redir.to_ast() for redir in self.com_redirs]
+        ## redirs = [redir_defs.to_ast() for redir in self.com_redirs]
         ##
         ## At the moment we do not reprint redirections here (we only produce redirections
         ## where we recreate arguments and redirections).

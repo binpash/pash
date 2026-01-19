@@ -18,12 +18,12 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
-from definitions.ir.arg import Arg
+from ir_defs.arg import Arg
 
 # for typing
 from pash_annotations.datatypes.CommandInvocationPrefix import CommandInvocationPrefix
 
-from shell_ast.ast_util import (
+from util import (
     string_to_argument,
     redir_stdout_to_file,
     redir_file_to_stdin,

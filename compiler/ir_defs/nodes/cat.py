@@ -1,7 +1,7 @@
 from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
-from definitions.ir.dfg_node import DFGNode
+from ir_defs.dfg_node import DFGNode
 
 
 def make_cat_node(inputs, output):

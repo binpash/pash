@@ -1,6 +1,6 @@
-from definitions.ir.arg import *
-from shell_ast.ast_util import *
-from custom_error import UnparallelizableError
+from shasta.ast_node import RedirectionNode, FileRedirNode
+from ir_defs.arg import Arg
+from util import make_kv, UnparallelizableError
 
 class Redirection:
     def __init__(self, redirection: RedirectionNode):
