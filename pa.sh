@@ -538,8 +538,9 @@ fi
 umask "$old_umask"
 
 ## 8. Run the preprocessor
-PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" \
-    "$PASH_TOP/compiler/pash_preprocessor.py" "${preprocessor_args[@]}"
+PYTHONPATH="$PASH_TOP/preprocessor:$PASH_TOP/compiler:$PYTHONPATH" \
+    PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" \
+    "$PASH_TOP/preprocessor/pash_preprocessor.py" "${preprocessor_args[@]}"
 pash_exit_code=$?
 
 ## 9. If preprocessing succeeded, execute the preprocessed script
