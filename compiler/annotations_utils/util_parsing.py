@@ -20,7 +20,7 @@ from pash_annotations.parser.parser import (
 from pash_annotations.parser.util_parser import get_json_data
 
 
-from shell_ast.ast_util import format_arg_chars, string_to_argument
+from util import format_arg_chars, string_to_argument
 
 
 def merge_to_single_string_with_space(list_str):

@@ -3,13 +3,12 @@ import config
 import subprocess
 import sys
 
-from shell_ast.ast_util import UnparsedScript
 from shasta.ast_node import ast_node_to_untyped_deep
 from shasta.json_to_ast import to_ast_node
 from shasta.ast_node import string_of_arg
 from shasta.bash_to_shasta_ast import to_ast_node as bash_to_shasta_ast
 
-from util import log
+from util import log, UnparsedScript
 
 import libdash.parser
 import libbash

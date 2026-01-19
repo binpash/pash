@@ -2,8 +2,7 @@ import config
 import os
 import uuid
 
-from shell_ast.ast_util import string_to_argument
-from util import make_kv
+from util import string_to_argument, make_kv
 from ir_defs.resource import (
     Resource,
     FileDescriptorResource,

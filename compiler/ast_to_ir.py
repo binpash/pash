@@ -8,10 +8,15 @@ from sh_expand.bash_expand import (
     BashExpansionState,
     expand_command as expand_command_bash,
 )
-from shell_ast.ast_util import *
 from ir import *
 from parse import from_ast_objects_to_shell
-from util import *
+from util import (
+    log,
+    get_kv,
+    make_kv,
+    string_to_arguments,
+    UnparallelizableError,
+)
 
 BASH_MODE = os.environ.get("pash_shell") == "bash"
 if BASH_MODE:

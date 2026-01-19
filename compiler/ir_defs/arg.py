@@ -1,7 +1,6 @@
 from __future__ import annotations
 from shasta.ast_node import ArgChar, CArgChar
-from shell_ast.ast_util import format_arg_chars, string_to_carg_char_list
-from util import log
+from util import format_arg_chars, string_to_carg_char_list, log
 
 
 class Arg:

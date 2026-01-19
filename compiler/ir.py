@@ -1,3 +1,5 @@
+from typing import List
+
 import pash_annotations.datatypes
 
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
@@ -39,8 +41,20 @@ import ir_defs.nodes.r_split as r_split
 import ir_defs.nodes.r_wrap as r_wrap
 import ir_defs.nodes.r_unwrap as r_unwrap
 
-from shell_ast.ast_util import *
-from util import *
+from util import (
+    log,
+    flatten_list,
+    UnparallelizableError,
+    AdjLineNotImplementedError,
+    format_arg_chars,
+    string_to_argument,
+    char_to_arg_char,
+    standard_var_ast,
+    quote_arg,
+    make_background,
+    make_command,
+    make_assignment,
+)
 
 import config
 
