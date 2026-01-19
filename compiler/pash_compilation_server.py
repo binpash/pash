@@ -16,7 +16,7 @@ from util import log, print_time_delta
 from dspash.worker_manager import WorkersManager
 
 from cli import BaseParser
-from custom_error import NotAllRegionParallelizableError
+from util import NotAllRegionParallelizableError
 
 ##
 ## A Daemon (not with the strict Unix sense)

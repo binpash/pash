@@ -12,7 +12,7 @@ from ast_to_ir import compile_asts
 from ir_to_ast import to_shell
 from pash_graphviz import maybe_generate_graphviz
 from util import log, print_time_delta, ptempfile
-from custom_error import UnparallelizableError, NotAllRegionParallelizableError, AdjLineNotImplementedError
+from util import UnparallelizableError, NotAllRegionParallelizableError, AdjLineNotImplementedError
 
 from ir_defs.nodes.eager import Eager
 from ir_defs.nodes.hdfs_cat import HDFSCat

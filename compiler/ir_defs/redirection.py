@@ -1,7 +1,7 @@
 from shasta.ast_node import RedirectionNode, FileRedirNode
 from ir_defs.arg import Arg
 from util import make_kv
-from custom_error import UnparallelizableError
+from util import UnparallelizableError
 
 class Redirection:
     def __init__(self, redirection: RedirectionNode):

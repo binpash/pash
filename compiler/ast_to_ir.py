@@ -13,7 +13,7 @@ from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
 
-from custom_error import *
+from util import *
 
 BASH_MODE = os.environ.get("pash_shell") == "bash"
 if BASH_MODE:
