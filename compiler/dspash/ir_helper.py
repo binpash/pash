@@ -15,10 +15,10 @@ from ir_to_ast import to_shell
 from util import ptempfile
 from dspash.hdfs_utils import HDFSFileConfig
 
-from definitions.ir.file_id import FileId
-from definitions.ir.resource import DFSSplitResource, FileDescriptorResource
+from ir_defs.file_id import FileId
+from ir_defs.resource import DFSSplitResource, FileDescriptorResource
 
-import definitions.ir.nodes.remote_pipe as remote_pipe
+import ir_defs.nodes.remote_pipe as remote_pipe
 
 HOST = socket.gethostbyname(socket.gethostname())
 NEXT_PORT = 58000

@@ -1,4 +1,4 @@
-from definitions.ir.dfg_node import DFGNode
+from ir_defs.dfg_node import DFGNode
 
 
 class HDFSCat(DFGNode):

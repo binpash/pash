@@ -1,6 +1,6 @@
 import socket
 
-from definitions.ir.arg import Arg
+from ir_defs.arg import Arg
 from util import log
 
 ## TODO: Resources should probably be more elaborate than just a

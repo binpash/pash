@@ -12,8 +12,8 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
 
 import config
 
-from definitions.ir.dfg_node import DFGNode
-from definitions.ir.arg import Arg
+from ir_defs.dfg_node import DFGNode
+from ir_defs.arg import Arg
 
 
 class RSplit(DFGNode):

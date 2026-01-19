@@ -4,7 +4,7 @@ import uuid
 
 from shell_ast.ast_util import string_to_argument
 from util import make_kv
-from definitions.ir.resource import (
+from ir_defs.resource import (
     Resource,
     FileDescriptorResource,
     FileResource,

@@ -1,6 +1,6 @@
 from typing import Set, List, Any
 
-from definitions.ir.arg import Arg
+from ir_defs.arg import Arg
 
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
 from pash_annotations.datatypes.BasicDatatypes import (

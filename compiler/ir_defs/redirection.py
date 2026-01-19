@@ -1,5 +1,5 @@
 from shasta.ast_node import RedirectionNode, FileRedirNode
-from definitions.ir.arg import Arg
+from ir_defs.arg import Arg
 from util import make_kv
 from custom_error import UnparallelizableError
 

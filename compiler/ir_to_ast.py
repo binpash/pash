@@ -3,6 +3,7 @@ from datetime import datetime
 
 from util import *
 from shell_ast.ast_util import *
+from shasta.json_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
 import config
 

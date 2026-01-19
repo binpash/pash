@@ -14,15 +14,15 @@ from pash_graphviz import maybe_generate_graphviz
 from util import log, print_time_delta, ptempfile
 from custom_error import UnparallelizableError, NotAllRegionParallelizableError, AdjLineNotImplementedError
 
-from definitions.ir.nodes.eager import Eager
-from definitions.ir.nodes.hdfs_cat import HDFSCat
-from definitions.ir.nodes.pash_split import Split
-from definitions.ir.resource import DFSSplitResource
+from ir_defs.nodes.eager import Eager
+from ir_defs.nodes.hdfs_cat import HDFSCat
+from ir_defs.nodes.pash_split import Split
+from ir_defs.resource import DFSSplitResource
 
-import definitions.ir.nodes.r_split as r_split
-import definitions.ir.nodes.r_unwrap as r_unwrap
-import definitions.ir.nodes.dgsh_tee as dgsh_tee
-import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
+import ir_defs.nodes.r_split as r_split
+import ir_defs.nodes.r_unwrap as r_unwrap
+import ir_defs.nodes.dgsh_tee as dgsh_tee
+import ir_defs.nodes.dfs_split_reader as dfs_split_reader
 
 # Distirbuted Exec
 import dspash.hdfs_utils as hdfs_utils

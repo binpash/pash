@@ -1,5 +1,5 @@
 from util import log
-from definitions.ir.resource import FileResource, Resource, FileDescriptorResource
+from ir_defs.resource import FileResource, Resource, FileDescriptorResource
 from pash_annotations.datatypes.BasicDatatypesWithIO import (
     FileNameWithIOInfo,
     StdDescriptorWithIOInfo,

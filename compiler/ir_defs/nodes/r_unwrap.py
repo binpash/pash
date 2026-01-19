@@ -6,7 +6,7 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
 import config
 import os
 
-from definitions.ir.dfg_node import DFGNode
+from ir_defs.dfg_node import DFGNode
 
 
 class RUnwrap(DFGNode):

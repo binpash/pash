@@ -8,8 +8,8 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
 import os
 
 import config
-from definitions.ir.arg import Arg
-from definitions.ir.dfg_node import DFGNode
+from ir_defs.arg import Arg
+from ir_defs.dfg_node import DFGNode
 
 
 class DGSHTee(DFGNode):
