@@ -1,35 +1,24 @@
-import argparse
-import sys
-import socket
+import os
 import pickle
-import traceback
-from datetime import datetime
-from typing import List, Set, Tuple, Dict, Callable
+import socket
+import sys
+from collections import deque, defaultdict
+from typing import List, Tuple, Dict, Callable
 from uuid import uuid4
 
 sys.path.append("/pash/compiler")
 
 import config
-from ir import *
-from ast_to_ir import compile_asts
+import pash_compiler
+from ir import IR, FileIdGen
 from ir_to_ast import to_shell
-from util import *
+from util import ptempfile
 from dspash.hdfs_utils import HDFSFileConfig
 
-from definitions.ir.aggregator_node import *
+from definitions.ir.file_id import FileId
+from definitions.ir.resource import DFSSplitResource, FileDescriptorResource
 
-from definitions.ir.nodes.eager import *
-from definitions.ir.nodes.pash_split import *
-
-import definitions.ir.nodes.r_merge as r_merge
-import definitions.ir.nodes.r_split as r_split
-import definitions.ir.nodes.r_unwrap as r_unwrap
-import definitions.ir.nodes.dgsh_tee as dgsh_tee
 import definitions.ir.nodes.remote_pipe as remote_pipe
-import shlex
-import subprocess
-import pash_compiler
-from collections import deque, defaultdict
 
 HOST = socket.gethostbyname(socket.gethostname())
 NEXT_PORT = 58000
@@ -79,12 +68,12 @@ def to_shell_file(graph: IR, args) -> str:
 
 
 def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
-    """ Takes an optimized IR and splits it subgraphs. Every subgraph
+    r""" Takes an optimized IR and splits it subgraphs. Every subgraph
     is a continues section between a splitter and a merger.
-    
+
     Example: given the following optimized IR
                       - tr -- grep -
-                    /                \\
+                    /                \
     cat - uniq -split                    cat - wc
                     \                /
                       - tr -- grep -

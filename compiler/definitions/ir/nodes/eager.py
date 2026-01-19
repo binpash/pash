@@ -8,7 +8,7 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
-from definitions.ir.dfg_node import *
+from definitions.ir.dfg_node import DFGNode
 
 
 class Eager(DFGNode):

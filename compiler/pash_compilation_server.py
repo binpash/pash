@@ -1,3 +1,4 @@
+import os
 import signal
 from threading import Thread
 from datetime import datetime, timedelta
@@ -10,12 +11,12 @@ import config
 from pash_graphviz import maybe_init_graphviz_dir, maybe_generate_graphviz
 import ast_to_ir
 import pash_compiler
-from util import *
+from util import log, print_time_delta
 from dspash.worker_manager import WorkersManager
 import server_util
 
 from cli import BaseParser
-from custom_error import * 
+from custom_error import NotAllRegionParallelizableError
 
 ##
 ## A Daemon (not with the strict Unix sense)

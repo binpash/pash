@@ -5,8 +5,11 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
-from annotations_utils.util_cmd_invocations import to_ast_flagoption, to_ast_operand
-from definitions.ir.dfg_node import *
+import os
+
+import config
+from definitions.ir.arg import Arg
+from definitions.ir.dfg_node import DFGNode
 
 
 class DGSHTee(DFGNode):

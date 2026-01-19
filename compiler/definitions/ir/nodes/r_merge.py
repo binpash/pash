@@ -3,7 +3,10 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
-from definitions.ir.dfg_node import *
+import config
+import os
+
+from definitions.ir.dfg_node import DFGNode
 
 
 class RMerge(DFGNode):

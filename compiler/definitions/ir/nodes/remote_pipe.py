@@ -1,4 +1,8 @@
-from definitions.ir.dfg_node import *
+import os
+
+import config
+from definitions.ir.dfg_node import DFGNode
+from definitions.ir.arg import Arg
 
 
 class RemotePipe(DFGNode):

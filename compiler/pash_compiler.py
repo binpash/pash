@@ -7,17 +7,17 @@ from sh_expand import env_vars_util
 from sh_expand.expand import ExpansionError 
 
 import config
-from ir import *
+from ir import IR, FileIdGen, make_cat_node
 from ast_to_ir import compile_asts
 from ir_to_ast import to_shell
 from pash_graphviz import maybe_generate_graphviz
-from util import *
-from custom_error import *
+from util import log, print_time_delta, ptempfile
+from custom_error import UnparallelizableError, NotAllRegionParallelizableError, AdjLineNotImplementedError
 
-from definitions.ir.aggregator_node import *
-
-from definitions.ir.nodes.eager import *
-from definitions.ir.nodes.pash_split import *
+from definitions.ir.nodes.eager import Eager
+from definitions.ir.nodes.hdfs_cat import HDFSCat
+from definitions.ir.nodes.pash_split import Split
+from definitions.ir.resource import DFSSplitResource
 
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap

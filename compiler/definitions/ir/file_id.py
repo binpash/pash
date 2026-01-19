@@ -1,11 +1,19 @@
 import config
 import os
-
-from shell_ast.ast_util import *
-from util import *
 import uuid
 
-from definitions.ir.resource import *
+from shell_ast.ast_util import string_to_argument
+from util import make_kv
+from definitions.ir.resource import (
+    Resource,
+    FileDescriptorResource,
+    FileResource,
+    TemporaryFileResource,
+    EphemeralResource,
+    RemoteFileResource,
+    HDFSFileResource,
+    DFSSplitResource,
+)
 
 
 ## Note: The NULL ident is considered to be the default unknown file id

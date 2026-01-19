@@ -292,38 +292,3 @@ class CompilerParser(BaseParser):
         )
 
 
-class PreprocessorParser(BaseParser):
-    """
-    Parser for the preprocessor in compiler/preprocessor/preprocessor.py
-    Generates two subparsers
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        subparser = self.add_subparsers(help="sub-command help")
-        self.add_pash_subparser(subparser)
-        self.add_spec_subparser(subparser)
-
-    @staticmethod
-    def add_pash_subparser(subparser):
-        parser_pash = subparser.add_parser(
-            "pash", help="Preprocess the script so that it can be run with PaSh"
-        )
-        parser_pash.add_pash_args()
-        parser_pash.add_argument("input", help="the script to be preprocessed")
-        parser_pash.set_defaults(preprocess_mode="pash")
-
-    @staticmethod
-    def add_spec_subparser(subparser):
-        # create the parser for the "b" command
-        parser_spec = subparser.add_parser(
-            "spec", help="Preprocess the script so that it can be run with speculation"
-        )
-        parser_spec.add_argument("input", help="the script to be preprocessed")
-
-        ## TODO: When we better integrate, this should be automatically set.
-        parser_spec.add_argument(
-            "partial_order_file",
-            help="the file to store the partial order (currently just a sequence)",
-        )
-        parser_spec.set_defaults(preprocess_mode="spec")

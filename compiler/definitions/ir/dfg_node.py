@@ -1,6 +1,8 @@
 import copy
-from definitions.ir.redirection import *
-from definitions.ir.resource import *
+import os
+
+from definitions.ir.redirection import Redirection
+from definitions.ir.resource import FileResource
 
 from annotations_utils.util_cmd_invocations import (
     to_node_cmd_inv_with_io_vars,
@@ -8,6 +10,7 @@ from annotations_utils.util_cmd_invocations import (
 )
 
 from util import (
+    log,
     return_empty_list_if_none_else_itself,
     return_default_if_none_else_itself,
 )

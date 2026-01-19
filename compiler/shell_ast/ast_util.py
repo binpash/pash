@@ -1,48 +1,22 @@
-from env_var_names import *
-from shasta.ast_node import *
-from shasta.json_to_ast import *
-from util import *
+"""
+AST utility functions for the PaSh compiler.
+"""
+
+from shasta.ast_node import ArgChar, CArgChar
+from util import make_kv
 
 
-## This class is used by the preprocessor in ast_to_ir
-class PreprocessedAST:
-    def __init__(
-        self, ast, replace_whole, non_maximal, something_replaced=True, last_ast=False
-    ):
-        assert isinstance(ast, AstNode)
-        self.ast = ast
-        self.replace_whole = replace_whole
-        self.non_maximal = non_maximal
-        self.something_replaced = something_replaced
-        self.last_ast = last_ast
-
-    def should_replace_whole_ast(self):
-        return self.replace_whole
-
-    def is_non_maximal(self):
-        return self.non_maximal
-
-    def will_anything_be_replaced(self):
-        return self.something_replaced
-
-    def is_last_ast(self):
-        return self.last_ast
-
-
-## This class represents text that was not modified at all by preprocessing, and therefore does not
-## need to be unparsed.
 class UnparsedScript:
+    """
+    Represents text that was not modified at all by preprocessing,
+    and therefore does not need to be unparsed.
+    """
+
     def __init__(self, text):
         self.text = text
 
 
-##
-## Pattern matching for the AST
-##
-
-
-def check_if_ast_is_supported(construct, arguments, **kwargs):
-    return
+# === Pattern matching for the AST ===
 
 
 def format_args(args):
@@ -74,13 +48,10 @@ def string_to_argument(string):
 
 
 def concat_arguments(arg1, arg2):
-    ## Arguments are simply `arg_char list` and therefore can just be concatenated
+    """Arguments are simply `arg_char list` and therefore can just be concatenated."""
     return arg1 + arg2
 
 
-## FIXME: This is certainly not complete. It is used to generate the
-## AST for the call to the distributed planner. It only handles simple
-## characters
 def char_to_arg_char(char):
     return ["C", ord(char)]
 
@@ -164,7 +135,7 @@ def make_semi_sequence(asts):
         return asts[0]
     else:
         acc = asts[-1]
-        ## Remove the last ast
+        # Remove the last ast
         iter_asts = asts[:-1]
         for ast in iter_asts[::-1]:
             acc = make_kv("Semi", [ast, acc])
@@ -177,9 +148,7 @@ def make_defun(name, body):
     return node
 
 
-##
-## Make some nodes
-##
+# === Make some nodes ===
 
 
 def make_export_var_constant_string(var_name: str, value: str):
@@ -188,45 +157,8 @@ def make_export_var_constant_string(var_name: str, value: str):
 
 
 def make_export_var(var_name: str, arg_char_list):
-    ## An argument is an arg_char_list
+    """An argument is an arg_char_list."""
     arg1 = string_to_argument(f"{var_name}=")
     arguments = [string_to_argument("export"), concat_arguments(arg1, arg_char_list)]
-    ## Pass all relevant argument to the planner
     node = make_command(arguments)
-    return node
-
-
-def export_pash_loop_iters_for_current_context(all_loop_ids: "list[int]"):
-    if len(all_loop_ids) > 0:
-        iter_var_names = [loop_iter_var(loop_id) for loop_id in all_loop_ids]
-        iter_vars = [
-            standard_var_ast(iter_var_name) for iter_var_name in iter_var_names
-        ]
-        concatted_vars = [iter_vars[0]]
-        for iter_var in iter_vars[1:]:
-            concatted_vars.append(char_to_arg_char("-"))
-            concatted_vars.append(iter_var)
-        quoted_vars = [quote_arg(concatted_vars)]
-    else:
-        quoted_vars = []
-
-    ## export pash_loop_iters="$pash_loop_XXX_iter $pash_loop_YYY_iter ..."
-    save_loop_iters_node = make_export_var(loop_iters_var(), quoted_vars)
-
-    return save_loop_iters_node
-
-
-def make_unset_var(var_name: str):
-    ## An argument is an arg_char_list
-    arguments = [string_to_argument("unset"), string_to_argument(var_name)]
-    ## Pass all relevant argument to the planner
-    node = make_command(arguments)
-    return node
-
-
-def make_increment_var(var_name: str):
-    arg = string_to_argument(f"{var_name}+1")
-    arith_expr = make_arith(arg)
-    assignments = [[var_name, [arith_expr]]]
-    node = make_command([], assignments=assignments)
     return node

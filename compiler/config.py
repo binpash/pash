@@ -2,8 +2,7 @@ import json
 import logging
 import os
 import subprocess
-
-from util import *
+import sys
 
 
 ## Global

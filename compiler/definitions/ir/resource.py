@@ -1,8 +1,7 @@
 import socket
 
-from definitions.ir.arg import *
-from util import *
-from shell_ast.ast_util import *
+from definitions.ir.arg import Arg
+from util import log
 
 ## TODO: Resources should probably be more elaborate than just a
 ## string and a line range. They could be URLs, and possibly other things.

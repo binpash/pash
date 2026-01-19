@@ -1,13 +1,12 @@
+import config
+import os
+
 from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
 from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
-from definitions.ir.file_id import *
-from definitions.ir.dfg_node import *
-
-import config
-import os
+from definitions.ir.dfg_node import DFGNode
 
 
 class Split(DFGNode):

@@ -4,11 +4,14 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
+import config
+import os
+
 from annotations_utils.util_cmd_invocations import (
     to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping,
 )
-from definitions.ir.dfg_node import *
-from shell_ast.ast_util import *
+from definitions.ir.dfg_node import DFGNode
+from definitions.ir.arg import Arg
 
 
 class RWrap(DFGNode):

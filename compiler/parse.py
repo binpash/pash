@@ -9,7 +9,7 @@ from shasta.json_to_ast import to_ast_node
 from shasta.ast_node import string_of_arg
 from shasta.bash_to_shasta_ast import to_ast_node as bash_to_shasta_ast
 
-from util import *
+from util import log
 
 import libdash.parser
 import libbash
