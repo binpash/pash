@@ -6,16 +6,14 @@ The PaSh preprocessor transforms shell scripts by identifying candidate dataflow
 
 ```
 preprocessor/
-├── pash_preprocessor.py      # Entry point (called by pa.sh)
-├── preprocessor.py           # Core preprocessing logic
+├── pash_preprocessor.py      # Entry point with all preprocessing logic
 ├── parse.py                  # Shell script parsing/unparsing
 ├── util.py                   # Utility functions
 ├── env_var_names.py          # Environment variable name constants
 ├── run_tests.sh              # Test runner script
 ├── shell_ast/
-│   ├── preprocess_ast_cases.py    # Main preprocessing dispatcher
+│   ├── ast_to_ast.py              # AST region replacement + preprocess_node
 │   ├── walk_preprocess.py         # Generic AST walker with handlers
-│   ├── ast_to_ast.py              # AST region replacement
 │   ├── transformation_options.py  # Transformation state classes
 │   ├── ast_util.py                # AST utility functions
 │   ├── handlers/
@@ -87,17 +85,18 @@ python3 -m unittest shell_ast.test_walk_preprocess -v
 
 ### Preprocessing Flow
 
-1. **Entry Point** (`pash_preprocessor.py`): Parses arguments and calls the preprocessor
-2. **Core Logic** (`preprocessor.py`): Orchestrates parsing, preprocessing, and unparsing
+1. **Entry Point** (`pash_preprocessor.py`): Parses arguments, orchestrates parsing, preprocessing, and unparsing
+2. **Parsing** (`parse.py`): Converts shell script to AST using libdash/libbash
 3. **AST Walking** (`walk_preprocess.py`): Generic pattern-matching walker with handler support
-4. **Node Handlers** (`preprocess_ast_cases.py`, `handlers/`): Node-specific preprocessing logic
-5. **Region Replacement** (`ast_to_ast.py`): Replaces dataflow regions with runtime calls
+4. **Region Replacement** (`ast_to_ast.py`): Identifies dataflow regions and replaces with runtime calls
+5. **Unparsing** (`parse.py`): Converts transformed AST back to shell script
 
 ### Key Classes
 
 - `WalkPreprocess`: Generic AST walker using Python pattern matching
 - `PreprocessContext`: Context threaded through traversal (trans_options, last_object)
 - `NodeResult`: Result from processing a node (ast, replace_whole, non_maximal, something_replaced)
+- `PreprocessedAST`: Result wrapper with flags for replacement decisions
 - `TransformationState`: Manages node IDs, loop contexts, and replacement generation
 
 ### Node Categories
@@ -109,6 +108,17 @@ python3 -m unittest shell_ast.test_walk_preprocess -v
 | Single Child | `RedirNode`, `SubshellNode`, `NotNode`, `GroupNode`, etc. | Close-recurse single child |
 | Control Flow | `IfNode`, `WhileNode`, `ForNode`, `CaseNode` | Close-recurse with special handling |
 | No-Op | `DefunNode`, `ArithNode` | Return unchanged |
+
+### Custom Handlers
+
+The walker supports custom handlers for specific node types. For example, `ForNode` has a custom handler in `handlers/loop_tracking.py` that injects loop iteration tracking code for speculative execution support.
+
+```python
+from shell_ast.walk_preprocess import WalkPreprocess
+
+handlers = {"for": my_custom_for_handler}
+walker = WalkPreprocess(handlers=handlers)
+```
 
 ## Dependencies
 
