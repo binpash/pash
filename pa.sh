@@ -2,9 +2,9 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-export RUNTIME_DIR="$PASH_TOP/compiler/orchestrator_runtime"
+export RUNTIME_DIR="$PASH_TOP/jit-runtime"
 export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"
-export RUNTIME_LIBRARY_DIR="$RUNTIME_DIR/../../runtime/"
+export RUNTIME_LIBRARY_DIR="$PASH_TOP/runtime"
 
 ## Register the signal handlers
 trap kill_all SIGTERM SIGINT
@@ -384,6 +384,12 @@ pash_setup_logging() {
     export -f pash_redir_output
     export -f pash_redir_all_output
     export -f pash_redir_all_output_always_execute
+
+    pash_declare_vars() {
+        local vars_file="${1?File not given}"
+        declare -p > "$vars_file"
+    }
+    export -f pash_declare_vars
 }
 
 ###############################################################################

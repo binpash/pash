@@ -8,7 +8,7 @@ pash_redir_output echo "$$: (2) Before asking the scheduler for cmd: ${pash_spec
 ## TODO: Correctly save variables
 ## Save the shell variables to a file (necessary for expansion)
 export pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/variables_$RANDOM$RANDOM$RANDOM"
-source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
+pash_declare_vars "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
 ## TODO: We want to send the environment to the scheduler.
