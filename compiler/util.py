@@ -33,13 +33,12 @@ def print_time_delta(prefix, start_time, end_time):
     else:
         log("{} time:".format(prefix), time_difference, " ms")
 
-
-## This is a wrapper for prints
-def log(*args, end="\n", level=1):
-    ## If the debug logging level is at least
-    ## as high as this log message.
-    ## TODO: Allow all levels
-    if level >= 1:
+def log(*args, end="\n", level=2):
+    """Wrapper for logging."""
+    if level == 1:
+        concatted_args = " ".join([str(a) for a in list(args)])
+        logging.warning(f"{config.LOGGING_PREFIX} {concatted_args}")
+    elif level >= 2:
         concatted_args = " ".join([str(a) for a in list(args)])
         logging.info(f"{config.LOGGING_PREFIX} {concatted_args}")
 

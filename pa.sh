@@ -44,7 +44,7 @@ export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
-export PASH_DEBUG_LEVEL=0
+export PASH_DEBUG_LEVEL=1
 export PASH_REDIR="&2"
 
 ###############################################################################
@@ -341,7 +341,7 @@ pash_build_server_args() {
 ###############################################################################
 
 pash_setup_logging() {
-    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+    if [ "$PASH_DEBUG_LEVEL" -le 1 ]; then
         pash_redir_output() {
             :
         }

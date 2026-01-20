@@ -29,7 +29,7 @@ class BaseParser(argparse.ArgumentParser):
             "--debug",
             type=int,
             help="configure debug level; defaults to 0",
-            default=0,
+            default=1,
         )
         self.add_argument(
             "--log_file",

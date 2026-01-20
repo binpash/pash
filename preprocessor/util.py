@@ -47,9 +47,12 @@ def logging_prefix(logging_prefix_str):
     return decorator
 
 
-def log(*args, end="\n", level=1):
+def log(*args, end="\n", level=2):
     """Wrapper for logging."""
-    if level >= 1:
+    if level == 1:
+        concatted_args = " ".join([str(a) for a in list(args)])
+        logging.warning(f"{LOGGING_PREFIX} {concatted_args}")
+    elif level >= 2:
         concatted_args = " ".join([str(a) for a in list(args)])
         logging.info(f"{LOGGING_PREFIX} {concatted_args}")
 
