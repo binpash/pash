@@ -27,7 +27,7 @@ pash_sequential_script_file="$tmp"
 
 ## Save the shell variables to a file (necessary for expansion)
 export pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/variables_$RANDOM$RANDOM$RANDOM"
-source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
+pash_declare_vars "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
 ## The parallel script will be saved in the following file if compilation is successful.

@@ -69,7 +69,9 @@
 ## The challenging aspect is how to make this work for the parallel pipelines
 
 ## First save the state of the shell
-source "$RUNTIME_DIR/save_shell_state.sh"
+export PREVIOUS_SHELL_EC="$?"
+export PREVIOUS_SET_STATUS=$-
+source "$RUNTIME_DIR/pash_set_from_to.sh" "$PREVIOUS_SET_STATUS" "${DEFAULT_SET_STATE:-huB}"
 ## Rename variables to pash specific names
 export pash_previous_exit_status="$PREVIOUS_SHELL_EC"
 export pash_previous_set_status="$PREVIOUS_SET_STATUS"
@@ -133,7 +135,9 @@ else
         export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
         source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
         ## Save the state after execution
-        source "$RUNTIME_DIR/save_shell_state.sh"
+        export PREVIOUS_SHELL_EC="$?"
+        export PREVIOUS_SET_STATUS=$-
+        source "$RUNTIME_DIR/pash_set_from_to.sh" "$PREVIOUS_SET_STATUS" "${DEFAULT_SET_STATE:-huB}"
         ## We don't need to save the arguments because they are already set
         pash_runtime_final_status="$PREVIOUS_SHELL_EC"
         export pash_previous_set_status="$PREVIOUS_SET_STATUS"
