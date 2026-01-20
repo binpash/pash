@@ -12,6 +12,7 @@ from shasta.ast_node import (
     CommandNode,
     BackgroundNode,
 )
+from shasta.ast_walker import walk_ast_node
 from sh_expand.expand import expand_command, ExpansionState
 
 import config
@@ -28,7 +29,7 @@ from util import (
     string_to_arguments,
     UnparallelizableError,
 )
-from ast_walker import walk_ast_node
+
 
 BASH_MODE = os.environ.get("pash_shell") == "bash"
 if BASH_MODE:
