@@ -34,8 +34,10 @@ def config_from_args(pash_args):
         )
 
     if pash_args.debug == 1:
+        logging.getLogger().setLevel(logging.WARNING)
+    elif pash_args.debug == 2:
         logging.getLogger().setLevel(logging.INFO)
-    elif pash_args.debug >= 2:
+    elif pash_args.debug >= 3:
         logging.getLogger().setLevel(logging.DEBUG)
 
 

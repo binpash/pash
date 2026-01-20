@@ -341,7 +341,7 @@ pash_build_server_args() {
 ###############################################################################
 
 pash_setup_logging() {
-    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+    if [ "$PASH_DEBUG_LEVEL" -le 1 ]; then
         pash_redir_output() {
             :
         }
