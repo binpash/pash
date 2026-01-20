@@ -139,7 +139,7 @@ def unix_socket_send_and_forget(socket_file: str, msg: str):
         ## There should be no response on these messages
         assert len(str_data) == 0
     finally:
-        log("Sent message:", msg, "to server.", level=1)
+        log("Sent message:", msg, "to server.")
         sock.close()
 
 
