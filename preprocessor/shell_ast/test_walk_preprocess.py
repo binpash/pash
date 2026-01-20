@@ -270,12 +270,12 @@ class TestFullPreprocessing(unittest.TestCase):
     def test_simple_command(self):
         """Test preprocessing of simple command."""
         result = preprocess_script("echo hello")
-        self.assertIn("pash_runtime", result)
+        self.assertIn("jit", result)
 
     def test_pipeline(self):
         """Test preprocessing of pipeline."""
         result = preprocess_script("echo hello | grep h")
-        self.assertIn("pash_runtime", result)
+        self.assertIn("jit", result)
 
     def test_for_loop_injects_tracking(self):
         """Test that for loop preprocessing injects loop tracking."""
@@ -297,7 +297,7 @@ class TestFullPreprocessing(unittest.TestCase):
     def test_if_statement(self):
         """Test preprocessing of if statement."""
         result = preprocess_script("if true; then echo yes; fi")
-        self.assertIn("pash_runtime", result)
+        self.assertIn("jit", result)
 
     def test_complex_script(self):
         """Test preprocessing of complex script."""
@@ -314,7 +314,7 @@ fi
 echo end
 """
         result = preprocess_script(script)
-        self.assertIn("pash_runtime", result)
+        self.assertIn("jit", result)
         self.assertIn("pash_loop_0_iter", result)
 
 

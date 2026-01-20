@@ -19,18 +19,18 @@ The compilation takes into account information about individual commands through
 
 A correspondence between blocks in the diagram and Python modules is shown below:
 
-- Preprocessing: [pash.py](./pash.py)
+- Preprocessing: [../preprocesor](../preprocessor)
 - Expansion and compilation: [ast_to_ir.py](./ast_to_ir.py)
 - Optimization: [pash_compiler.py](./pash_compiler.py)
 
 ## Compiler Overview
 
 Now let's get to the compiler.
-It's entry point is [pash.py](./pash.py) that parses a script and replaces potentially parallelizable regions with calls to [pash_runtime.sh](./pash_runtime.sh).
+It's entry point is [pash.py](./pash.py) that parses a script and replaces potentially parallelizable regions with calls to [jit.sh](../jit-runtime/jit.sh).
 It then executes the script.
 This allows invoking the compiler during the runtime to have information about the values of environment variables.
 
-The [pash_runtime.sh](./pash_runtime.sh) script simply invokes the [pash.py](./pash.py) compiler:
+The [jit.sh](../jit-runtime/jit.sh) script simply invokes the [pash.py](./pash.py) compiler:
   if it succeeds it executes the optimized script, otherwise it executes the original script.
 
 The compiler has several stages:
