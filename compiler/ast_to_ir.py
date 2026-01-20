@@ -8,27 +8,9 @@ from shasta.ast_node import (
     EArgChar,
     BArgChar,
     QArgChar,
-    NotNode,
-    DefunNode,
-    WhileNode,
-    IfNode,
-    CaseNode,
-    SelectNode,
-    ArithNode,
-    CondNode,
-    ArithForNode,
-    CoprocNode,
-    TimeNode,
-    GroupNode,
     PipeNode,
     CommandNode,
-    SubshellNode,
-    RedirNode,
     BackgroundNode,
-    ForNode,
-    AndNode,
-    OrNode,
-    SemiNode,
 )
 from sh_expand.expand import expand_command, ExpansionState
 
@@ -55,34 +37,27 @@ if BASH_MODE:
 
     # too verbose to keep on with -d 1 (TODO: Get -d 2 working here)
     BASH_EXP_STATE = BashExpansionState(temp_dir=config.PASH_TMP_PREFIX, debug=False)
-## TODO: Separate the ir stuff to the bare minimum and
-##       try to move this to the shell_ast folder.
 
 ##
 ## Compile AST -> Extended AST with IRs
 ##
-
-## Compiles a given AST to an intermediate representation tree, which
-## has some subtrees in it that are graphs representing a distributed
-## computation.
+## The preprocessor sends only dataflow region nodes to the compiler:
+## - PipeNode
+## - CommandNode (with arguments)
+## - BackgroundNode
 ##
-## The above assumes that subtrees of the AST are disjoint
-## computations that can be distributed separately (locally/modularly)
-## without knowing about previous or later subtrees that can be
-## distributed. Is that reasonable?
+## All other node types (control flow, wrappers, etc.) stay in the
+## preprocessed script and are executed by bash directly.
+##
 
 
 def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        # log("Compiling AST {}".format(i))
-        # log(ast_object)
         assert isinstance(ast_object, AstNode)
 
-        ## Compile subtrees of the AST to out intermediate representation
-        ## KK 2023-05-25: Would we ever want to pass this state to the expansion
-        ##                of the next object? I don't think so.
+        ## Compile subtrees of the AST to our intermediate representation
         if BASH_MODE:
             if not BASH_EXP_STATE.is_open:
                 BASH_EXP_STATE.open()
@@ -96,9 +71,6 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
             exp_state = ExpansionState(config["shell_variables"])
             expanded_ast = expand_command(ast_object, exp_state)
         compiled_ast = compile_node(expanded_ast, fileIdGen, config)
-
-        # log("Compiled AST:")
-        # log(compiled_ast)
 
         ## If the accumulator contains an IR (meaning that the
         ## previous commands where run in background), union it with
@@ -124,7 +96,7 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
             else:
                 compiled_asts.append(compiled_ast)
 
-        ## The final accumulator
+    ## The final accumulator
     if not acc_ir is None:
         compiled_asts.append(acc_ir)
 
@@ -135,196 +107,35 @@ def make_compile_transform(fileIdGen, config):
     """
     Create a compile transformation function for use with walk_ast_node.
 
-    The returned function handles the IR-specific transformation logic,
-    returning non-None when it wants to replace a node (stopping further recursion
-    into that subtree), or None to let the walker continue with default recursion.
+    Only handles node types that actually reach the compiler from the preprocessor:
+    - PipeNode, CommandNode, BackgroundNode (dataflow region nodes)
+    - BArgChar, QArgChar (for command substitution and quoted strings)
     """
 
     def compile_transform(node):
         match node:
-            # Pipe: compile children and combine into single IR
             case PipeNode():
+                # Compile pipe children and combine into single IR
                 compiled_items = [compile_node(item, fileIdGen, config) for item in node.items]
                 compiled_ir = combine_pipe(compiled_items)
-                # Save the old ast for the end-to-end prototype
                 compiled_ir.set_ast(node.json())
-                # Set the IR background so that it can be parallelized with
-                # the next command if the pipeline was run in background
                 compiled_ir.set_background(node.is_background)
                 return compiled_ir
 
-            # Command: try to compile to DFG
             case CommandNode():
                 return compile_command_node(node, fileIdGen, config)
 
-            # And/Or/Semi: compile children and wrap in make_kv
-            case AndNode() | OrNode() | SemiNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        compile_node(node.left_operand, fileIdGen, config),
-                        compile_node(node.right_operand, fileIdGen, config),
-                    ],
-                )
-
-            # Redir/Subshell: compile body, return IR if possible
-            case RedirNode() | SubshellNode():
-                compiled_body = compile_node(node.body, fileIdGen, config)
-                if isinstance(compiled_body, IR):
-                    # TODO: use the redir list to redirect the files of the IR accordingly
-                    return compiled_body
-                else:
-                    return make_kv(
-                        type(node).NodeName,
-                        [node.line_number, compiled_body, node.redir_list],
-                    )
-
-            # Background: compile node, set background flag on IR
             case BackgroundNode():
                 compiled_inner = compile_node(node.node, fileIdGen, config)
                 if isinstance(compiled_inner, IR):
-                    # TODO: Redirect the stdout, stdin accordingly
                     compiled_inner.set_background(True)
                     return compiled_inner
                 else:
                     # Note: background nodes can be added in the distributed graph
                     # similarly to the children of pipelines.
-                    # TODO: We should not compile the ast here
                     node.node = compiled_inner
                     return node
 
-            # For: compile body and argument
-            case ForNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        node.line_number,
-                        compile_command_argument(node.argument, fileIdGen, config),
-                        compile_node(node.body, fileIdGen, config),
-                        node.variable,
-                    ],
-                )
-
-            # Bash-only nodes
-            case NotNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [compile_node(node.body, fileIdGen, config)],
-                )
-
-            case DefunNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        node.line_number,
-                        compile_command_argument(node.name, fileIdGen, config),
-                        compile_node(node.body, fileIdGen, config),
-                    ],
-                )
-
-            case WhileNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        compile_node(node.test, fileIdGen, config),
-                        compile_node(node.body, fileIdGen, config),
-                    ],
-                )
-
-            case IfNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        compile_node(node.cond, fileIdGen, config),
-                        compile_node(node.then_b, fileIdGen, config),
-                        compile_node(node.else_b, fileIdGen, config) if node.else_b else None,
-                    ],
-                )
-
-            case CaseNode():
-                compiled_cases = [
-                    [
-                        compile_command_argument(case["cpattern"], fileIdGen, config),
-                        compile_node(case["cbody"], fileIdGen, config),
-                    ]
-                    for case in node.cases
-                ]
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        node.line_number,
-                        compile_command_argument(node.argument, fileIdGen, config),
-                        compiled_cases,
-                    ],
-                )
-
-            case SelectNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        node.line_number,
-                        compile_command_argument(node.variable, fileIdGen, config),
-                        compile_node(node.body, fileIdGen, config),
-                        compile_command_arguments(node.map_list, fileIdGen, config),
-                    ],
-                )
-
-            case ArithNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        node.line_number,
-                        compile_command_arguments(node.body, fileIdGen, config),
-                    ],
-                )
-
-            case CondNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        node.line_number,
-                        node.cond_type,
-                        compile_command_argument(node.op, fileIdGen, config) if node.op else None,
-                        compile_node(node.left, fileIdGen, config) if node.left else None,
-                        compile_node(node.right, fileIdGen, config) if node.right else None,
-                        node.invert_return,
-                    ],
-                )
-
-            case ArithForNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        node.line_number,
-                        compile_command_argument(node.init, fileIdGen, config),
-                        compile_command_argument(node.cond, fileIdGen, config),
-                        compile_command_argument(node.step, fileIdGen, config),
-                        compile_node(node.action, fileIdGen, config),
-                    ],
-                )
-
-            case CoprocNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [
-                        compile_command_argument(node.name, fileIdGen, config),
-                        compile_node(node.body, fileIdGen, config),
-                    ],
-                )
-
-            case TimeNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [compile_node(node.command, fileIdGen, config)],
-                )
-
-            case GroupNode():
-                return make_kv(
-                    type(node).NodeName,
-                    [compile_node(node.body, fileIdGen, config)],
-                )
-
-            # ArgChar types that need compilation
             case BArgChar():
                 # Command substitution - compile the inner node
                 return BArgChar(node=compile_node(node.node, fileIdGen, config))
@@ -333,8 +144,8 @@ def make_compile_transform(fileIdGen, config):
                 # Quoted string - compile the inner argument
                 return QArgChar(arg=compile_command_argument(node.arg, fileIdGen, config))
 
-            # Default: let the walker handle it (returns None to continue recursion)
             case _:
+                # Let walker handle default recursion for other nodes
                 return None
 
     return compile_transform
@@ -399,8 +210,6 @@ def compile_command_node(ast_node, fileIdGen, config):
         return ir
     except ValueError as err:
         log("Command not compiled to DFG:", err)
-        # TODO: Maybe we want to fail here instead of waiting for later?
-        #       Is there any case where a non-compiled command is fine?
         compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
         return make_kv(
             type(ast_node).NodeName,
@@ -414,12 +223,6 @@ def compile_command_node(ast_node, fileIdGen, config):
 
 
 ## This function checks if we should expand an arg_char
-##
-## It has a dual purpose:
-## 1. First, it checks whether we need
-##    to pay the overhead of expanding (by checking that there is something to expand)
-##    like a variable
-## 2. Second it raises an error if we cannot expand an argument.
 def should_expand_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if key in ["V"]:  # Variable
@@ -436,10 +239,8 @@ def should_expand_argument(argument):
     return any([should_expand_arg_char(arg_char) for arg_char in argument])
 
 
-## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
     output_script = from_ast_objects_to_shell(asts)
-    # log(output_script)
     exec_obj = subprocess.run(
         ["/usr/bin/env", "bash"],
         input=output_script,
@@ -448,30 +249,18 @@ def execute_shell_asts(asts):
         universal_newlines=True,
     )
     exec_obj.check_returncode()
-    # log(exec_obj.stdout)
     return exec_obj.stdout
 
 
-## TODO: Properly parse the output of the shell script
 def parse_string_to_arguments(arg_char_string):
-    # log(arg_char_string)
     return string_to_arguments(arg_char_string)
 
 
-## This function compiles an arg char by recursing if it contains quotes or command substitution.
-##
-## It is currently being extended to also expand any arguments that are safe to expand.
 def compile_arg_char(arg_char: ArgChar, fileIdGen, config):
-    ## Compile the arg char
+    """Compile an arg char by recursing if it contains quotes or command substitution."""
     if isinstance(arg_char, CArgChar) or isinstance(arg_char, EArgChar):
-        # Single character or escape
         return arg_char
     elif isinstance(arg_char, BArgChar):
-        ## TODO: I probably have to redirect the input of the compiled
-        ##       node (IR) to be closed, and the output to be
-        ##       redirected to some file that we will use to write to
-        ##       the command argument to complete the command
-        ##       substitution.
         arg_char.node = compile_node(arg_char.node, fileIdGen, config)
         return arg_char
     elif isinstance(arg_char, QArgChar):
@@ -479,20 +268,15 @@ def compile_arg_char(arg_char: ArgChar, fileIdGen, config):
         return arg_char
     else:
         log(f"Unknown arg_char: {arg_char}")
-        ## TODO: Complete this
         return arg_char
 
 
 def compile_command_argument(argument, fileIdGen, config):
-    compiled_argument = [compile_arg_char(char, fileIdGen, config) for char in argument]
-    return compiled_argument
+    return [compile_arg_char(char, fileIdGen, config) for char in argument]
 
 
 def compile_command_arguments(arguments, fileIdGen, config):
-    compiled_arguments = [
-        compile_command_argument(arg, fileIdGen, config) for arg in arguments
-    ]
-    return compiled_arguments
+    return [compile_command_argument(arg, fileIdGen, config) for arg in arguments]
 
 
 def compile_assignment(assignment, fileIdGen, config):
@@ -501,23 +285,14 @@ def compile_assignment(assignment, fileIdGen, config):
 
 
 def compile_assignments(assignments, fileIdGen, config):
-    compiled_assignments = [
-        compile_assignment(assignment, fileIdGen, config)
-        for assignment in assignments
-    ]
-    return compiled_assignments
+    return [compile_assignment(assignment, fileIdGen, config) for assignment in assignments]
 
 
 def compile_redirection(redirection, fileIdGen, config):
     if redirection.arg is not None:
-        file_arg = compile_command_argument(redirection.arg, fileIdGen, config)
-        redirection.arg = file_arg
+        redirection.arg = compile_command_argument(redirection.arg, fileIdGen, config)
     return redirection
 
 
 def compile_redirections(redirections, fileIdGen, config):
-    compiled_redirections = [
-        compile_redirection(redirection, fileIdGen, config)
-        for redirection in redirections
-    ]
-    return compiled_redirections
+    return [compile_redirection(redirection, fileIdGen, config) for redirection in redirections]
