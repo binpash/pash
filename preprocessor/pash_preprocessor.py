@@ -33,7 +33,9 @@ def config_from_args(pash_args):
             filemode="w",
         )
 
-    if pash_args.debug == 1:
+    if pash_args.debug == 0:
+        logging.getLogger().setLevel(logging.ERROR)
+    elif pash_args.debug == 1:
         logging.getLogger().setLevel(logging.WARNING)
     elif pash_args.debug == 2:
         logging.getLogger().setLevel(logging.INFO)
@@ -51,7 +53,7 @@ class Parser(argparse.ArgumentParser):
             "--debug",
             type=int,
             help="configure debug level; defaults to 0",
-            default=0,
+            default=1,
         )
         self.add_argument(
             "--log_file",

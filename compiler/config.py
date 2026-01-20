@@ -75,7 +75,9 @@ def set_config_globals_from_pash_args(given_pash_args):
         )
 
     # Set debug level
-    if given_pash_args.debug == 1:
+    if given_pash_args.debug == 0:
+        logging.getLogger().setLevel(logging.ERROR)
+    elif given_pash_args.debug == 1:
         logging.getLogger().setLevel(logging.WARNING)
     elif given_pash_args.debug == 2:
         logging.getLogger().setLevel(logging.INFO)

@@ -1,3 +1,4 @@
+import logging
 import os
 import signal
 import socket
@@ -22,6 +23,7 @@ from util import log, print_time_delta, NotAllRegionParallelizableError
 ## that responds to requests for compilation
 ##
 
+SUCCESSFUL_COMPILATIONS = 0
 
 def handler(signum, frame):
     log("Signal:", signum, "caught")
@@ -475,6 +477,10 @@ class Scheduler:
         if ast_or_ir != None:
             compile_success = True
 
+            ## Increase the counter of successful compilations
+            global SUCCESSFUL_COMPILATIONS
+            SUCCESSFUL_COMPILATIONS += 1
+
             maybe_generate_graphviz(
                 ast_or_ir, config.pash_args, name=f"dfg-{process_id}"
             )
@@ -699,6 +705,8 @@ class Scheduler:
 
 
 def shutdown():
+    global SUCCESSFUL_COMPILATIONS
+
     # in-bash expansion server, if it exists
     try:
         ast_to_ir.BASH_EXP_STATE
@@ -706,6 +714,10 @@ def shutdown():
         pass
     else:
         ast_to_ir.BASH_EXP_STATE.close()
+
+    if SUCCESSFUL_COMPILATIONS == 0:
+        logging.warning("[PaSh] Warning: No region was parallelized successfully")
+        logging.warning("       Hint: Check if there are annotations for the commands in your script")
 
     ## There may be races since this is called through the signal handling
     log("PaSh daemon is shutting down...")
