@@ -67,7 +67,11 @@ def for_node_with_loop_tracking(
         [
             to_ast_node(increment_node),
             to_ast_node(save_loop_iters_node),
-            copy.deepcopy(preprocessed_body),
+            ## KK 2026-01-20 This deepcopy used to be there but led to serious
+            ##               performance issues with some tests. 
+            ##               I think it is not necessary but leaving it here in case we want to revert back.
+            # copy.deepcopy(preprocessed_body),
+            preprocessed_body,
         ]
     )
 

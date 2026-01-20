@@ -558,12 +558,11 @@ if [ "$pash_exit_code" -eq 0 ]; then
 fi
 
 ## 10. Cleanup
-rm -f "$preprocessed_output"
 if [ "$show_version" -eq 0 ]; then
     cleanup_server "${daemon_pid}"
 fi
 
-if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+if [ "$PASH_DEBUG_LEVEL" -le 1 ]; then
     rm -rf "${PASH_TMP_PREFIX}"
 fi
 

@@ -21,6 +21,9 @@ from util import log, logging_prefix, print_time_delta
 
 LOGGING_PREFIX = "PaSh Preprocessor: "
 
+## Increase the recursion limit (it seems that the parser/unparser needs it for bigger scripts)
+sys.setrecursionlimit(10000)
+## Note: The preprocessor is very slow for very large recursive scripts
 
 def config_from_args(pash_args):
     """Configure logging based on command-line arguments."""
