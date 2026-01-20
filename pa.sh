@@ -2,9 +2,9 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-export RUNTIME_DIR="$PASH_TOP/compiler/orchestrator_runtime"
+export RUNTIME_DIR="$PASH_TOP/jit-runtime"
 export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"
-export RUNTIME_LIBRARY_DIR="$RUNTIME_DIR/../../runtime/"
+export RUNTIME_LIBRARY_DIR="$PASH_TOP/runtime"
 
 ## Register the signal handlers
 trap kill_all SIGTERM SIGINT
