@@ -5,6 +5,8 @@ on:
     # the paths that trigger the ci
     paths: 
         - compiler/**
+        - preprocessor/**
+        - jit-runtime/**
         - runtime/**
         - evaluation/**
         - annotations/**
@@ -15,6 +17,8 @@ on:
       - future
     paths: 
         - compiler/**
+        - preprocessor/**
+        - jit-runtime/**
         - runtime/**
         - evaluation/**
         - annotations/**
