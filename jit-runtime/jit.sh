@@ -56,29 +56,16 @@
 ## (1)
 ##
 
-## TODO: Make a shell script that is called wrap and
-##       takes three arguments (pre_script, script, post_script)
-##       and wraps a shell script file with a pre and a post code.
 ##
-##       This wrap function should perform only the necessary shell setting,
-##       exit code, and $!, transfer. Arguments should ideally be transfered too but
-##       I don't know of a good way to do it for an external script from an internal one.
+## (1) Save shell state
 ##
-##       Maybe it can happen with eval
-##
-## The challenging aspect is how to make this work for the parallel pipelines
 
 ## First save the state of the shell
-export PREVIOUS_SHELL_EC="$?"
-export PREVIOUS_SET_STATUS=$-
-source "$RUNTIME_DIR/pash_set_from_to.sh" "$PREVIOUS_SET_STATUS" "${DEFAULT_SET_STATE:-huB}"
-## Rename variables to pash specific names
-export pash_previous_exit_status="$PREVIOUS_SHELL_EC"
-export pash_previous_set_status="$PREVIOUS_SET_STATUS"
+export pash_previous_exit_status="$?"
+export pash_previous_set_status=$-
+source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "${DEFAULT_SET_STATE:-huB}"
+pash_redir_output echo "$$: (1) Pre-ec, pre-set, jit-set: ($pash_previous_exit_status, $pash_previous_set_status, $-)"
 
-pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
-pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
-pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
 
 ##
 ## (2)
@@ -135,12 +122,11 @@ else
         export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
         source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
         ## Save the state after execution
-        export PREVIOUS_SHELL_EC="$?"
-        export PREVIOUS_SET_STATUS=$-
-        source "$RUNTIME_DIR/pash_set_from_to.sh" "$PREVIOUS_SET_STATUS" "${DEFAULT_SET_STATE:-huB}"
+        export pash_previous_exit_status="$?"
+        export pash_previous_set_status=$-
+        source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "${DEFAULT_SET_STATE:-huB}"
         ## We don't need to save the arguments because they are already set
-        pash_runtime_final_status="$PREVIOUS_SHELL_EC"
-        export pash_previous_set_status="$PREVIOUS_SET_STATUS"
+        pash_runtime_final_status="$pash_previous_exit_status"
 
         pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
     else 

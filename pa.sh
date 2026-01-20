@@ -387,7 +387,6 @@ pash_setup_logging() {
 
     pash_declare_vars() {
         local vars_file="${1?File not given}"
-        pash_redir_output echo "Writing vars to: $vars_file"
         declare -p > "$vars_file"
     }
     export -f pash_declare_vars
