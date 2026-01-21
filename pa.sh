@@ -102,6 +102,9 @@ pash_init_arg_defaults() {
 
     # Help flag
     show_help=0
+
+    # Unknown flag detection
+    unknown_flag=""
 }
 
 ## Display combined help for PaSh (preprocessor + compiler)
@@ -327,7 +330,10 @@ pash_parse_args() {
 
             # Positional arguments (input script and script args)
             *)
-                if [ -z "$input_script" ] && [ -z "$command_mode" ]; then
+                # Check if this looks like an unknown flag
+                if [[ "$arg" == -* ]] && [ -z "$input_script" ] && [ -z "$command_mode" ]; then
+                    unknown_flag="$arg"
+                elif [ -z "$input_script" ] && [ -z "$command_mode" ]; then
                     input_script="$arg"
                     shell_name="$arg"
                     positional_only=1
@@ -596,6 +602,14 @@ pash_parse_args "$@"
 if [ "$show_help" -eq 1 ]; then
     pash_show_help
     exit 0
+fi
+
+## Check for unknown flags
+if [ -n "$unknown_flag" ]; then
+    echo "pa.sh: unknown option: $unknown_flag" >&2
+    echo "" >&2
+    pash_show_help >&2
+    exit 1
 fi
 
 ## 2. Setup functions based on parsed arguments
