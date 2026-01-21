@@ -17,9 +17,9 @@ grep '"cat": "Cat"' "$FILE" || echo "cat annotation not found (possibly already 
 # First run (annotation present)
 # -------------------------------
 echo "Running with cat annotation enabled..."
-$PASH_TOP/pa.sh -c "cat /usr/share/dict/words | grep '^un' | wc -l" \
-    --local-annotations-dir "$PASH_TOP/../annotations/" \
-    --assert_all_regions_parallelizable
+$PASH_TOP/pa.sh --local-annotations-dir "$PASH_TOP/../annotations/" \
+    --assert_all_regions_parallelizable \
+    -c "cat /usr/share/dict/words | grep '^un' | wc -l"
 first_run_status=$?
 echo "First run exit code: $first_run_status"
 
@@ -45,9 +45,9 @@ grep '"cat": "Cat"' "$FILE" || echo "cat annotation is now commented"
 # Second run (annotation removed)
 # ------------------------------------------
 echo "Running with cat annotation removed..."
-$PASH_TOP/pa.sh -c "cat /usr/share/dict/words | grep '^un' | wc -l" \
-    --local-annotations-dir "$PASH_TOP/../annotations/" \
-    --assert_all_regions_parallelizable
+$PASH_TOP/pa.sh --local-annotations-dir "$PASH_TOP/../annotations/" \
+    --assert_all_regions_parallelizable \
+    -c "cat /usr/share/dict/words | grep '^un' | wc -l"
 second_run_status=$?
 echo "Second run exit code: $second_run_status"
 
