@@ -564,7 +564,7 @@ pash_setup_server_functions() {
     else
         ## Normal PaSh mode
         start_server() {
-            "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
+            "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/compilation_server.py" "$@" &
             export daemon_pid=$!
             pash_wait_until_daemon_listening
         }
