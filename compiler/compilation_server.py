@@ -29,6 +29,8 @@ from util import log, print_time_delta, NotAllRegionParallelizableError
 ## that responds to requests for compilation
 ##
 
+SOCKET_BUF_SIZE = 8192
+
 SUCCESSFUL_COMPILATIONS = 0
 TOTAL_REGIONS = 0
 SUCCESSFUL_PARALLELIZATIONS = 0
@@ -144,7 +146,7 @@ def unix_socket_send_and_forget(socket_file: str, msg: str):
         msg_with_newline = msg + "\n"
         byte_msg = msg_with_newline.encode("utf-8")
         sock.sendall(byte_msg)
-        data = sock.recv(config.SOCKET_BUF_SIZE)
+        data = sock.recv(SOCKET_BUF_SIZE)
         str_data = data.decode("utf-8")
         ## There should be no response on these messages
         assert len(str_data) == 0
@@ -161,7 +163,7 @@ class SocketManager:
     def __init__(self, socket_addr: str):
         ## Configure them outside
         server_address = socket_addr
-        self.buf_size = config.SOCKET_BUF_SIZE
+        self.buf_size = SOCKET_BUF_SIZE
 
         # Make sure the socket does not already exist
         ## TODO: Is this necessary?

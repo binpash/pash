@@ -15,6 +15,7 @@ PASH_TOP = os.environ["PASH_TOP"]
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
 import config
+from arg_parser import BaseParser
 from util import log
 import pash_compiler
 from dspash.socket_utils import send_msg, recv_msg
@@ -108,13 +109,11 @@ def manage_connection(conn, addr):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser = BaseParser(description="PaSh distributed worker.")
+    parser.add_pash_args()
     parser.add_argument("--port", type=int, help="port to use", default=65432)
-    config.add_common_arguments(parser)
     args = parser.parse_args()
     config.set_config_globals_from_pash_args(args)
-    ## Initialize the log file
-    config.init_log_file()
     if not config.config:
         config.load_config(args.config_path)
     return args
