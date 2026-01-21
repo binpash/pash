@@ -1,3 +1,11 @@
+"""
+Argument parser classes for PaSh compiler components.
+
+Classes:
+- BaseParser: Base argparse class with common flags (debug, log_file)
+- CompilerParser: Extended parser with compiler-specific arguments
+"""
+
 import argparse
 import os
 
@@ -208,5 +216,3 @@ class CompilerParser(BaseParser):
             help="determines the path of a file containing all shell variables.",
             default=None,
         )
-
-

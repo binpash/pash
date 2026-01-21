@@ -25,13 +25,9 @@ def flatten_list(lst):
 
 
 def print_time_delta(prefix, start_time, end_time):
-    ## Always output time in the log.
+    """Log time delta between start and end time."""
     time_difference = (end_time - start_time) / timedelta(milliseconds=1)
-    ## If output_time flag is set, log the time
-    if config.OUTPUT_TIME:
-        log("{} time:".format(prefix), time_difference, " ms", level=0)
-    else:
-        log("{} time:".format(prefix), time_difference, " ms")
+    log("{} time:".format(prefix), time_difference, " ms")
 
 def log(*args, end="\n", level=2):
     """Wrapper for logging."""

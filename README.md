@@ -42,10 +42,12 @@ To run with a local version of the library, please refer to the documentation [l
 
 This repo hosts the core `pash` development. The structure is as follows:
 
-* [compiler](./compiler): Shell-dataflow translations and associated parallelization transformations.
+* [preprocessor](./preprocessor): Parses shell scripts, expands variables, and identifies dataflow regions for compilation.
+* [compiler](./compiler): Translates shell dataflow regions to IRs and applies parallelization transformations.
+* [jit-runtime](./jit-runtime): Just-in-time runtime that executes compiled regions and manages shell state.
+* [runtime](./runtime): Runtime components — e.g., `eager`, `split`, and associated combiners.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
 * [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/other/more-scripts) used for the evaluation.
-* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and associated combiners.
 * [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
 
 ## Community & More

@@ -1,3 +1,9 @@
+"""
+Compilation daemon/server that handles multiple compilation requests.
+
+This is the primary entry point when running PaSh via pa.sh.
+"""
+
 import logging
 import os
 import signal
@@ -12,16 +18,18 @@ from sh_expand import env_vars_util
 import config
 from pash_graphviz import maybe_init_graphviz_dir, maybe_generate_graphviz
 import ast_to_ir
-import pash_compiler
+import compilation
 from dspash.worker_manager import WorkersManager
 
-from cli import BaseParser
+from arg_parser import BaseParser
 from util import log, print_time_delta, NotAllRegionParallelizableError
 
 ##
 ## A Daemon (not with the strict Unix sense)
 ## that responds to requests for compilation
 ##
+
+SOCKET_BUF_SIZE = 8192
 
 SUCCESSFUL_COMPILATIONS = 0
 TOTAL_REGIONS = 0
@@ -138,7 +146,7 @@ def unix_socket_send_and_forget(socket_file: str, msg: str):
         msg_with_newline = msg + "\n"
         byte_msg = msg_with_newline.encode("utf-8")
         sock.sendall(byte_msg)
-        data = sock.recv(config.SOCKET_BUF_SIZE)
+        data = sock.recv(SOCKET_BUF_SIZE)
         str_data = data.decode("utf-8")
         ## There should be no response on these messages
         assert len(str_data) == 0
@@ -155,7 +163,7 @@ class SocketManager:
     def __init__(self, socket_addr: str):
         ## Configure them outside
         server_address = socket_addr
-        self.buf_size = config.SOCKET_BUF_SIZE
+        self.buf_size = SOCKET_BUF_SIZE
 
         # Make sure the socket does not already exist
         ## TODO: Is this necessary?
@@ -238,7 +246,7 @@ def init():
     if not config.config:
         config.load_config(args.config_path)
 
-    pash_compiler.runtime_config = config.config["distr_planner"]
+    compilation.runtime_config = config.config["distr_planner"]
 
     ## Initialize the graphviz directory
     maybe_init_graphviz_dir(args)
@@ -376,7 +384,7 @@ class Scheduler:
             selected_width = config.pash_args.width
 
         log("Selected width:", selected_width)
-        return pash_compiler.CompilerConfig(selected_width)
+        return compilation.CompilerConfig(selected_width)
 
     def get_averages_per_width(self, input_ir_file):
         ## If we haven't gathered any statistic yet
@@ -463,9 +471,9 @@ class Scheduler:
         ## Add the process_id -> input_ir mapping
         self.add_proc_id_map(process_id, input_ir_file, compiler_config)
 
-        # check if any general exceptions are caught to report to --assert_compiler_success flag 
-        try: 
-            ast_or_ir = pash_compiler.compile_ir(
+        # check if any general exceptions are caught to report to --assert_compiler_success flag
+        try:
+            ast_or_ir = compilation.compile_ir(
                 input_ir_file, compiled_script_file, config.pash_args, compiler_config
             )
         except NotAllRegionParallelizableError:
@@ -528,19 +536,19 @@ class Scheduler:
         else:
             ## Wait if we have more pipelines running than our current limit
             self.wait_until_limit(config.pash_args.parallel_pipelines_limit)
-        
+
         if compile_success:
             response = success_response(
                 f"{process_id} {compiled_script_file} {var_file} {input_ir_file}"
             )
-        elif not current_region_parallelizable: 
+        elif not current_region_parallelizable:
             # send specified message to say current region is not parallelizable instead of general exception caught
             response = error_response(f"{process_id} current region is not parallelizable; failed to compile")
             self.unsafe_running = True
         else:
             response = error_response(f"{process_id} failed to compile")
             self.unsafe_running = True
-           
+
         self.running_procs += 1
 
         ## Get the time before we start executing (roughly) to determine how much time this command execution will take
