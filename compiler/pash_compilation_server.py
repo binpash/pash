@@ -733,7 +733,7 @@ def shutdown():
 
     # Default warning when no assertions and no successful compilations
     if not config.pash_args.assert_all_regions_parallelizable and not config.pash_args.assert_compiler_success:
-        if SUCCESSFUL_COMPILATIONS == 0:
+        if SUCCESSFUL_COMPILATIONS == 0 and TOTAL_REGIONS > 0:
             logging.warning("[PaSh] Warning: No region was parallelized successfully")
             logging.warning("       Hint: Check if there are annotations for the commands in your script")
 

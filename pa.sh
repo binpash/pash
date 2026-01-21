@@ -42,7 +42,6 @@ export pash_profile_driven_flag=1
 export pash_no_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
-export show_version=0
 export distributed_exec=0
 export PASH_DEBUG_LEVEL=1
 export PASH_REDIR="&2"
@@ -88,7 +87,6 @@ pash_init_arg_defaults() {
     arg_no_parallel_pipelines=""
     arg_parallel_pipelines_limit=""
     arg_r_split_batch_size=""
-    arg_version=""
     arg_no_eager=""
     arg_profile_driven=""
     arg_termination=""
@@ -101,6 +99,66 @@ pash_init_arg_defaults() {
     arg_r_split=""
     arg_dgsh_tee=""
     arg_speculation=""
+
+    # Help flag
+    show_help=0
+}
+
+## Display combined help for PaSh (preprocessor + compiler)
+pash_show_help() {
+    cat << 'EOF'
+Usage: pa.sh [OPTIONS] [-c COMMAND | SCRIPT_FILE] [ARGS...]
+
+PaSh: Parallelizing Shell Scripts
+
+Shell Options:
+  -c, --command COMMAND    Execute COMMAND instead of reading from a script file
+  -a                       Export all variables (equivalent to bash -a)
+  -v                       Verbose mode (equivalent to bash -v)
+  -x                       Trace mode (equivalent to bash -x)
+
+Shared Options (Preprocessor + Compiler):
+  -d, --debug LEVEL        Debug level (default: 1)
+  --log_file FILE          Log file path (default: stderr)
+  --speculative            (experimental) Use speculative execution
+  --config_path PATH       Path to configuration file
+
+Preprocessor Options:
+  --bash                   (experimental) Interpret input as a bash script
+
+Compiler Options:
+  -w, --width N            Parallelism width (default: number of CPUs)
+  --no_optimize            Disable optimizations
+  --dry_run_compiler       Run compiler without executing
+  --assert_compiler_success
+                           Exit with error if any parallelizable region fails to compile
+  --assert_all_regions_parallelizable
+                           Exit with error if any region is not parallelizable
+  --avoid_pash_runtime_completion
+                           Avoid runtime completion
+  -p, --output_optimized   Output optimized script
+  --graphviz FORMAT        Generate graphviz output (no, dot, svg, pdf, png)
+  --graphviz_dir DIR       Directory for graphviz output (default: /tmp)
+  --no_parallel_pipelines  Disable parallel pipelines
+  --parallel_pipelines_limit N
+                           Limit parallel pipelines (default: 2)
+  --r_split_batch_size N   Batch size for r_split (default: 1000000)
+  --no_eager               Disable eager evaluation
+  --profile_driven         (experimental) Enable profile-driven optimization
+  --termination MODE       Termination mode: clean_up_graph, drain_stream
+  --daemon_communicates_through_unix_pipes
+                           (experimental) Use Unix pipes for daemon communication
+  --distributed_exec       (experimental) Enable distributed execution
+
+Other Options:
+  -h, --help               Show this help message and exit
+
+Examples:
+  pa.sh script.sh                    Run script.sh with PaSh
+  pa.sh -c "cat file | grep foo"     Run a command with PaSh
+  pa.sh -w 4 script.sh               Run with parallelism width 4
+  pa.sh --debug 2 script.sh          Run with debug level 2
+EOF
 }
 
 ## Parse all command-line arguments into variables and set exported flags
@@ -122,6 +180,11 @@ pash_parse_args() {
         fi
 
         case "$arg" in
+            # Help flag (must be handled before other flags)
+            -h|--help)
+                show_help=1
+                ;;
+
             # Shell flags
             -c|--command)
                 command_mode="-c"
@@ -220,10 +283,6 @@ pash_parse_args() {
             --r_split_batch_size)
                 arg_r_split_batch_size="$next_arg"
                 i=$next_i
-                ;;
-            --version)
-                arg_version="--version"
-                export show_version=1
                 ;;
             --no_eager)
                 arg_no_eager="--no_eager"
@@ -331,7 +390,6 @@ pash_build_server_args() {
     [ -n "$arg_no_parallel_pipelines" ] && server_args+=("$arg_no_parallel_pipelines")
     [ -n "$arg_parallel_pipelines_limit" ] && server_args+=("--parallel_pipelines_limit" "$arg_parallel_pipelines_limit")
     [ -n "$arg_r_split_batch_size" ] && server_args+=("--r_split_batch_size" "$arg_r_split_batch_size")
-    [ -n "$arg_version" ] && server_args+=("$arg_version")
     [ -n "$arg_no_eager" ] && server_args+=("$arg_no_eager")
     [ -n "$arg_profile_driven" ] && server_args+=("$arg_profile_driven")
     [ -n "$arg_termination" ] && server_args+=("--termination" "$arg_termination")
@@ -534,6 +592,12 @@ pash_setup_server_functions() {
 pash_init_arg_defaults
 pash_parse_args "$@"
 
+## Show help and exit if requested
+if [ "$show_help" -eq 1 ]; then
+    pash_show_help
+    exit 0
+fi
+
 ## 2. Setup functions based on parsed arguments
 pash_setup_logging
 pash_setup_communication
@@ -550,9 +614,7 @@ pash_build_preprocessor_args
 pash_build_server_args
 
 ## 6. Start the compilation server
-if [ "$show_version" -eq 0 ]; then
-    start_server "${server_args[@]}"
-fi
+start_server "${server_args[@]}"
 
 ## 7. Restore umask before executing user scripts
 umask "$old_umask"
@@ -572,9 +634,7 @@ if [ "$pash_exit_code" -eq 0 ]; then
 fi
 
 ## 10. Cleanup
-if [ "$show_version" -eq 0 ]; then
-    cleanup_server "${daemon_pid}"
-fi
+cleanup_server "${daemon_pid}"
 
 ## Check if assertion failed (--assert_all_regions_parallelizable or --assert_compiler_success)
 if [ "${pash_assert_failed:-0}" -eq 1 ]; then
