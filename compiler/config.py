@@ -112,52 +112,6 @@ def load_config(config_file_path=""):
     config = pash_config
 
 
-def pass_common_arguments(pash_arguments):
-    arguments = []
-    if pash_arguments.no_optimize:
-        arguments.append("--no_optimize")
-    if pash_arguments.dry_run_compiler:
-        arguments.append("--dry_run_compiler")
-    if pash_arguments.assert_compiler_success:
-        arguments.append("--assert_compiler_success")
-    if pash_arguments.avoid_pash_runtime_completion:
-        arguments.append("--avoid_pash_runtime_completion")
-    if pash_arguments.profile_driven:
-        arguments.append("--profile_driven")
-    if pash_arguments.output_optimized:
-        arguments.append("--output_optimized")
-    arguments.append("--graphviz")
-    arguments.append(pash_arguments.graphviz)
-    arguments.append("--graphviz_dir")
-    arguments.append(pash_arguments.graphviz_dir)
-    if not pash_arguments.log_file == "":
-        arguments.append("--log_file")
-        arguments.append(pash_arguments.log_file)
-    if pash_arguments.no_eager:
-        arguments.append("--no_eager")
-    if pash_arguments.distributed_exec:
-        arguments.append("--distributed_exec")
-    if pash_arguments.speculative:
-        arguments.append("--speculative")
-    if pash_arguments.no_parallel_pipelines:
-        arguments.append("--no_parallel_pipelines")
-    if pash_arguments.daemon_communicates_through_unix_pipes:
-        arguments.append("--daemon_communicates_through_unix_pipes")
-    arguments.append("--parallel_pipelines_limit")
-    arguments.append(str(pash_arguments.parallel_pipelines_limit))
-    arguments.append("--r_split_batch_size")
-    arguments.append(str(pash_arguments.r_split_batch_size))
-    arguments.append("--debug")
-    arguments.append(str(pash_arguments.debug))
-    arguments.append("--termination")
-    arguments.append(pash_arguments.termination)
-    arguments.append("--width")
-    arguments.append(str(pash_arguments.width))
-    if not pash_arguments.config_path == "":
-        arguments.append("--config_path")
-        arguments.append(pash_arguments.config_path)
-    return arguments
-
 
 def init_log_file():
     global LOG_FILE
