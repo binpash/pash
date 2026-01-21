@@ -24,6 +24,8 @@ from util import log, print_time_delta, NotAllRegionParallelizableError
 ##
 
 SUCCESSFUL_COMPILATIONS = 0
+TOTAL_REGIONS = 0
+SUCCESSFUL_PARALLELIZATIONS = 0
 
 def handler(signum, frame):
     log("Signal:", signum, "caught")
@@ -437,10 +439,13 @@ class Scheduler:
     ##############################################################################
 
     def compile_and_add(self, compiled_script_file, var_file, input_ir_file):
+        global TOTAL_REGIONS, SUCCESSFUL_PARALLELIZATIONS
+        TOTAL_REGIONS += 1
+
         process_id = self.get_next_id()
         run_parallel = False
         compile_success = False
-        current_region_parallelizable = True 
+        current_region_parallelizable = True
 
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
@@ -463,10 +468,13 @@ class Scheduler:
             ast_or_ir = pash_compiler.compile_ir(
                 input_ir_file, compiled_script_file, config.pash_args, compiler_config
             )
-        except NotAllRegionParallelizableError: 
-            ast_or_ir = None 
+        except NotAllRegionParallelizableError:
+            ast_or_ir = None
             current_region_parallelizable = False
-                    
+
+        # Track successful parallelizations (region was parallelizable)
+        if current_region_parallelizable:
+            SUCCESSFUL_PARALLELIZATIONS += 1
 
         daemon_compile_end_time = datetime.now()
         print_time_delta(
@@ -533,17 +541,7 @@ class Scheduler:
             response = error_response(f"{process_id} failed to compile")
             self.unsafe_running = True
            
-
-        ## Do not increase the running procs if assert_all_regions_parallelizable is enabled
-        ##  and compilation failed, since nothing will run then.
-        ## Do not increase when compile is not successful but regions are parallelizable (in the case that general exceptions are caught), 
-        ##  nothing will run in this case also 
-        if (not compile_success and config.pash_args.assert_all_regions_parallelizable): 
-            pass 
-        elif (not compile_success and current_region_parallelizable and config.pash_args.assert_compiler_success): 
-            pass 
-        else:
-            self.running_procs += 1
+        self.running_procs += 1
 
         ## Get the time before we start executing (roughly) to determine how much time this command execution will take
         command_exec_start_time = datetime.now()
@@ -647,9 +645,18 @@ class Scheduler:
             self.handle_exit(input_cmd)
         elif input_cmd.startswith("Done"):
             self.wait_for_all()
+            ## Check if any assertion failed
+            assertion_failed = False
+            if config.pash_args.assert_all_regions_parallelizable and SUCCESSFUL_PARALLELIZATIONS != TOTAL_REGIONS:
+                assertion_failed = True
+            if config.pash_args.assert_compiler_success and SUCCESSFUL_COMPILATIONS != TOTAL_REGIONS:
+                assertion_failed = True
             ## We send output to the top level pash process
             ## to signify that we are done.
-            self.respond("All finished")
+            if assertion_failed:
+                self.respond("ASSERT_FAILED")
+            else:
+                self.respond("All finished")
             self.done = True
         elif input_cmd.startswith("Daemon Start") or input_cmd == "":
             ## This happens when pa.sh first connects to daemon to see if it is on
@@ -705,7 +712,7 @@ class Scheduler:
 
 
 def shutdown():
-    global SUCCESSFUL_COMPILATIONS
+    global SUCCESSFUL_COMPILATIONS, TOTAL_REGIONS, SUCCESSFUL_PARALLELIZATIONS
 
     # in-bash expansion server, if it exists
     try:
@@ -715,9 +722,20 @@ def shutdown():
     else:
         ast_to_ir.BASH_EXP_STATE.close()
 
-    if SUCCESSFUL_COMPILATIONS == 0:
-        logging.warning("[PaSh] Warning: No region was parallelized successfully")
-        logging.warning("       Hint: Check if there are annotations for the commands in your script")
+    # Report assertion failures
+    if config.pash_args.assert_all_regions_parallelizable:
+        if SUCCESSFUL_PARALLELIZATIONS != TOTAL_REGIONS:
+            logging.warning(f"[PaSh] Assertion failed: Not all regions were parallelizable ({SUCCESSFUL_PARALLELIZATIONS}/{TOTAL_REGIONS} parallelized)")
+
+    if config.pash_args.assert_compiler_success:
+        if SUCCESSFUL_COMPILATIONS != TOTAL_REGIONS:
+            logging.warning(f"[PaSh] Assertion failed: Not all regions were compiled successfully ({SUCCESSFUL_COMPILATIONS}/{TOTAL_REGIONS} compiled)")
+
+    # Default warning when no assertions and no successful compilations
+    if not config.pash_args.assert_all_regions_parallelizable and not config.pash_args.assert_compiler_success:
+        if SUCCESSFUL_COMPILATIONS == 0:
+            logging.warning("[PaSh] Warning: No region was parallelized successfully")
+            logging.warning("       Hint: Check if there are annotations for the commands in your script")
 
     ## There may be races since this is called through the signal handling
     log("PaSh daemon is shutting down...")

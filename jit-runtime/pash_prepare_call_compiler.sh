@@ -71,25 +71,8 @@ process_id=${response_args[1]}
 
 pash_redir_output echo "$$: (2) Compiler exited with code: $pash_runtime_return_code"
 
-## only when --assert_all_regions_parallellizable is used do we care about all regions being parallelizable
-if [ "$pash_all_region_parallelizable" -ne 0 ] && [ "$pash_assert_all_regions_parallelizable_flag" -eq 1 ]; then
-    pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code because some regions were not parallelizable: $pash_all_region_parallelizable while assert_all_regions_parallelizable_flag was enabled! Exiting PaSh..."
-    inform_daemon_exit
-    exit 1
-fi
-
-if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_all_regions_parallelizable_flag" -eq 1 ]; then
-    pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code: $pash_runtime_return_code while assert_all_regions_parallelizable_flag was enabled! Exiting PaSh..."
-    inform_daemon_exit
-    exit 1
-fi
-
-## for pash_assert_compiler_success_flag, exit when return code is not 0 (general exception caught) and when all regions are parallelizable
-if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_all_region_parallelizable" -eq 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
-    pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code: $pash_runtime_return_code while assert_compiler_success was enabled! Exiting PaSh..."
-    inform_daemon_exit
-    exit 1
-fi
+## Note: Early exits for --assert_all_regions_parallelizable and --assert_compiler_success
+## have been removed. Assertions are now checked at shutdown and reported gracefully.
 
 # store functions for distributed execution
 if [ "$distributed_exec" -eq 1 ]; then

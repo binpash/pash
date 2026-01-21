@@ -513,6 +513,10 @@ pash_setup_server_functions() {
                 if [ "$distributed_exec" -eq 1 ]; then
                     manager_response=$(pash_communicate_worker_manager "$msg")
                 fi
+                ## Check if assertion failed
+                if [[ "$daemon_response" == *"ASSERT_FAILED"* ]]; then
+                    pash_assert_failed=1
+                fi
                 wait 2> /dev/null 1>&2
             fi
         }
@@ -570,6 +574,11 @@ fi
 ## 10. Cleanup
 if [ "$show_version" -eq 0 ]; then
     cleanup_server "${daemon_pid}"
+fi
+
+## Check if assertion failed (--assert_all_regions_parallelizable or --assert_compiler_success)
+if [ "${pash_assert_failed:-0}" -eq 1 ]; then
+    pash_exit_code=1
 fi
 
 if [ "$PASH_DEBUG_LEVEL" -le 1 ]; then
