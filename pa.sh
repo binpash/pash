@@ -107,11 +107,19 @@ pash_init_arg_defaults() {
 pash_parse_args() {
     local i=1
     local arg next_i next_arg
+    local positional_only=0
 
     while [ $i -le $# ]; do
         arg="${!i}"
         next_i=$((i+1))
         next_arg="${!next_i}"
+
+        # Once in positional-only mode, all args go to script_args
+        if [ "$positional_only" -eq 1 ]; then
+            script_args+=("$arg")
+            i=$((i+1))
+            continue
+        fi
 
         case "$arg" in
             # Shell flags
@@ -119,6 +127,7 @@ pash_parse_args() {
                 command_mode="-c"
                 command_text="$next_arg"
                 i=$next_i
+                positional_only=1
                 ;;
             -a)
                 allexport_flag="-a"
@@ -262,6 +271,7 @@ pash_parse_args() {
                 if [ -z "$input_script" ] && [ -z "$command_mode" ]; then
                     input_script="$arg"
                     shell_name="$arg"
+                    positional_only=1
                 else
                     script_args+=("$arg")
                 fi
