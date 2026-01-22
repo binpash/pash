@@ -1,9 +1,9 @@
 name: Build
-on: 
+on:
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     # the paths that trigger the ci
-    paths: 
+    paths:
         - src/pash/compiler/**
         - src/pash/runtime/**
         - evaluation/**
@@ -13,22 +13,24 @@ on:
     branches:
       - main
       - future
-    paths: 
+    paths:
         - src/pash/compiler/**
         - src/pash/runtime/**
         - evaluation/**
         - annotations/**
         - scripts/**
+  # Allow manual trigger from any branch
+  workflow_dispatch:
 
 # Jobs section
 jobs:
   build-pash:
       runs-on: ubuntu-latest
-      if: github.event.pull_request.draft == false
+      if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v4 
+        - uses: actions/checkout@v4
           with:
-            ref: ${{ github.event.pull_request.head.sha }}
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
         - name: Building Pash
           run: |
             set -e
