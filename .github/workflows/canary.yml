@@ -21,8 +21,9 @@ jobs:
           wget https://raw.githubusercontent.com/binpash/pash/main/scripts/up.sh
           sh up.sh
           ## Inspect it if you wish
-          export PASH_TOP="$PWD/pash/"
+          export PASH_TOP="$PWD/pash/src/pash"
+          export PATH="$PATH:$PWD/pash"
           cd pash
-          "$PASH_TOP/pa.sh" -c "echo hi"
-          "$PASH_TOP/evaluation/tests/test_evaluation_scripts.sh"
+          ./pa.sh -c "echo hi"
+          ./evaluation/tests/test_evaluation_scripts.sh
           
