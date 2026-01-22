@@ -8,35 +8,36 @@
 
 Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more) | [Citing](#citing)
 
-## Running PaSh
 
-To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization degree of 2× run:
-
-```sh
-./pa.sh ./evaluation/intro/hello-world.sh
-```
-
-If the script contains bash specific syntax, add the beta `--bash` flag to enable support.
-
-Run `./pa.sh --help` to get more information about the available commands.
-Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
-
-## Installation
-
-### Via pip (Recommended)
+## Installation via pip (Recommended)
 ```sh
 pip install pash
 pash -c "echo hi"
 ```
 
-### From source
-On Ubuntu, Fedora, and Debian run the following to set up PaSh.
+## Running PaSh
+
+To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization degree of 2× run:
+
 ```sh
-wget https://raw.githubusercontent.com/binpash/pash/main/scripts/up.sh
-sh up.sh
-export PASH_TOP="$PWD/pash/"
-## Run PaSh with echo hi
-"$PASH_TOP/pa.sh" -c "echo hi"
+pash -w 2 ./evaluation/intro/hello-world.sh
+```
+
+If the script contains bash specific syntax, add the beta `--bash` flag to enable support.
+
+Run `pash --help` to get more information about the available commands.
+Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
+
+
+## Local testing (development)
+
+To install and run PaSh for local development:
+
+```sh
+pip install -e .
+pash --help
+pash -c "echo hello | cat"
+./scripts/run_tests.sh
 ```
 
 For more details, manual installation, or other platforms see [installation instructions](./docs/install).
