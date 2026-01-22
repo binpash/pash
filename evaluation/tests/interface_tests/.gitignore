@@ -1,2 +1,4 @@
 output
 *.err
+*.tempfile
+*tmp

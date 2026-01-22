@@ -223,7 +223,10 @@ test_set_e_3()
 test_redirect()
 {
     local shell=$1
-    $shell redirect_wrapper.sh "$shell"
+    ## Previously this was: 
+    ## `$shell redirect_wrapper.sh "$shell"`
+    ## But that caused a recursive pash invocation...
+    $shell redirect_wrapper.sh "bash"
 }
 
 test_unparsing()

@@ -46,6 +46,7 @@ jobs:
         run: |
           export PASH_TOP=$PWD/src/pash
           export PATH=$PATH:$PASH_TOP
+          source python_pkgs/bin/activate
 
           ./scripts/setup-annotations.sh
           ./scripts/ci/test_local_annotations.sh
