@@ -24,6 +24,7 @@ from dspash.worker_manager import WorkersManager
 from arg_parser import BaseParser
 from util import log, print_time_delta, NotAllRegionParallelizableError
 
+
 ##
 ## A Daemon (not with the strict Unix sense)
 ## that responds to requests for compilation
