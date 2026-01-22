@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pash"
-version = "0.16.1"
+name = "binpash-pash"
+version = "0.16.2"
 description = "Light-touch Data-Parallel Shell Processing"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -20,10 +20,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: C",
     "Topic :: System :: Shells",
