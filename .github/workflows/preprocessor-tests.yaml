@@ -49,6 +49,7 @@ jobs:
           export PASH_TMP_PREFIX=$(mktemp -d)/
           export PASH_BASH_VERSION="5 2 21"
           export PYTHONPATH="$PASH_TOP/preprocessor:$PASH_TOP/compiler:$PYTHONPATH"
+          source python_pkgs/bin/activate
 
           cd src/pash/preprocessor
           ./run_tests.sh
