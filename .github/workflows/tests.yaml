@@ -49,6 +49,7 @@ jobs:
             sudo -E bash scripts/distro-deps.sh -o
             # install pash (uses pip install -e)
             sudo -E bash scripts/setup-pash.sh -o
+            source python_pkgs/bin/activate
             export PASH_TOP=$PWD/src/pash
             export PATH=$PATH:$PASH_TOP
             # run all the tests (INTRO, INTERFACE, COMPILER)
