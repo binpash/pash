@@ -1,0 +1,27 @@
+# Include documentation and metadata
+include README.md
+include LICENSE
+
+# Include C source files for runtime compilation
+recursive-include src/pash/runtime *.c
+recursive-include src/pash/runtime *.h
+include src/pash/runtime/Makefile
+recursive-include src/pash/runtime *.sh
+
+# Include JIT runtime bash scripts
+recursive-include src/pash/jit_runtime *.sh
+
+# Include compiler config
+include src/pash/compiler/config.json
+
+# Include any parser data files
+recursive-include src/pash/compiler/parser *
+
+# Exclude compiled artifacts
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude *.so
+global-exclude *.o
+prune */__pycache__
+prune *.egg-info

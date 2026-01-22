@@ -1,8 +1,8 @@
 """
 Configuration module for PaSh compiler.
 
-Constants (set at import time from environment):
-- PASH_TOP: Root directory of PaSh installation
+Constants (set at import time from environment or package location):
+- PASH_TOP: Root directory of PaSh installation/package
 - PASH_TMP_PREFIX: Temporary directory for this session
 - BASH_VERSION: Tuple of bash version numbers
 - HDFS_PREFIX: Prefix for HDFS paths
@@ -16,16 +16,47 @@ Runtime state (set during initialization):
 import json
 import logging
 import os
-import subprocess
 import sys
+from pathlib import Path
 
-# === Constants from environment ===
-assert os.getenv("PASH_TOP") is not None, "PASH_TOP must be set by pa.sh"
-assert os.getenv("PASH_TMP_PREFIX") is not None, "PASH_TMP_PREFIX must be set by pa.sh"
-PASH_TOP = os.getenv("PASH_TOP")
-PASH_TMP_PREFIX = os.getenv("PASH_TMP_PREFIX")
 
-BASH_VERSION = tuple(int(i) for i in os.getenv("PASH_BASH_VERSION").split(" "))
+def get_package_root() -> Path:
+    """Get the root directory of the pash package.
+
+    This is the directory containing compiler/, preprocessor/, etc.
+    When installed via pip, this is the site-packages/pash directory.
+    """
+    return Path(__file__).parent.parent
+
+
+def get_pash_top() -> str:
+    """Get PASH_TOP, preferring environment variable if set.
+
+    This allows both pip-installed usage (uses package location)
+    and development usage (uses PASH_TOP from pa.sh).
+    """
+    env_pash_top = os.getenv("PASH_TOP")
+    if env_pash_top:
+        return env_pash_top
+    return str(get_package_root())
+
+
+# === Constants from environment or package location ===
+
+PASH_TOP = get_pash_top()
+
+# PASH_TMP_PREFIX must be set by the entry point (pa.sh or cli.py)
+_pash_tmp_prefix = os.getenv("PASH_TMP_PREFIX")
+if _pash_tmp_prefix is None:
+    # Fallback for when module is imported outside of normal execution
+    import tempfile
+    _pash_tmp_prefix = tempfile.mkdtemp(prefix="pash_") + "/"
+PASH_TMP_PREFIX = _pash_tmp_prefix
+
+# BASH_VERSION with fallback
+_bash_version_str = os.getenv("PASH_BASH_VERSION", "5 0 0")
+BASH_VERSION = tuple(int(i) for i in _bash_version_str.split(" "))
+
 HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
 # === Runtime state ===
@@ -69,7 +100,8 @@ def load_config(config_file_path=""):
     global config
 
     if config_file_path == "":
-        config_file_path = os.path.join(PASH_TOP, "compiler/config.json")
+        # Look for config.json relative to this module (in compiler directory)
+        config_file_path = str(Path(__file__).parent / "config.json")
 
     with open(config_file_path) as config_file:
         config = json.load(config_file)

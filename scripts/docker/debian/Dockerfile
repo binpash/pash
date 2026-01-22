@@ -23,9 +23,10 @@ ENV LANGUAGE en_US.UTF-8
 ENV LC_COLLATE C
 ENV LC_ALL en_US.UTF-8
 
-ENV PASH_TOP=/opt/pash
+ENV PASH_TOP=/opt/pash/src/pash
 # download PaSh
 RUN git clone https://github.com/binpash/pash.git /opt/pash
+ENV PATH="/opt/pash:${PATH}"
 RUN source /root/.bashrc && bash /opt/pash/scripts/distro-deps.sh -o 
 RUN source /root/.bashrc && yes | bash /opt/pash/scripts/setup-pash.sh -o
 CMD ["/bin/bash"]

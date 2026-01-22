@@ -1,11 +1,11 @@
 name: Build
-on: 
+on:
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     # the paths that trigger the ci
-    paths: 
-        - compiler/**
-        - runtime/**
+    paths:
+        - src/pash/compiler/**
+        - src/pash/runtime/**
         - evaluation/**
         - annotations/**
         - scripts/**
@@ -13,31 +13,33 @@ on:
     branches:
       - main
       - future
-    paths: 
-        - compiler/**
-        - runtime/**
+    paths:
+        - src/pash/compiler/**
+        - src/pash/runtime/**
         - evaluation/**
         - annotations/**
         - scripts/**
+  # Allow manual trigger from any branch
+  workflow_dispatch:
 
 # Jobs section
 jobs:
   build-pash:
       runs-on: ubuntu-latest
-      if: github.event.pull_request.draft == false
+      if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v4 
+        - uses: actions/checkout@v4
           with:
-            ref: ${{ github.event.pull_request.head.sha }}
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
         - name: Building Pash
           run: |
             set -e
             sudo touch /.githubenv
             # install the system deps and pash the environment
             sudo -E bash scripts/distro-deps.sh -o
-            # install pash
+            # install pash (uses pip install -e)
             sudo -E bash scripts/setup-pash.sh -o
-            export PASH_TOP=$PWD
-            export PATH=$PATH:$PASH_TOP
+            export PASH_TOP=$PWD/src/pash
+            export PATH=$PATH:$PWD
             # run a simple command
-            $PASH_TOP/pa.sh -c 'echo done'
+            ./pa.sh -c 'echo done'

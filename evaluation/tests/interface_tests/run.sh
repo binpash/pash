@@ -1,12 +1,20 @@
 #!/bin/bash
 
-export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source utils for helper functions
+. "$REPO_ROOT/scripts/utils.sh"
+
+# Always set PASH_TOP to the correct location (src/pash)
+# This overrides any stale values from old PaSh installations
+export PASH_TOP="$REPO_ROOT/src/pash"
 # time: print real in seconds, to simplify parsing
 
-pash="$PASH_TOP/pa.sh -d 0 --profile_driven"
-pash_with_bash="$PASH_TOP/pa.sh -d 0 --profile_driven --bash"
+pash="$REPO_ROOT/pa.sh -d 0 --profile_driven"
+pash_with_bash="$REPO_ROOT/pa.sh -d 0 --profile_driven --bash"
 
-output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
+output_dir="$REPO_ROOT/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
 mkdir -p "$output_dir"
 

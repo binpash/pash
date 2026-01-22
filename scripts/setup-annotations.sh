@@ -22,7 +22,9 @@ else
         echo "Set PASH_TOP or provide a directory path as an argument."
         exit 1
     fi
-    ANNOTATIONS_DIR="$(dirname "$PASH_TOP")/annotations"
+    # PASH_TOP points to src/pash, so repo root is ../..
+    REPO_ROOT="$(cd "$PASH_TOP/../.." && pwd)"
+    ANNOTATIONS_DIR="$REPO_ROOT/annotations"
 fi
 
 echo "Annotations directory set to: $ANNOTATIONS_DIR"

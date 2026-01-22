@@ -2,9 +2,10 @@ FROM ubuntu:24.04
 ## Necessary to avoid interactive responses in installations
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y && apt-get install -y git
-ENV PASH_TOP=/opt/pash
+ENV PASH_TOP=/opt/pash/src/pash
 # download PaSh
 RUN git clone https://github.com/binpash/pash.git /opt/pash
+ENV PATH="/opt/pash:${PATH}"
 RUN bash /opt/pash/scripts/distro-deps.sh -o 
 RUN yes | bash /opt/pash/scripts/setup-pash.sh -o
 ENV LANG en_US.UTF-8

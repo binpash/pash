@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
+# Get the directory containing this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PASH_TOP=${PASH_TOP:-$SCRIPT_DIR/src/pash}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-export RUNTIME_DIR="$PASH_TOP/jit-runtime"
+export RUNTIME_DIR="$PASH_TOP/jit_runtime"
 export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"
 export RUNTIME_LIBRARY_DIR="$PASH_TOP/runtime"
 
@@ -557,14 +559,28 @@ pash_setup_communication() {
 # Server Functions
 ###############################################################################
 
+## Determine Python executable - use venv if available, otherwise system Python
+get_pash_python() {
+    # First check if there's a local venv (for development/source installs)
+    # PASH_TOP points to src/pash, so python_pkgs is at ../../python_pkgs
+    local venv_python="${PASH_TOP}/../../python_pkgs/bin/python"
+    if [ -x "$venv_python" ]; then
+        echo "$venv_python"
+    else
+        # Fallback to system Python (for pip installs)
+        echo "python3"
+    fi
+}
+export PASH_PYTHON=$(get_pash_python)
+
 pash_setup_server_functions() {
     if [ "${pash_speculative_flag}" -eq 1 ]; then
         ## Speculative mode - source the speculative setup
-        source "$PASH_TOP/compiler/orchestrator_runtime/speculative/pash_spec_init_setup.sh"
+        source "$PASH_TOP/jit_runtime/speculative/pash_spec_init_setup.sh"
     else
         ## Normal PaSh mode
         start_server() {
-            "$PASH_TOP/python_pkgs/bin/python" "$PASH_TOP/compiler/compilation_server.py" "$@" &
+            "$PASH_PYTHON" "$PASH_TOP/compiler/compilation_server.py" "$@" &
             export daemon_pid=$!
             pash_wait_until_daemon_listening
         }
@@ -635,7 +651,7 @@ umask "$old_umask"
 
 ## 8. Run the preprocessor
 PYTHONPATH="$PASH_TOP/preprocessor:$PASH_TOP/compiler:$PYTHONPATH" \
-    PASH_FROM_SH="PaSh preprocessor" "$PASH_TOP/python_pkgs/bin/python" \
+    PASH_FROM_SH="PaSh preprocessor" "$PASH_PYTHON" \
     "$PASH_TOP/preprocessor/pash_preprocessor.py" "${preprocessor_args[@]}"
 pash_exit_code=$?
 

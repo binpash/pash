@@ -9,6 +9,60 @@
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
 
+# Get PASH_TOP from various sources (works for both git development and pip install)
+get_pash_top() {
+    # 1. If PASH_TOP is already set, use it
+    if [ -n "${PASH_TOP:-}" ]; then
+        echo "$PASH_TOP"
+        return 0
+    fi
+
+    # 2. Try git rev-parse (works in development)
+    local git_root
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [ -n "$git_root" ] && [ -d "$git_root/src/pash" ]; then
+        echo "$git_root/src/pash"
+        return 0
+    fi
+
+    # 3. Try to find via pash Python package (works for pip install)
+    if command -v python3 >/dev/null 2>&1; then
+        local pash_path
+        pash_path=$(python3 -c "import pash; print(pash.__file__.rsplit('/', 1)[0])" 2>/dev/null)
+        if [ -n "$pash_path" ] && [ -d "$pash_path" ]; then
+            echo "$pash_path"
+            return 0
+        fi
+    fi
+
+    echo "Error: Cannot determine PASH_TOP" >&2
+    return 1
+}
+
+# Get the repository root (for tests that need evaluation/ and scripts/ directories)
+get_repo_root() {
+    # 1. Try git rev-parse (works in development)
+    local git_root
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [ -n "$git_root" ]; then
+        echo "$git_root"
+        return 0
+    fi
+
+    # 2. Derive from PASH_TOP if set (PASH_TOP points to src/pash)
+    if [ -n "${PASH_TOP:-}" ]; then
+        local repo_root
+        repo_root=$(cd "$PASH_TOP/../.." 2>/dev/null && pwd)
+        if [ -d "$repo_root/evaluation" ]; then
+            echo "$repo_root"
+            return 0
+        fi
+    fi
+
+    echo "Error: Cannot determine repository root" >&2
+    return 1
+}
+
 eexit(){
   echo $1 'please email pash-devs@googlegroups.com'
   exit 1
@@ -81,7 +135,9 @@ install_eval_deps() {
     echo "Installing evaluation dependencies (needs sudo)"
     # needed for majority of the benchmarks (not available in docker instances)
     sudo apt-get install unzip
-    paths="$(find $PASH_TOP/evaluation/benchmarks -name install-deps.sh)"
+    local repo_root
+    repo_root=$(get_repo_root)
+    paths="$(find "$repo_root/evaluation/benchmarks" -name install-deps.sh)"
     for f in $(echo $paths); do
         path=$(dirname $(readlink -f $f))
         cd $path
@@ -89,7 +145,7 @@ install_eval_deps() {
         cd - > /dev/null
     done
     echo "Generating PDF plots of the evaluation results is optional and requires R-packages"
-    echo "Follow Installation Guide from: $PASH_TOP/evaluation/eval_script/README.md"
+    echo "Follow Installation Guide from: $repo_root/evaluation/eval_script/README.md"
 }
 
 ##########################################
@@ -128,7 +184,9 @@ confirm_installation_works() {
 # action---apart from checking the logs, which are currently not comprehensive
   echo "Confirming installation works.."
   set +e
-  $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
+  local repo_root
+  repo_root=$(get_repo_root)
+  "$repo_root/pa.sh" "$repo_root/evaluation/intro/hello-world.sh"
   if [ $? -ne 0 ]; then
     echo "Something failed, please check logs"
   fi

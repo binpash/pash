@@ -18,7 +18,7 @@ from util import ptempfile
 
 # Runtime executable path - constructed from PASH_TOP environment variable
 PASH_TOP = os.environ.get("PASH_TOP", "")
-RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "jit-runtime/jit.sh")
+RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "jit_runtime/jit.sh")
 
 
 class TransformationType(Enum):

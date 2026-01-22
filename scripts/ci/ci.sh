@@ -18,8 +18,12 @@ set -ex
 REPORT_DIR=../../reports
 C=5
 cd ..
-PASH_TOP="$PWD"
+REPO_ROOT="$PWD"
 cd -
+
+# PASH_TOP points to src/pash, REPO_ROOT points to the repository root
+export PASH_TOP="$REPO_ROOT/src/pash"
+export PATH="$PATH:$REPO_ROOT"
 
 SMOOSH_RESULTS=""
 
@@ -28,24 +32,24 @@ trim() {
 }
 
 build_runtime() {
-  cd ../runtime 
+  cd "$PASH_TOP/runtime"
   make
-  cd $PASH_TOP/scripts
+  cd "$REPO_ROOT/scripts"
 }
 
 pash_tests() {
-  cd ../evaluation/tests/ 
+  cd "$REPO_ROOT/evaluation/tests/"
   ./test_evaluation_scripts.sh | tee  >(grep '^Summary' | cut -d ' ' -f2 > pash_tests.sum)
   PASH_RESULTS=$(cat pash_tests.sum)
-  cd $PASH_TOP/scripts
+  cd "$REPO_ROOT/scripts"
 }
 
 smoosh_tests() {
   cd ../../smoosh
-  TEST_SHELL="$PASH_TOP/pa.sh --width 2 --log_file /tmp/log_file" make -C tests veryclean
-  TEST_SHELL="$PASH_TOP/pa.sh --width 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
+  TEST_SHELL="$REPO_ROOT/pa.sh --width 2 --log_file /tmp/log_file" make -C tests veryclean
+  TEST_SHELL="$REPO_ROOT/pa.sh --width 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
   SMOOSH_RESULTS=$(cat smoosh_tests.sum)
-  cd $PASH_TOP/scripts
+  cd "$REPO_ROOT/scripts"
 }
 
 git pull
