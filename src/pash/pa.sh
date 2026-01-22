@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 
-# Get the directory containing this script
+# Get the directory containing this script (this is src/pash or the installed package dir)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export PASH_TOP=${PASH_TOP:-$SCRIPT_DIR/src/pash}
+
+# PASH_TOP is the directory containing compiler/, runtime/, etc.
+# Since pa.sh is now in src/pash/, SCRIPT_DIR is already the correct PASH_TOP
+if [ -n "${PASH_TOP:-}" ] && [ -d "$PASH_TOP/compiler" ] && [ -d "$PASH_TOP/runtime" ]; then
+    # PASH_TOP is already set and valid, keep it
+    export PASH_TOP
+else
+    # Use script location as PASH_TOP
+    export PASH_TOP="$SCRIPT_DIR"
+fi
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 export RUNTIME_DIR="$PASH_TOP/jit_runtime"
 export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"

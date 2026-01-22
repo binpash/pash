@@ -6,7 +6,7 @@ on:
     paths:
       - src/pash/preprocessor/**
       - src/pash/compiler/parser/**
-      - pa.sh
+      - src/pash/pa.sh
   push:
     branches:
       - main
@@ -14,7 +14,7 @@ on:
     paths:
       - src/pash/preprocessor/**
       - src/pash/compiler/parser/**
-      - pa.sh
+      - src/pash/pa.sh
 
 jobs:
   preprocessor-tests:
@@ -57,8 +57,8 @@ jobs:
       - name: Verify pa.sh integration
         run: |
           export PASH_TOP=$PWD/src/pash
-          export PATH=$PATH:$PWD
+          export PATH=$PATH:$PASH_TOP
 
           # Test that preprocessing works end-to-end
-          ./pa.sh -c 'echo hello'
-          ./pa.sh -c 'echo hello | cat'
+          pa.sh -c 'echo hello'
+          pa.sh -c 'echo hello | cat'
