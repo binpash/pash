@@ -135,7 +135,9 @@ install_eval_deps() {
     echo "Installing evaluation dependencies (needs sudo)"
     # needed for majority of the benchmarks (not available in docker instances)
     sudo apt-get install unzip
-    paths="$(find $PASH_TOP/evaluation/benchmarks -name install-deps.sh)"
+    local repo_root
+    repo_root=$(get_repo_root)
+    paths="$(find "$repo_root/evaluation/benchmarks" -name install-deps.sh)"
     for f in $(echo $paths); do
         path=$(dirname $(readlink -f $f))
         cd $path
@@ -143,7 +145,7 @@ install_eval_deps() {
         cd - > /dev/null
     done
     echo "Generating PDF plots of the evaluation results is optional and requires R-packages"
-    echo "Follow Installation Guide from: $PASH_TOP/evaluation/eval_script/README.md"
+    echo "Follow Installation Guide from: $repo_root/evaluation/eval_script/README.md"
 }
 
 ##########################################
@@ -182,7 +184,9 @@ confirm_installation_works() {
 # action---apart from checking the logs, which are currently not comprehensive
   echo "Confirming installation works.."
   set +e
-  $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
+  local repo_root
+  repo_root=$(get_repo_root)
+  "$repo_root/pa.sh" "$repo_root/evaluation/intro/hello-world.sh"
   if [ $? -ne 0 ]; then
     echo "Something failed, please check logs"
   fi

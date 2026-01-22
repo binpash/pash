@@ -1,15 +1,17 @@
 #!/bin/bash
 
-cd $PASH_TOP
+# Get repo root from PASH_TOP (which points to src/pash)
+REPO_ROOT="${PASH_TOP}/../.."
+cd "$REPO_ROOT"
 
 echo  confirms the necessary components for running the artifact
 echo
 echo Git commit ID: $(git rev-parse --short HEAD)
 echo \$PASH_TOP: $(echo $PASH_TOP)
-echo pash executable: $PASH_TOP/pa.sh
+echo pash executable: $REPO_ROOT/pa.sh
 
 echo
-$PASH_TOP/pa.sh --help
+"$REPO_ROOT/pa.sh" --help
 
 echo "Testing graph generation"
-$PASH_TOP/pa.sh -c 'echo Pash Installation is complete!'
+"$REPO_ROOT/pa.sh" -c 'echo Pash Installation is complete!'

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 cd $(dirname $0)
+SCRIPT_DIR="$(pwd)"
 
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-. "$PASH_TOP/scripts/utils.sh"
+# Get repository root (distro-deps runs before setup, so we use git or script location)
+REPO_ROOT=${REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || cd "$SCRIPT_DIR/.." && pwd)}
+. "$REPO_ROOT/scripts/utils.sh"
 
 if [[ $(uname) == 'Darwin' ]]; then
     echo 'Currently pash can run only on Linux'
@@ -11,7 +13,7 @@ if [[ $(uname) == 'Darwin' ]]; then
 fi
 
 read_cmd_args $@
-cd $PASH_TOP
+cd "$REPO_ROOT"
 
 # if we aren't running in docker, use sudo to install packages
 if ! ( isDockerBuildkit || isDocker || isDockerContainer )
