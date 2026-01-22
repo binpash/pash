@@ -11,7 +11,7 @@ Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Tes
 
 ## Installation via pip (Recommended)
 ```sh
-pip install pash
+pip install binpash-pash
 pash -c "echo hi"
 ```
 
