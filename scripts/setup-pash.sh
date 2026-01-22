@@ -2,19 +2,16 @@
 
 set -e
 
-## TODO: Maybe hide stdout and stderr to logs by default and only if debug flag exists show
-
 cd "$(dirname "$0")"
-# set PASH_TOP
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+SCRIPT_DIR="$(pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-cd $PASH_TOP
-. "$PASH_TOP/scripts/utils.sh"
-read_cmd_args $@
+. "$SCRIPT_DIR/utils.sh"
+read_cmd_args "$@"
 
-LOG_DIR=$PASH_TOP/install_logs
-mkdir -p $LOG_DIR
-PYTHON_PKG_DIR=$PASH_TOP/python_pkgs
+LOG_DIR=$REPO_ROOT/install_logs
+mkdir -p "$LOG_DIR"
+PYTHON_PKG_DIR=$REPO_ROOT/python_pkgs
 
 # Check if venv module is available
 if ! python3 -m venv --help &> /dev/null; then
@@ -24,47 +21,51 @@ if ! python3 -m venv --help &> /dev/null; then
     exit 1
 fi
 
+# Create virtual environment if it doesn't exist
+if [ ! -d "$PYTHON_PKG_DIR" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$PYTHON_PKG_DIR"
+fi
 
-# Create virtual environment
-echo "Creating virtual environment..."
-python3 -m venv $PYTHON_PKG_DIR
+# Upgrade pip
+echo "Upgrading pip..."
+"$PYTHON_PKG_DIR/bin/pip" install --upgrade pip
 
-# Install dependencies
-echo "Installing Python dependencies..."
-$PYTHON_PKG_DIR/bin/pip install --upgrade pip
-$PYTHON_PKG_DIR/bin/pip install -r "$PASH_TOP/requirements.txt"
+# Install PaSh in editable mode (this also builds runtime binaries via setup.py)
+echo "Installing PaSh and dependencies..."
+"$PYTHON_PKG_DIR/bin/pip" install -e "$REPO_ROOT"
 
-## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
+# Install evaluation dependencies if requested
 if [[ "$install_eval" == 1 ]]; then
-    $PYTHON_PKG_DIR/bin/pip install numpy matplotlib
+    echo "Installing evaluation dependencies..."
+    "$PYTHON_PKG_DIR/bin/pip" install numpy matplotlib
 fi
 
-# Build runtime tools: eager, split
-echo "Building runtime tools..."
-cd "$PASH_TOP/runtime/"
-case "$distro" in
-    freebsd*) 
-        gmake #&> $LOG_DIR/make.log
-        ;;
-    *)
-        make #&> $LOG_DIR/make.log
-        if [ -f /.dockerenv ]; then
-            # issue with docker only
-            python3 -m pip install -U --force-reinstall pip
-            cp "$PASH_TOP"/pa.sh /usr/bin/
-        fi
-        ;;
-esac
-
+# Generate input files for tests
 echo "Generating input files..."
-$PASH_TOP/evaluation/tests/input/setup.sh
+"$REPO_ROOT/evaluation/tests/input/setup.sh"
 
-# export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-echo " * * * "
-echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
-echo " * * * "
-# in case we are running on docker or CI, installation is complete at this moment
-if [[ -f /.dockerenv || -f /.githubenv ]]; then
-    exit 0  
+# Docker-specific setup
+if [ -f /.dockerenv ]; then
+    # Make pash available system-wide in Docker
+    cp "$REPO_ROOT/pa.sh" /usr/bin/ 2>/dev/null || true
 fi
 
+echo " * * * "
+echo "PaSh installation complete!"
+echo ""
+echo "To use PaSh, either:"
+echo "  1. Activate the virtual environment: source $PYTHON_PKG_DIR/bin/activate"
+echo "     Then run: pash <script.sh>"
+echo ""
+echo "  2. Or use pa.sh directly: $REPO_ROOT/pa.sh <script.sh>"
+echo ""
+echo "  3. Or set PASH_TOP and add to PATH:"
+echo "     export PASH_TOP=$REPO_ROOT/src/pash"
+echo "     export PATH=\$PATH:$REPO_ROOT"
+echo " * * * "
+
+# In CI/Docker environments, exit without prompting
+if [[ -f /.dockerenv || -f /.githubenv ]]; then
+    exit 0
+fi

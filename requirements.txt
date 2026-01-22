@@ -1,6 +1,0 @@
-graphviz
-libdash
-pash-annotations~=0.2.4
-shasta~=0.4
-libbash~=0.1.14
-sh-expand~=0.2.0

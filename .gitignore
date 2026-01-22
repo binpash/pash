@@ -30,7 +30,33 @@ revision.tex
 # Node.js
 node_modules
 
-python_pkgs
+# Python virtual environment
+python_pkgs/
+
+# Python packaging (pip/PyPI)
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+*.whl
+pip-wheel-metadata/
+MANIFEST
+
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
 
 # local directory w/ related work
 bib.to
@@ -41,16 +67,26 @@ pldi/draft.synctex.gz(busy)
 
 notes.txt
 
-# python
-**/__pycache__/*
-
-#testing and plotting
+# Testing and plotting
 scripts/test_eval/*.png
 tmp*
-compiler/1-grams.txt
-compiler/2-grams.txt
-runtime/dgsh-tee
+src/pash/compiler/1-grams.txt
+src/pash/compiler/2-grams.txt
 *.res
+
+# Runtime compiled binaries (built during pip install)
+src/pash/runtime/eager
+src/pash/runtime/split
+src/pash/runtime/r_split
+src/pash/runtime/r_merge
+src/pash/runtime/r_wrap
+src/pash/runtime/r_unwrap
+src/pash/runtime/set-diff
+src/pash/runtime/dgsh-tee
+src/pash/runtime/dgsh/
+
+# Installation logs
+install_logs/
 
 # IDE files
 .vscode/*

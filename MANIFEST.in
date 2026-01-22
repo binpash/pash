@@ -1,7 +1,6 @@
 # Include documentation and metadata
 include README.md
 include LICENSE
-include requirements.txt
 
 # Include C source files for runtime compilation
 recursive-include src/pash/runtime *.c
