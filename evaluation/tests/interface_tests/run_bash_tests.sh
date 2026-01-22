@@ -13,7 +13,7 @@ export PASH_TOP="$REPO_ROOT/src/pash"
 bash="bash"
 pash="pash --parallel_pipelines --profile_driven --bash"
 
-output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
+output_dir="$REPO_ROOT/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
 mkdir -p "$output_dir"
 
