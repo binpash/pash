@@ -58,7 +58,7 @@ Once everything is set up, test PaSh with:
 To run it with local annotation:
 ```sh
 cd pash/evaluation/intro
-time $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh --local-annotations-dr /path/to/annotations
+time pash $PASH_TOP/evaluation/intro/hello-world.sh --local-annotations-dir /path/to/annotations
 ```
 
 For more details, check the test script here:  

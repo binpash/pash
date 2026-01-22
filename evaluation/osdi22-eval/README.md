@@ -93,7 +93,7 @@ To connect to these machines, use:
 ```sh
 ssh osdi22@deathstar.ndr.md -i ~/.ssh/pash.key
 # run a simple command with pash. This should run without any issue
-$PASH_TOP/pa.sh -c 'echo Hello World!'
+pash -c 'echo Hello World!'
 ```
 
 ```sh
@@ -101,7 +101,7 @@ ssh  osdi22@antikythera.csail.mit.edu -i ~/.ssh/pash.key
 # create a new instance of the container
 docker run -it --sig-proxy=false posix /bin/bash
 # run a simple command
-$PASH_TOP/pa.sh -c 'echo Hello World!'
+pash -c 'echo Hello World!'
 ```
 
 **Local installation (Docker):**
@@ -114,7 +114,7 @@ If you want to simply run the latest stable version of PaSh, you can use the fol
 
 ```sh
 docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
-$PASH_TOP/pa.sh -c 'echo Hello World!'         # this is typed _in_ the container
+pash -c 'echo Hello World!'         # this is typed _in_ the container
 ```
 
 In order to later generate the performance figures, [install the R environment](https://cran.r-project.org/bin/linux/ubuntu/) and then install ggplot2 for R:
@@ -144,7 +144,7 @@ git checkout osdi22-ae
 ./scripts/distro-deps.sh
 ./scripts/setup-pash.sh
 export PASH_TOP=/pash
-$PASH_TOP/pa.sh -c 'echo Hello World!'
+pash -c 'echo Hello World!'
 ```
 
 ## A Minimal Run: Demo Spell
@@ -178,7 +178,7 @@ On `deathstar`, it takes about 41s.
 To execute it using `pash` with 2x-parallelism:
 
 ```sh
-time $PASH_TOP/pa.sh -w 2 demo-spell.sh > pash-spell.out
+time pash -w 2 demo-spell.sh > pash-spell.out
 ``` 
 
 On `deathstar`, the 2x-parallel script takes about 28s.
@@ -192,7 +192,7 @@ cmp spell.out pash-spell.out && echo "Files are identical"
 
 You could also execute it with 8x-parallelism using:
 ```sh
-time $PASH_TOP/pa.sh -w 8 --graphviz pdf --graphviz_dir . demo-spell.sh > pash-spell.out
+time pash -w 8 --graphviz pdf --graphviz_dir . demo-spell.sh > pash-spell.out
 ``` 
 which takes about 14s.
 
@@ -203,7 +203,7 @@ A sample graph may be viewed [here](./pdfs/dfg.pdf).
 To view the actual parallel shell code emitted by the compiler, you can inspect the log by running:
 
 ```sh
-time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
+time pash -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 vim pash.log
 ```
 

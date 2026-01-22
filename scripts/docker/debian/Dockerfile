@@ -26,7 +26,8 @@ ENV LC_ALL en_US.UTF-8
 ENV PASH_TOP=/opt/pash/src/pash
 # download PaSh
 RUN git clone https://github.com/binpash/pash.git /opt/pash
-ENV PATH="${PASH_TOP}:${PATH}"
-RUN source /root/.bashrc && bash /opt/pash/scripts/distro-deps.sh -o 
+RUN source /root/.bashrc && bash /opt/pash/scripts/distro-deps.sh -o
 RUN source /root/.bashrc && yes | bash /opt/pash/scripts/setup-pash.sh -o
+# Add virtual environment to PATH so 'pash' command is available
+ENV PATH="/opt/pash/python_pkgs/bin:${PATH}"
 CMD ["/bin/bash"]

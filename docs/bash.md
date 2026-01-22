@@ -2,9 +2,9 @@
 
 ## Usage
 
-Add `--bash` to the pa.sh call. For example:
+Add `--bash` to the pash call. For example:
 ```sh
-./pa.sh --bash ./evaluation/intro/hello-world-bash.sh
+pash --bash ./evaluation/intro/hello-world-bash.sh
 ```
 
 Bash mode is experimental -- bug reports are welcome!

@@ -45,12 +45,6 @@ fi
 echo "Generating input files..."
 "$REPO_ROOT/evaluation/tests/input/setup.sh"
 
-# Docker-specific setup
-if [ -f /.dockerenv ]; then
-    # Make pash available system-wide in Docker
-    cp "$REPO_ROOT/src/pash/pa.sh" /usr/bin/ 2>/dev/null || true
-fi
-
 echo " * * * "
 echo "PaSh installation complete!"
 echo ""
@@ -58,11 +52,12 @@ echo "To use PaSh, either:"
 echo "  1. Activate the virtual environment: source $PYTHON_PKG_DIR/bin/activate"
 echo "     Then run: pash <script.sh>"
 echo ""
-echo "  2. Or use pa.sh directly: $REPO_ROOT/src/pash/pa.sh <script.sh>"
+echo "  2. Or add the virtual environment to your PATH:"
+echo "     export PATH=\"$PYTHON_PKG_DIR/bin:\$PATH\""
+echo "     Then run: pash <script.sh>"
 echo ""
-echo "  3. Or set PASH_TOP and add to PATH:"
+echo "  3. Or set PASH_TOP for scripts that need it:"
 echo "     export PASH_TOP=$REPO_ROOT/src/pash"
-echo "     export PATH=\$PATH:\$PASH_TOP"
 echo " * * * "
 
 # In CI/Docker environments, exit without prompting

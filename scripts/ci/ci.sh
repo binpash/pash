@@ -23,7 +23,8 @@ cd -
 
 # PASH_TOP points to src/pash, REPO_ROOT points to the repository root
 export PASH_TOP="$REPO_ROOT/src/pash"
-export PATH="$PATH:$REPO_ROOT"
+# Activate virtual environment to get pash command
+source "$REPO_ROOT/python_pkgs/bin/activate"
 
 SMOOSH_RESULTS=""
 
@@ -46,8 +47,8 @@ pash_tests() {
 
 smoosh_tests() {
   cd ../../smoosh
-  TEST_SHELL="$REPO_ROOT/pa.sh --width 2 --log_file /tmp/log_file" make -C tests veryclean
-  TEST_SHELL="$REPO_ROOT/pa.sh --width 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
+  TEST_SHELL="pash --width 2 --log_file /tmp/log_file" make -C tests veryclean
+  TEST_SHELL="pash --width 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
   SMOOSH_RESULTS=$(cat smoosh_tests.sum)
   cd "$REPO_ROOT/scripts"
 }

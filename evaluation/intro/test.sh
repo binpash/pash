@@ -12,8 +12,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 export PASH_TOP="$REPO_ROOT/src/pash"
 
 bash="bash"
-pash="$REPO_ROOT/pa.sh -w 2"
-pash_with_bash="$REPO_ROOT/pa.sh -w 2 --bash"
+pash="pash -w 2"
+pash_with_bash="pash -w 2 --bash"
 
 output_dir="$REPO_ROOT/evaluation/intro/output"
 rm -rf "$output_dir"

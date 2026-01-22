@@ -47,11 +47,11 @@ echo "Executing the script with bash..."
 { time /bin/bash $web_index_script > $seq_output ; } 2> >(tee "${seq_time}" >&2)
 
 echo "Executing the script with pash -w 2 (log in: ${temp_dir}/pash_2_log)"
-{ time $PASH_TOP/pa.sh -w 2 --log_file "${temp_dir}/pash_2_log" --output_time $web_index_script ; } 1> "$pash_width_2_output" 2> >(tee "${pash_width_2_time}" >&2)
+{ time pash -w 2 --log_file "${temp_dir}/pash_2_log" --output_time $web_index_script ; } 1> "$pash_width_2_output" 2> >(tee "${pash_width_2_time}" >&2)
 echo "Checking for output equivalence..."
 diff -s $seq_output $pash_width_2_output | head
 
 echo "Executing the script with pash -w 16 (log in: ${temp_dir}/pash_16_log)"
-{ time $PASH_TOP/pa.sh -w 16 --log_file "${temp_dir}/pash_16_log" --output_time $web_index_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_time}" >&2)
+{ time pash -w 16 --log_file "${temp_dir}/pash_16_log" --output_time $web_index_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_time}" >&2)
 echo "Checking for output equivalence..."
 diff -s $seq_output $pash_width_16_output | head

@@ -44,14 +44,15 @@ jobs:
             # install pash (uses pip install -e)
             sudo -E bash scripts/setup-pash.sh -o
             export PASH_TOP=$PWD/src/pash
-            export PATH=$PATH:$PASH_TOP
+            # activate the virtual environment to get pash command
+            source python_pkgs/bin/activate
             # run a simple command
-            pa.sh -c 'echo done'
+            pash -c 'echo done'
 
         - name: Running Tight-Loop Tests
           run: |
             export PASH_TOP=$PWD/src/pash
-            export PATH=$PATH:$PASH_TOP
+            source python_pkgs/bin/activate
             cd evaluation/benchmarks/runtime-overhead
             results=$(bash run.sh)
             mkdir ~/artifact

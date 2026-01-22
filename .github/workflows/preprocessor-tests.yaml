@@ -6,7 +6,7 @@ on:
     paths:
       - src/pash/preprocessor/**
       - src/pash/compiler/parser/**
-      - src/pash/pa.sh
+      - src/pash/cli.py
   push:
     branches:
       - main
@@ -14,7 +14,7 @@ on:
     paths:
       - src/pash/preprocessor/**
       - src/pash/compiler/parser/**
-      - src/pash/pa.sh
+      - src/pash/cli.py
 
 jobs:
   preprocessor-tests:
@@ -54,11 +54,11 @@ jobs:
           cd src/pash/preprocessor
           ./run_tests.sh
 
-      - name: Verify pa.sh integration
+      - name: Verify pash integration
         run: |
           export PASH_TOP=$PWD/src/pash
-          export PATH=$PATH:$PASH_TOP
+          source python_pkgs/bin/activate
 
           # Test that preprocessing works end-to-end
-          pa.sh -c 'echo hello'
-          pa.sh -c 'echo hello | cat'
+          pash -c 'echo hello'
+          pash -c 'echo hello | cat'

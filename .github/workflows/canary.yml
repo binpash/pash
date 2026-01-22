@@ -22,8 +22,9 @@ jobs:
           sh up.sh
           ## Inspect it if you wish
           export PASH_TOP="$PWD/pash/src/pash"
-          export PATH="$PATH:$PASH_TOP"
           cd pash
-          pa.sh -c "echo hi"
+          # activate the virtual environment to get pash command
+          source python_pkgs/bin/activate
+          pash -c "echo hi"
           ./evaluation/tests/test_evaluation_scripts.sh
           

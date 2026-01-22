@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# uses bashisms to demonstrate pa.sh bash support
+# uses bashisms to demonstrate pash --bash support
 
 [[ $(uname) = 'Darwin' ]] && a=/usr/share/dict/web2 || a=/usr/share/dict/words
 

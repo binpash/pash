@@ -3,9 +3,10 @@ RUN dnf install git -y
 ENV PASH_TOP=/opt/pash/src/pash
 # download PaSh
 RUN git clone https://github.com/binpash/pash.git /opt/pash
-ENV PATH="${PASH_TOP}:${PATH}"
-RUN bash /opt/pash/scripts/distro-deps.sh -o 
+RUN bash /opt/pash/scripts/distro-deps.sh -o
 RUN yes | bash /opt/pash/scripts/setup-pash.sh -o
+# Add virtual environment to PATH so 'pash' command is available
+ENV PATH="/opt/pash/python_pkgs/bin:${PATH}"
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 ENV LC_COLLATE C

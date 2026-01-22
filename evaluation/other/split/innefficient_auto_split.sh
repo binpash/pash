@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## Running it with PaSh:
-## time ./pa.sh -w 4 -d 1 --output_time evaluation/scripts/innefficient_auto_split.sh
+## time pash -w 4 -d 1 --output_time evaluation/scripts/innefficient_auto_split.sh
 ##
 ## is slower than running it with bash:
 ## time ./evaluation/scripts/innefficient_auto_split.sh
