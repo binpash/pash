@@ -110,7 +110,8 @@ setup(
     cmdclass={
         "build_py": BuildPyWithRuntime,
         "develop": DevelopWithRuntime,
+        "install": InstallWithRuntime,
     },
-    # Signal that we have platform-specific binaries
-    has_ext_modules=lambda: True,
+    # Don't mark as having ext_modules - we compile from source at install time
+    # This creates a pure Python wheel that works on any platform
 )

@@ -55,7 +55,11 @@ jobs:
           sudo apt-get install -y build-essential
 
       - name: Build package
-        run: python -m build
+        run: |
+          # Only build source distribution (sdist), not wheel
+          # PaSh needs to compile C binaries at install time
+          # Wheels don't trigger build_py, so we distribute sdist only
+          python -m build --sdist
 
       - name: Check package
         run: twine check dist/*
