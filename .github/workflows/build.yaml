@@ -31,7 +31,8 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Building Pash
           run: |
-            set -ex
+            set -e
+            set -x
             sudo touch /.githubenv
             # install the system deps and pash the environment
             sudo -E bash scripts/distro-deps.sh -o
