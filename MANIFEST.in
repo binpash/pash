@@ -2,6 +2,9 @@
 include README.md
 include LICENSE
 
+# Include pa.sh (main entry point script)
+include src/pash/pa.sh
+
 # Include C source files for runtime compilation
 recursive-include src/pash/runtime *.c
 recursive-include src/pash/runtime *.h

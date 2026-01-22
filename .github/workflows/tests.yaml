@@ -50,7 +50,7 @@ jobs:
             # install pash (uses pip install -e)
             sudo -E bash scripts/setup-pash.sh -o
             export PASH_TOP=$PWD/src/pash
-            export PATH=$PATH:$PWD
+            export PATH=$PATH:$PASH_TOP
             # run all the tests (INTRO, INTERFACE, COMPILER)
             cd scripts && bash run_tests.sh
             # fetch the execution results of the passed/failed

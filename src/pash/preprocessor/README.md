@@ -25,10 +25,10 @@ preprocessor/
 
 ## Running the Preprocessor
 
-### Via pa.sh (normal usage)
+### Via pash command (normal usage)
 
 ```bash
-./pa.sh script.sh
+pash script.sh
 ```
 
 ### Standalone preprocessing

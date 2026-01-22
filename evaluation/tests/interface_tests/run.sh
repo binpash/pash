@@ -11,8 +11,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 export PASH_TOP="$REPO_ROOT/src/pash"
 # time: print real in seconds, to simplify parsing
 
-pash="$REPO_ROOT/pa.sh -d 0 --profile_driven"
-pash_with_bash="$REPO_ROOT/pa.sh -d 0 --profile_driven --bash"
+pash="pash -d 0 --profile_driven"
+pash_with_bash="pash -d 0 --profile_driven --bash"
 
 output_dir="$REPO_ROOT/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"

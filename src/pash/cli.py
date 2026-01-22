@@ -30,21 +30,18 @@ def get_pash_top() -> Path:
 def get_pa_sh_path() -> Path:
     """Get the path to pa.sh.
 
-    When installed via pip, pa.sh is in the repo root (three levels up from cli.py).
-    When running from source with editable install, it's in the repo root.
+    pa.sh is located in the same directory as this file (src/pash/).
     """
-    # cli.py is at src/pash/cli.py
-    # pa.sh is at repo root (three levels up)
-    repo_root = get_pash_top().parent.parent
-    pa_sh = repo_root / "pa.sh"
+    pash_top = get_pash_top()
+    pa_sh = pash_top / "pa.sh"
+
     if pa_sh.exists():
         return pa_sh
 
     # Fallback: check PASH_TOP environment variable
-    pash_top = os.environ.get("PASH_TOP")
-    if pash_top:
-        # PASH_TOP points to src/pash, so go up two levels
-        env_pa_sh = Path(pash_top).parent.parent / "pa.sh"
+    pash_top_env = os.environ.get("PASH_TOP")
+    if pash_top_env:
+        env_pa_sh = Path(pash_top_env) / "pa.sh"
         if env_pa_sh.exists():
             return env_pa_sh
 

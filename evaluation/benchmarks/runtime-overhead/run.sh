@@ -47,7 +47,7 @@ run_pash()
     pash_log="${pash_logs_dir}/${script_name}.${config}.pash.log"
 
     ## We don't want -d 1 since it adds overhead!
-    echo "${config_padded}" $({ time "$REPO_ROOT/pa.sh" $PASH_FLAGS  --log_file "${pash_log}" ${script} > "$par_outputs_file"; } 2>&1) | tee -a "$times_file"
+    echo "${config_padded}" $({ time pash $PASH_FLAGS  --log_file "${pash_log}" ${script} > "$par_outputs_file"; } 2>&1) | tee -a "$times_file"
     diff -q "$bash_outputs_file" "$par_outputs_file"
 }
 

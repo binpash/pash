@@ -61,7 +61,7 @@ oneliners_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
 
@@ -106,7 +106,7 @@ unix50_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done  
   cd ..
@@ -140,7 +140,7 @@ web-index_pash(){
 
   ## FIXME: There is a bug when running with r_split at the moment. r_wrap cannot execute bash_functions
   echo -n "web-index.sh:" | tee -a "$times_file"
-  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" web-index.sh > "$outputs_file"; } 2> "${single_time_file}"
+  { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" web-index.sh > "$outputs_file"; } 2> "${single_time_file}"
   cat "${single_time_file}" | tee -a "$times_file"
   cd ..
 }
@@ -170,7 +170,7 @@ max-temp_pash(){
   single_time_file="${outputs_dir}/temp-analytics.${time_suffix}"
 
   echo -n "temp-analytics.sh:" | tee -a "$times_file"
-  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS --log_file "${pash_log}" temp-analytics.sh > "$outputs_file"; } 2> "${single_time_file}"
+  { time "pash" -w "${width}" $PASH_FLAGS --log_file "${pash_log}" temp-analytics.sh > "$outputs_file"; } 2> "${single_time_file}"
   cat "${single_time_file}" | tee -a "$times_file"
   cd ..
 }
@@ -211,7 +211,7 @@ analytics-mts_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
@@ -282,7 +282,7 @@ nlp_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
@@ -362,7 +362,7 @@ dgsh_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
@@ -432,7 +432,7 @@ aliases_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
@@ -488,7 +488,7 @@ posh_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
@@ -539,7 +539,7 @@ bio_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
@@ -594,7 +594,7 @@ dependency_untangling_pash() {
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "pash" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..

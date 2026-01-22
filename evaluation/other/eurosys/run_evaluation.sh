@@ -155,7 +155,7 @@ echo "Section 6.3: Use Case: NOAA Weather Analysis"
 ##
 ## It runs the script on:
 ## - bash
-## - pa.sh --width 16
+## - pash --width 16
 ##
 ## The results are saved in:
 ## - `evaluation/results/max-temp-complete-2000-2000-seq.time`

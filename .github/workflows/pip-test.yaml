@@ -8,7 +8,6 @@ on:
       - pyproject.toml
       - setup.py
       - MANIFEST.in
-      - pa.sh
   push:
     branches: [main, future]
     paths:
@@ -16,7 +15,6 @@ on:
       - pyproject.toml
       - setup.py
       - MANIFEST.in
-      - pa.sh
   # Allow manual trigger
   workflow_dispatch:
   # Allow being called by other workflows

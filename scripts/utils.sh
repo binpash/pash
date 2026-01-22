@@ -186,7 +186,7 @@ confirm_installation_works() {
   set +e
   local repo_root
   repo_root=$(get_repo_root)
-  "$repo_root/pa.sh" "$repo_root/evaluation/intro/hello-world.sh"
+  pash "$repo_root/evaluation/intro/hello-world.sh"
   if [ $? -ne 0 ]; then
     echo "Something failed, please check logs"
   fi

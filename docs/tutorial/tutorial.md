@@ -57,7 +57,7 @@ All scripts in this guide assume that `$PASH_TOP` is set to the top directory of
 cd $PASH_TOP/evaluation/intro
 ```
 
-> In the following examples, you can avoid including `$PASH_TOP` before `pa.sh` by adding `PASH_TOP` in your `PATH`, which amounts to adding an `export PATH=$PATH:$PASH_TOP` in your shell configuration file.
+> In the following examples, make sure the virtual environment is activated (`source python_pkgs/bin/activate`) so that the `pash` command is available.
 
 #### Intro: Hello, Parallel World!
 
@@ -70,10 +70,10 @@ time bash ./hello-world.sh
 
 To run it in parallel with PaSh:
 ```sh
-time $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
+time pash $PASH_TOP/evaluation/intro/hello-world.sh
 ```
 
-At this point, you might be interested in running `pa.sh --help` to get a first sense of the available options.
+At this point, you might be interested in running `pash --help` to get a first sense of the available options.
 Of particular interest is `--with` or `-w`, which specifies the degree of parallelism sought by PaSh (_e.g.,_ `-w 2`).
 
 #### A More Interesting Script: Demo Spell
@@ -97,8 +97,8 @@ On our evaluation infrastructure, the script takes about 41s.
 
 To execute it using `pash` with 2x-parallelism:
 ```sh
-time $PASH_TOP/pa.sh -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
-``` 
+time pash -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
+```
 On our evaluation infrastructure, the 2x-parallel script takes about 28s.
 
 You can check that the results are correct by:
@@ -108,7 +108,7 @@ diff spell.out pash-spell.out
 
 Assuming you have more than 8 CPUs, you could also execute it with 8x-parallelism using:
 ```sh
-time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
+time pash -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
 On our evaluation infrastructure, the 8x-parallel script takes about 14s.
 

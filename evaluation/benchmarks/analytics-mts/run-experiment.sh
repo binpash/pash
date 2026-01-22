@@ -24,12 +24,12 @@ do
     { time /bin/bash $script > $seq_output ; } 2> >(tee "${seq_time}" >&2)
 
     echo "Executing the script with pash -w 16 without the cat-split optimization (log in: /tmp/pash_16_log)"
-    { time $PASH_TOP/pa.sh -w 16 -d 1 --log_file /tmp/pash_16_no_cat_split_log --no_cat_split_vanish --output_time $script ; } 1> "$pash_width_16_no_cat_split_output" 2> >(tee "${pash_width_16_no_cat_split_time}" >&2)
+    { time pash -w 16 -d 1 --log_file /tmp/pash_16_no_cat_split_log --no_cat_split_vanish --output_time $script ; } 1> "$pash_width_16_no_cat_split_output" 2> >(tee "${pash_width_16_no_cat_split_time}" >&2)
     echo "Checking for output equivalence..."
     diff -s $seq_output $pash_width_16_no_cat_split_output | head
 
     echo "Executing the script with pash -w 16 (log in: /tmp/pash_16_log)"
-    { time $PASH_TOP/pa.sh -w 16 -d 1 --log_file /tmp/pash_16_log --output_time $script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_time}" >&2)
+    { time pash -w 16 -d 1 --log_file /tmp/pash_16_log --output_time $script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_time}" >&2)
     echo "Checking for output equivalence..."
     diff -s $seq_output $pash_width_16_output | head
 

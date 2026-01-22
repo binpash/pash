@@ -40,12 +40,12 @@ jobs:
           # Install PaSh (uses pip install -e)
           sudo -E bash scripts/setup-pash.sh -o
           export PASH_TOP=$PWD/src/pash
-          export PATH=$PATH:$PWD
+          export PATH=$PATH:$PASH_TOP
 
       - name: Run Custom Test Scripts
         run: |
           export PASH_TOP=$PWD/src/pash
-          export PATH=$PATH:$PWD
+          export PATH=$PATH:$PASH_TOP
 
           ./scripts/setup-annotations.sh
           ./scripts/ci/test_local_annotations.sh

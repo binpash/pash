@@ -8,10 +8,10 @@ echo  confirms the necessary components for running the artifact
 echo
 echo Git commit ID: $(git rev-parse --short HEAD)
 echo \$PASH_TOP: $(echo $PASH_TOP)
-echo pash executable: $REPO_ROOT/pa.sh
+echo pash command: $(which pash 2>/dev/null || echo "not in PATH - activate virtual environment")
 
 echo
-"$REPO_ROOT/pa.sh" --help
+pash --help
 
 echo "Testing graph generation"
-"$REPO_ROOT/pa.sh" -c 'echo Pash Installation is complete!'
+pash -c 'echo Pash Installation is complete!'
