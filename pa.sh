@@ -562,7 +562,8 @@ pash_setup_communication() {
 ## Determine Python executable - use venv if available, otherwise system Python
 get_pash_python() {
     # First check if there's a local venv (for development/source installs)
-    local venv_python="${PASH_TOP}/../python_pkgs/bin/python"
+    # PASH_TOP points to src/pash, so python_pkgs is at ../../python_pkgs
+    local venv_python="${PASH_TOP}/../../python_pkgs/bin/python"
     if [ -x "$venv_python" ]; then
         echo "$venv_python"
     else

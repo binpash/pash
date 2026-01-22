@@ -1,8 +1,15 @@
 #!/bin/bash
 
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-. "$PASH_TOP/scripts/utils.sh"
-cd $(dirname $0)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source utils for helper functions
+. "$REPO_ROOT/scripts/utils.sh"
+
+# Always set PASH_TOP to the correct location (src/pash)
+# This overrides any stale values from old PaSh installations
+export PASH_TOP="$REPO_ROOT/src/pash"
+cd "$SCRIPT_DIR"
 
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 head_sz="M"

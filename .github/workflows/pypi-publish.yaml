@@ -25,8 +25,14 @@ on:
         type: boolean
 
 jobs:
+  # Run pip install tests first
+  pip-tests:
+    name: Run pip install tests
+    uses: ./.github/workflows/pip-test.yaml
+
   build:
     name: Build distribution
+    needs: pip-tests  # Wait for tests to pass
     runs-on: ubuntu-latest
 
     steps:

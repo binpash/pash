@@ -1,0 +1,65 @@
+test1:0.002
+test2:0.001
+test3:0.002
+test4:0.002
+test5:0.010
+test6:0.002
+test8:0.002
+test9:0.003
+exit_error.sh: line 1: /dev/null/abc: Not a directory
+exit_error.sh: line 2: /dev/null/abc: Not a directory
+exit_error.sh: line 3: /dev/null/abc: Not a directory
+exit_error.sh: line 4: /dev/null/abc: Not a directory
+exit_error.sh: line 5: /dev/null/abc: Not a directory
+exit_error.sh: line 6: /dev/null/abc: Not a directory
+exit_error.sh: line 7: /dev/null/abc: Not a directory
+exit_error.sh: line 8: /dev/null/abc: Not a directory
+exit_error.sh: line 9: /dev/null/abc: Not a directory
+exit_error.sh: line 10: name_of_a_command_that_will_not_be_found: command not found
+test10:0.030
+incomplete-arith.sh: line 3: unexpected EOF while looking for matching `)'
+test11:0.002
+test12:0.003
+test13:0.005
+readonly.sh: line 3: var1: readonly variable
+readonly.sh: line 4: var2: readonly variable
+readonly.sh: line 6: unset: var1: cannot unset: readonly variable
+readonly.sh: line 7: unset: var2: cannot unset: readonly variable
+test14:0.002
+readonly.sh: line 3: var1: readonly variable
+readonly.sh: line 4: var2: readonly variable
+readonly.sh: line 6: unset: var1: cannot unset: readonly variable
+readonly.sh: line 7: unset: var2: cannot unset: readonly variable
+test15:0.002
+test16:0.004
+test17:0.003
+test18:0.003
+test_set:0.005
+test_set_e:0.002
+test_redirect:0.003
+test_unparsing:0.010
+test_set_e_2:0.003
+test_set_e_3:0.005
+test_new_line_in_var:0.004
+test_cmd_sbst:0.003
+test_cmd_sbst2:0.007
+test_exec_redirections:0.007
+test_cat_hyphen:0.005
+test_trap:0.002
+test_set-dash:0.004
+cat-redir-fail.sh: line 1: no.such.file: No such file or directory
+test_cat_redir_fail:0.003
+test_umask:0.003
+expand-u.sh: line 3: foobar: unbound variable
+test_expand_u:0.003
+expand-u-positional.sh: line 2: $1: unbound variable
+test_expand_u_positional:0.002
+test_quoting:0.002
+test_var_assgn_default:0.002
+test_exclam:0.002
+test_redir_var_test:0.002
+test_star:0.003
+test_env_vars:0.008
+test_redir_dup:0.005
+test_IFS:0.003
+test_shell_args:0.003

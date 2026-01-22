@@ -35,21 +35,21 @@ def compile_runtime_binaries(build_lib=None):
         return
 
     # Check for required tools
-    for tool in ["gcc", "make"]:
+    for tool in ["gcc", "make", "git"]:
         if shutil.which(tool) is None:
             raise RuntimeError(
                 f"Required tool '{tool}' not found. "
                 f"Please install build tools:\n"
-                f"  Ubuntu/Debian: sudo apt install build-essential\n"
-                f"  Fedora/RHEL: sudo dnf install gcc make\n"
-                f"  macOS: xcode-select --install"
+                f"  Ubuntu/Debian: sudo apt install build-essential git\n"
+                f"  Fedora/RHEL: sudo dnf install gcc make git\n"
+                f"  macOS: xcode-select --install && brew install git"
             )
 
     # Run make in the runtime directory
     print(f"Compiling PaSh runtime binaries in {runtime_src}...")
 
-    # Binary targets (excluding dgsh-tee which requires git clone)
-    targets = ["eager", "split", "r-merge", "r-wrap", "r-split", "r-unwrap", "set-diff"]
+    # Binary targets (including dgsh-tee which requires git to clone during build)
+    targets = ["eager", "split", "r-merge", "r-wrap", "r-split", "r-unwrap", "set-diff", "dgsh-tee"]
 
     try:
         # Clean first to ensure fresh build
@@ -75,7 +75,8 @@ def compile_runtime_binaries(build_lib=None):
         target_dir.mkdir(parents=True, exist_ok=True)
 
         # Binary names (note: make targets use hyphens, binaries use underscores)
-        binaries = ["eager", "split", "r_split", "r_merge", "r_wrap", "r_unwrap", "set-diff"]
+        binaries = ["eager", "split", "r_split", "r_merge", "r_wrap", "r_unwrap", "set-diff", "dgsh-tee"]
+
         for binary in binaries:
             src_binary = runtime_src / binary
             if src_binary.exists():

@@ -1,4 +1,4 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: pash
 Version: 0.13.0
 Summary: Light-touch Data-Parallel Shell Processing
@@ -50,20 +50,8 @@ Classifier: Topic :: System :: System Shells
 Classifier: Topic :: Software Development :: Compilers
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
-License-File: LICENSE
-Requires-Dist: graphviz
-Requires-Dist: libdash
-Requires-Dist: pash-annotations~=0.2.4
-Requires-Dist: shasta~=0.4
-Requires-Dist: libbash~=0.1.14
-Requires-Dist: sh-expand~=0.2.0
 Provides-Extra: dev
-Requires-Dist: pytest; extra == "dev"
-Requires-Dist: black; extra == "dev"
-Requires-Dist: mypy; extra == "dev"
-Requires-Dist: build; extra == "dev"
-Requires-Dist: twine; extra == "dev"
-Dynamic: license-file
+License-File: LICENSE
 
 ## PaSh: Light-touch Data-Parallel Shell Processing
 
@@ -95,6 +83,25 @@ Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
 pip install pash
 pash -c "echo hi"
 ```
+
+
+# Local testing (development)
+pip install -e .
+pash --help
+pash -c "echo hello | cat"
+./scripts/run_tests.sh
+
+# Local testing (pip install simulation)
+pip install build
+python -m build
+pip install dist/*.whl --force-reinstall
+pash --version
+pash -c "echo 'Hello from wheel!'"
+
+# After PyPI publish
+pip install pash
+pash --help
+pash -c "echo 'Hello from PyPI!'"
 
 ### From source
 On Ubuntu, Fedora, and Debian run the following to set up PaSh.

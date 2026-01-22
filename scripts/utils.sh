@@ -9,6 +9,60 @@
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
 
+# Get PASH_TOP from various sources (works for both git development and pip install)
+get_pash_top() {
+    # 1. If PASH_TOP is already set, use it
+    if [ -n "${PASH_TOP:-}" ]; then
+        echo "$PASH_TOP"
+        return 0
+    fi
+
+    # 2. Try git rev-parse (works in development)
+    local git_root
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [ -n "$git_root" ] && [ -d "$git_root/src/pash" ]; then
+        echo "$git_root/src/pash"
+        return 0
+    fi
+
+    # 3. Try to find via pash Python package (works for pip install)
+    if command -v python3 >/dev/null 2>&1; then
+        local pash_path
+        pash_path=$(python3 -c "import pash; print(pash.__file__.rsplit('/', 1)[0])" 2>/dev/null)
+        if [ -n "$pash_path" ] && [ -d "$pash_path" ]; then
+            echo "$pash_path"
+            return 0
+        fi
+    fi
+
+    echo "Error: Cannot determine PASH_TOP" >&2
+    return 1
+}
+
+# Get the repository root (for tests that need evaluation/ and scripts/ directories)
+get_repo_root() {
+    # 1. Try git rev-parse (works in development)
+    local git_root
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [ -n "$git_root" ]; then
+        echo "$git_root"
+        return 0
+    fi
+
+    # 2. Derive from PASH_TOP if set (PASH_TOP points to src/pash)
+    if [ -n "${PASH_TOP:-}" ]; then
+        local repo_root
+        repo_root=$(cd "$PASH_TOP/../.." 2>/dev/null && pwd)
+        if [ -d "$repo_root/evaluation" ]; then
+            echo "$repo_root"
+            return 0
+        fi
+    fi
+
+    echo "Error: Cannot determine repository root" >&2
+    return 1
+}
+
 eexit(){
   echo $1 'please email pash-devs@googlegroups.com'
   exit 1
