@@ -47,12 +47,12 @@ jobs:
             sudo touch /.githubenv
             # install the system deps and pash the environment
             sudo -E bash scripts/distro-deps.sh -o
-            # install pash
+            # install pash (uses pip install -e)
             sudo -E bash scripts/setup-pash.sh -o
-            export PASH_TOP=$PWD
-            export PATH=$PATH:$PASH_TOP
+            export PASH_TOP=$PWD/src/pash
+            export PATH=$PATH:$PWD
             # run all the tests (INTRO, INTERFACE, COMPILER)
-            cd scripts && bash run_tests.sh  
+            cd scripts && bash run_tests.sh
             # fetch the execution results of the passed/failed
             cd workflow && bash parse.sh > results.log 2>&1  
             # get the timer
@@ -108,11 +108,11 @@ jobs:
           with:
             ignore_paths:
               annotations
-              compiler/parser/libdash
-              compiler/tests
+              src/pash/compiler/parser/libdash
+              src/pash/compiler/tests
               evaluation
               python_pkgs
-              runtime/agg/cpp/tests
+              src/pash/runtime/agg/cpp/tests
               scripts
             ignore_names:
               test_evaluation_scripts.sh

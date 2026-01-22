@@ -6,7 +6,7 @@ on:
     paths:
       - src/pash/compiler/**
       - src/pash/preprocessor/**
-      - src/pash/jit_src/pash/runtime/**
+      - src/pash/jit_runtime/**
       - src/pash/runtime/**
       - evaluation/**
       - annotations/**
@@ -18,7 +18,7 @@ on:
     paths:
       - src/pash/compiler/**
       - src/pash/preprocessor/**
-      - src/pash/jit_src/pash/runtime/**
+      - src/pash/jit_runtime/**
       - src/pash/runtime/**
       - evaluation/**
       - annotations/**
@@ -43,8 +43,8 @@ jobs:
 
       - name: Run Bash interface tests
         run: |
-          export PASH_TOP=$PWD
-          export PATH=$PATH:$PASH_TOP
+          export PASH_TOP=$PWD/src/pash
+          export PATH=$PATH:$PWD
           export TMPDIR="${TMPDIR:-/tmp/}"
           cd evaluation/tests/interface_tests
           ./run_bash_tests.sh

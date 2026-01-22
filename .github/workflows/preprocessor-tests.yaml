@@ -4,16 +4,16 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     paths:
-      - preprocessor/**
-      - compiler/parser/**
+      - src/pash/preprocessor/**
+      - src/pash/compiler/parser/**
       - pa.sh
   push:
     branches:
       - main
       - future
     paths:
-      - preprocessor/**
-      - compiler/parser/**
+      - src/pash/preprocessor/**
+      - src/pash/compiler/parser/**
       - pa.sh
 
 jobs:
@@ -45,19 +45,19 @@ jobs:
 
       - name: Run preprocessor tests
         run: |
-          export PASH_TOP=$PWD
+          export PASH_TOP=$PWD/src/pash
           export PASH_TMP_PREFIX=$(mktemp -d)/
           export PASH_BASH_VERSION="5 2 21"
           export PYTHONPATH="$PASH_TOP/preprocessor:$PASH_TOP/compiler:$PYTHONPATH"
 
-          cd preprocessor
+          cd src/pash/preprocessor
           ./run_tests.sh
 
       - name: Verify pa.sh integration
         run: |
-          export PASH_TOP=$PWD
-          export PATH=$PATH:$PASH_TOP
+          export PASH_TOP=$PWD/src/pash
+          export PATH=$PATH:$PWD
 
           # Test that preprocessing works end-to-end
-          $PASH_TOP/pa.sh -c 'echo hello'
-          $PASH_TOP/pa.sh -c 'echo hello | cat'
+          ./pa.sh -c 'echo hello'
+          ./pa.sh -c 'echo hello | cat'
