@@ -4,11 +4,14 @@
 TIMEFORMAT="%3R" # %3U %3S"
 
 if [[ -z "$PASH_TOP" ]]; then
-  echo "Need to provide PASH_TOP, possibly $(git rev-parse --show-toplevel)" 1>&2
+  echo "Need to provide PASH_TOP, possibly \$(git rev-parse --show-toplevel)/src/pash" 1>&2
   exit 1
 fi
 
-eval_dir="$PASH_TOP/evaluation/benchmarks/runtime-overhead/"
+# PASH_TOP points to src/pash, so repo root is ../..
+REPO_ROOT="$(cd "$PASH_TOP/../.." && pwd)"
+
+eval_dir="$REPO_ROOT/evaluation/benchmarks/runtime-overhead/"
 
 bash_outputs_suffix="bash.out"
 par_outputs_suffix="par.out"
@@ -44,7 +47,7 @@ run_pash()
     pash_log="${pash_logs_dir}/${script_name}.${config}.pash.log"
 
     ## We don't want -d 1 since it adds overhead!
-    echo "${config_padded}" $({ time "$PASH_TOP/pa.sh" $PASH_FLAGS  --log_file "${pash_log}" ${script} > "$par_outputs_file"; } 2>&1) | tee -a "$times_file"
+    echo "${config_padded}" $({ time "$REPO_ROOT/pa.sh" $PASH_FLAGS  --log_file "${pash_log}" ${script} > "$par_outputs_file"; } 2>&1) | tee -a "$times_file"
     diff -q "$bash_outputs_file" "$par_outputs_file"
 }
 
