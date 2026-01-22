@@ -1,6 +1,0 @@
-case foo in
-     bar)
-        ;;
-     *)
-        echo hi;;
-esac
