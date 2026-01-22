@@ -96,9 +96,10 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Install package from wheel
+      - name: Install package from source distribution
         run: |
-          pip install dist/*.whl
+          # Install from sdist (tar.gz) to ensure C binaries are compiled
+          pip install dist/*.tar.gz
 
       - name: Test CLI help
         run: |

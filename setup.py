@@ -110,8 +110,7 @@ setup(
     cmdclass={
         "build_py": BuildPyWithRuntime,
         "develop": DevelopWithRuntime,
-        "install": InstallWithRuntime,
     },
     # Don't mark as having ext_modules - we compile from source at install time
-    # This creates a pure Python wheel that works on any platform
+    # When users install from the sdist, build_py will compile the C binaries
 )

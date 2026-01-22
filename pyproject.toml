@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "binpash-pash"
-version = "0.16.3"
+version = "0.16.4"
 description = "Light-touch Data-Parallel Shell Processing"
 readme = "README.md"
 license = {file = "LICENSE"}
