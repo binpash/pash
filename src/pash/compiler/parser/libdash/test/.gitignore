@@ -1,0 +1,11 @@
+*.a
+*.cmxa
+test
+*.native
+*~
+*.o
+*.cmx
+*.cmi
+test.err
+test.byte
+test.cmo

@@ -1,0 +1,35 @@
+ls * ${x:-$(foo)} ${#foo}seven $x "foo\"${x}"${y} $((x + ${x})) `ls 1` $(bq1)x$(bq2) >foo 2>&1 <<HERE
+this is a ${heredoc}
+HERE
+{ ls ; echo foo ; }>/dev/null
+mv /tmp/foo /tmp/bar &
+foo | bar | baz | quux
+foo | bar | baz | quux &
+if /bin/true; then always; else never; fi
+if [ -x some_file ]; then maybe; elif [ -d some_dir ]; then otherwise; fi
+if something; then we are looking for the one-armed bandit; fi
+while [ ! -x some_file ]; do try to make some_file; done
+until [ -x some_file ]; do seriously make that file; done
+while { ! a && ! b ; } ; do certainly not c; done
+for x in a b c d; do something to those letters; done
+for x; do something to those arguments implicitly; done
+case "$1" in start) echo starting ;; stop) oh noes ;; *) blargh ;; esac
+case "$1" in start) echo starting ;; stop) oh noes ;; *) blargh;; esac
+function foo { echo $*; export x=$((x + 1)) }
+function foo { echo $*; export x=$((x + 1)) }
+foo() { echo $*; export x=$((x + 1)) ; }
+this <<HERE
+is a funny
+EOF
+heredoc
+ HERE
+HERE
+ls *
+cd ..
+X=a b c d
+X=`run this please` Y=$(okay now $(this)) we should ${X} these ${Y}
+X=lonely
+echo `ls \`pwd\``
+x1=hi x2=yo x$((3-1))=heya # the last thing here gets parsed as a command x2=heya, which isn't found
+
+# that was a blank line; this is a comment

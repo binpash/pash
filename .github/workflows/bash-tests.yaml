@@ -4,10 +4,10 @@ on:
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     paths:
-      - compiler/**
-      - preprocessor/**
-      - jit-runtime/**
-      - runtime/**
+      - src/pash/compiler/**
+      - src/pash/preprocessor/**
+      - src/pash/jit_src/pash/runtime/**
+      - src/pash/runtime/**
       - evaluation/**
       - annotations/**
       - scripts/**
@@ -16,10 +16,10 @@ on:
       - main
       - future
     paths:
-      - compiler/**
-      - preprocessor/**
-      - jit-runtime/**
-      - runtime/**
+      - src/pash/compiler/**
+      - src/pash/preprocessor/**
+      - src/pash/jit_src/pash/runtime/**
+      - src/pash/runtime/**
       - evaluation/**
       - annotations/**
       - scripts/**

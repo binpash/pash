@@ -1,0 +1,14 @@
+sudo: required
+
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker pull ocaml/opam2:debian-9
+  - docker build -t libdash .
+
+script:
+  - docker run libdash make -C libdash/test test
+

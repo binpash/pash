@@ -4,8 +4,8 @@ on:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     # the paths that trigger the ci
     paths: 
-        - compiler/**
-        - runtime/**
+        - src/pash/compiler/**
+        - src/pash/runtime/**
         - evaluation/**
         - annotations/**
         - scripts/**
@@ -14,8 +14,8 @@ on:
       - main
       - future
     paths: 
-        - compiler/**
-        - runtime/**
+        - src/pash/compiler/**
+        - src/pash/runtime/**
         - evaluation/**
         - annotations/**
         - scripts/**
