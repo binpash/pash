@@ -31,7 +31,9 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
     operand_list = []
     access_map = {}
     implicit_use_of_streaming_input = implicit_use_of_streaming_output = None
-    if local_fifo_id:
+    # print("make_serverless_remote_pipe called with parameters:")
+    if local_fifo_id and not (is_remote_read and is_s3_lambda):
+        # print("WENt into acc map")
         access_map[local_fifo_id] = make_stream_input()
     if output_edge:
         access_map[output_edge.get_ident()] = make_stream_output()
@@ -51,7 +53,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                     remote_pipe_bin = "python3 aws/s3-get-object-smart-and-streaming.py"                                     
                 else:                                                                                                        
                     # Approximate boundaries: requires inter-lambda tail byte communication    
-                    print("Using approximate boundaries for S3 lambda reads")                              
+                    # print("Using approximate boundaries for S3 lambda reads")                              
                     remote_pipe_bin = "python3 aws/s3-shard-reader-streaming.py"     
                 operand_list.append(Operand(Arg.string_to_arg(str(remote_key)))) # s3 key
                 #if output_edge and (output_edge.get_resource() is not None):
@@ -65,6 +67,8 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                 operand_list.append(Operand(Arg.string_to_arg(f"num_shards={total_lambdas}"))) # num shards
                 operand_list.append(Operand(Arg.string_to_arg(f"job_uid={job_uid}"))) # job uid
                 operand_list.append(Operand(Arg.string_to_arg(f"debug=True")))
+                # print("settingimplicit use of streaming output to local fifo id")
+                implicit_use_of_streaming_output = local_fifo_id
             else:
                 remote_pipe_bin = "python3.9 aws/s3-get-object.py"
                 operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
@@ -88,6 +92,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
     
 
 
+    # print(f"make_serverless_remote_pipe: remote_pipe_bin={remote_pipe_bin}, operand_list={operand_list}, access_map={access_map}, implicit_use_of_streaming_input={implicit_use_of_streaming_input}, implicit_use_of_streaming_output={implicit_use_of_streaming_output}")
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=remote_pipe_bin,
         flag_option_list=[], 
@@ -95,6 +100,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
         implicit_use_of_streaming_input=implicit_use_of_streaming_input,
         implicit_use_of_streaming_output=implicit_use_of_streaming_output,
         access_map=access_map)
+    # print("Created CommandInvocationWithIOVars for ServerlessRemotePipe")
     return ServerlessRemotePipe(cmd_inv_with_io_vars)
 
 

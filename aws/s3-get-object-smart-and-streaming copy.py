@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.9
 """
-Phase 2: S3 split Reader with Pashlib Inter-Process Communication and Multi-Chunk Headers
+Phase 2: S3 split Reader with Pashlib Inter-Process Communication
 
 Reads one logical split from S3, handling newline boundaries by communicating
 with adjacent processes via pashlib FIFOs.
@@ -26,7 +26,6 @@ import subprocess
 import threading
 import time
 import shutil
-import json
 from botocore.exceptions import ClientError
 from io import BytesIO
 
@@ -130,71 +129,66 @@ def parse_keyword_args(args):
 
 
 
-def stream_s3_to_fifo_handle(fifo_handle, bucket, key, chunks, debug=False):
+def stream_s3_to_fifo_handle(fifo_handle, bucket, key, start_byte, end_byte, debug=False):
     """
-    Stream multiple S3 byte ranges to FIFO with r_merge-compatible headers.
+    Stream S3 byte range DIRECTLY to the FIFO.
 
-    Args:
-        fifo_handle: File handle opened in binary write mode
-        bucket: S3 bucket name
-        key: S3 object key
-        chunks: List of dicts with {start, end, block_id, skip_first_line}
-        debug: Enable debug output
+    FIXED: Uses s3.get_object + shutil.copyfileobj to avoid the
+    'Invalid extra_args key Range' error from download_fileobj,
+    while maintaining the original "pipe" behavior.
 
-    Returns:
-        Total bytes written (headers + data)
+    Writes r_merge-compatible headers before each chunk.
+    Only the LAST chunk gets isLast=1 to prevent data interleaving.
     """
     s3 = boto3.client('s3')
-    total_bytes_written = 0
 
     if debug:
-        print(f"[STREAM] Processing {len(chunks)} chunks with headers", file=sys.stderr)
+         print(f"[{_now_ts()}][STREAM] Strategy: DIRECT PIPE (Low Latency via get_object)", file=sys.stderr)
+         sys.stderr.flush()
 
-    for chunk_idx, chunk in enumerate(chunks):
-        start_byte = chunk['start']
-        end_byte = chunk['end']
-        block_id = chunk['block_id']
-        is_last = 1 if chunk_idx == len(chunks) - 1 else 0  # Last chunk for THIS lambda
+    # 1. Get the stream from S3 with the specific range
+    # This corresponds to your original architecture's simplicity
+    response = s3.get_object(
+        Bucket=bucket,
+        Key=key,
+        Range=f'bytes={start_byte}-{end_byte}'
+    )
 
-        # Download chunk from S3
-        if debug:
-            chunk_mb = (end_byte - start_byte + 1) / (1024 * 1024)
-            print(f"[STREAM] Chunk {chunk_idx}: ID={block_id}, bytes={start_byte}-{end_byte} ({chunk_mb:.2f} MB), isLast={is_last}", file=sys.stderr)
+    shutil.copyfileobj(response['Body'], fifo_handle, length=CHUNK_SIZE)
+    return end_byte - start_byte + 1
 
-        try:
-            response = s3.get_object(
-                Bucket=bucket,
-                Key=key,
-                Range=f'bytes={start_byte}-{end_byte}'
-            )
+    # 2. Stream data with headers using one-chunk lookahead
+    # This allows us to set isLast=1 only for the final chunk
+    # without buffering all data in memory
+    block_id = 0
+    total_bytes = 0
+    prev_chunk = None
 
-            # Read entire chunk into memory
-            chunk_data = response['Body'].read()
-            chunk_size = len(chunk_data)
+    while True:
+        chunk = response['Body'].read(CHUNK_SIZE)
 
-            if debug:
-                print(f"[STREAM] Downloaded {chunk_size} bytes for block {block_id}", file=sys.stderr)
+        if not chunk:
+            break
 
-            # Write header (24 bytes) using existing function
-            write_block_header(fifo_handle, block_id, chunk_size, is_last)
-            total_bytes_written += 24
+        if prev_chunk is not None:
+            # Write previous chunk with isLast=0 (not the last)
+            write_block_header(fifo_handle, block_id, len(prev_chunk), 0)
+            fifo_handle.write(prev_chunk)
+            block_id += 1
+            total_bytes += len(prev_chunk)
 
-            # Write chunk data
-            fifo_handle.write(chunk_data)
-            fifo_handle.flush()
-            total_bytes_written += chunk_size
+       
+        prev_chunk = chunk
 
-            if debug:
-                print(f"[STREAM] Wrote block {block_id}: 24-byte header + {chunk_size} data bytes", file=sys.stderr)
+    # Write final chunk with isLast=1
+    #before adding this code here we were getting lamost the right number of bytes except a bit more because it didnt know it was th elast chunk
+    #now with this code were getting double 
+    if prev_chunk:
+        write_block_header(fifo_handle, block_id, len(prev_chunk), 1)
+        fifo_handle.write(prev_chunk)
+        total_bytes += len(prev_chunk)
 
-        except Exception as e:
-            print(f"[STREAM] ERROR downloading chunk {chunk_idx} (block_id={block_id}): {e}", file=sys.stderr)
-            raise
-
-    if debug:
-        print(f"[STREAM] Complete: {total_bytes_written} bytes total ({len(chunks)} chunks)", file=sys.stderr)
-
-    return total_bytes_written
+    return total_bytes
 
 
 def upload_to_s3(bucket, key, data, debug=False):
@@ -278,38 +272,10 @@ def main():
             sys.stderr.flush()
             sys.exit(1)
 
-        # Parse byte ranges: single string OR JSON array
-        chunks = []
-        try:
-            chunks_data = json.loads(byte_range_str)
-
-            # Multi-chunk mode: JSON array
-            if isinstance(chunks_data, list) and len(chunks_data) > 0:
-                chunks = chunks_data
-
-                if debug:
-                    chunk_ids = [c['block_id'] for c in chunks]
-                    total_mb = sum((c['end'] - c['start'] + 1) / (1024*1024) for c in chunks)
-                    print(f"[MAIN {shard_index}] Multi-chunk mode: {len(chunks)} chunks, IDs {chunk_ids}, {total_mb:.2f} MB", file=sys.stderr)
-            else:
-                raise ValueError("Not a valid chunk list")
-
-        except (json.JSONDecodeError, ValueError, KeyError, TypeError):
-            # Single-chunk mode: backward compatible
-            start_byte, end_byte = parse_byte_range(byte_range_str)
-            chunks = [{
-                "start": start_byte,
-                "end": end_byte,
-                "block_id": 0,
-                "skip_first_line": False
-            }]
-
-            if debug:
-                print(f"[MAIN {shard_index}] Single-chunk mode: bytes={start_byte}-{end_byte}", file=sys.stderr)
-
         if debug:
             print(f"[{_now_ts()}][MAIN {shard_index}] Starting", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] S3: {s3_bucket}/{s3_key}", file=sys.stderr)
+            print(f"[{_now_ts()}][MAIN {shard_index}] Range: {byte_range_str}", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] split: {shard_index}/{num_shards}", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] UID: {job_uid}", file=sys.stderr)
             sys.stderr.flush()
@@ -319,7 +285,9 @@ def main():
             print(f"[{_now_ts()}][MAIN {shard_index}] Smart boundary mode: Boundary is line-aligned, skipping request listener", file=sys.stderr)
             sys.stderr.flush()
 
-        log_timing("ARGS_PARSED", f"Parsed {len(chunks)} chunks", debug)
+        # 2. Parse byte range
+        start_byte, end_byte = parse_byte_range(byte_range_str)
+        log_timing("ARGS_PARSED", f"byte_range={start_byte}-{end_byte}", debug)
 
         # 3. Open FIFO and stream S3 directly to it
         log_timing("FIFO_OPEN_START", f"Opening FIFO {output_fifo}", debug)
@@ -331,14 +299,14 @@ def main():
         with open(output_fifo, 'wb', buffering=0) as fifo:
             log_timing("FIFO_OPEN_END", "FIFO connected to downstream", debug)
             if debug:
-                print(f"[{_now_ts()}][MAIN {shard_index}] FIFO connected, streaming chunks", file=sys.stderr)
+                print(f"[{_now_ts()}][MAIN {shard_index}] FIFO connected, streaming S3 range {start_byte}-{end_byte}", file=sys.stderr)
                 sys.stderr.flush()
 
             # Stream S3 data to FIFO
             log_timing("STREAM_START", "Starting S3→FIFO stream", debug)
-
+            
             bytes_streamed = stream_s3_to_fifo_handle(
-                fifo, s3_bucket, s3_key, chunks,  # Pass chunks list instead of start/end
+                fifo, s3_bucket, s3_key, start_byte, end_byte,
                 debug=debug
             )
             log_timing("STREAM_END", f"Streamed {bytes_streamed} bytes", debug)

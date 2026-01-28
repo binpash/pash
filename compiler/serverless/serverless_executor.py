@@ -170,16 +170,22 @@ class ServerlessManager:
         self.counter.decrement()
         return
 
-    def invoke_lambda(self, folder_ids, script_ids):
+    def invoke_lambda(self, folder_ids, script_ids, job_id=None):
         # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
         start = time.time()
         try:
             lambda_client = boto3.client("lambda",region_name='us-east-1', config=self.lambda_config)
+
+            # Include job_id in payload
+            payload = {"folder_ids": folder_ids, "ids": script_ids}
+            if job_id:
+                payload["job_id"] = job_id
+
             response = lambda_client.invoke(
                 FunctionName="lambda",
                 InvocationType="RequestResponse",
                 LogType="None",
-                Payload=json.dumps({"folder_ids": folder_ids , "ids": script_ids}),
+                Payload=json.dumps(payload),
             )
             # parse response
             # log(f"[Serverless Manager] Lambda execution response with batches {script_ids} && {folder_ids}: {response}")
@@ -259,6 +265,12 @@ class ServerlessManager:
 
             conn.sendall(bytes_message)
             conn.close()
+
+            # Read job_id from environment
+            job_id = os.environ.get('PASH_JOB_ID')
+            if job_id:
+                log(f"[Serverless Manager] Using job ID: {job_id}")
+
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
@@ -268,7 +280,7 @@ class ServerlessManager:
                     invocation_thread = threading.Thread(target=self.run_local, args=(script_id,))
                     invocation_thread.start()
                 else:
-                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
+                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id))
                     invocation_thread.start()
 
             # # for oneliners local fifo
