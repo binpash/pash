@@ -698,21 +698,25 @@ class IR:
     def remove_node(self, node_id):
         node = self.nodes.pop(node_id)
         ## Remove the node in the edges dictionary
-        for in_id in node.get_input_list():
+        for in_id in (node.get_input_list() or []):
             self.set_edge_to(in_id, None)
 
-        for out_id in node.get_output_list():
+        for out_id in (node.get_output_list() or []):
             self.set_edge_from(out_id, None)
 
 
     def add_node(self, node):
         node_id = node.get_id()
+        # print("Adding node:", node_id)
         self.nodes[node_id] = node
+        # print("Current nodes:", self.nodes.keys())
         ## Add the node in the edges dictionary
-        for in_id in node.get_input_list():
+        for in_id in (node.get_input_list() or []):
+            # print("Setting edge to:", in_id, "node:", node_id)
             self.set_edge_to(in_id, node_id)
 
-        for out_id in node.get_output_list():
+        for out_id in (node.get_output_list() or []):
+            # print("Setting edge from:", out_id, "node:", node_id)
             self.set_edge_from(out_id, node_id)
 
     def generate_ephemeral_edges(self, fileIdGen, num_of_edges):

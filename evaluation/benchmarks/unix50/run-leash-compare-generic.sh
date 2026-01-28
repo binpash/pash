@@ -2,6 +2,29 @@
 
 cd "$(dirname "$0")" || exit 1
 
+# Parse mode flags
+RUN_NOOPT=false
+RUN_S3OPT=false
+RUN_S3OPTNONSMART=false
+
+if [[ "$*" == *"--noopt"* ]]; then
+    RUN_NOOPT=true
+fi
+
+if [[ "$*" == *"--s3opt"* ]]; then
+    RUN_S3OPT=true
+fi
+
+if [[ "$*" == *"--s3optnonsmart"* ]]; then
+    RUN_S3OPTNONSMART=true
+fi
+
+# If no mode flags specified, run all modes (backward compatibility)
+if [ "$RUN_NOOPT" = false ] && [ "$RUN_S3OPT" = false ] && [ "$RUN_S3OPTNONSMART" = false ]; then
+    RUN_NOOPT=true
+    RUN_S3OPT=true
+    RUN_S3OPTNONSMART=true
+fi
 
 if [[ "$*" == *"--small"* ]]
 then
@@ -12,6 +35,41 @@ then
         # "4.sh:1_1M.txt"
         # "5.sh:2_1M.txt"
         "6.sh:3_1M.txt"
+        # "7.sh:4_1M.txt"
+        # "8.sh:4_1M.txt"
+        # "9.sh:4_1M.txt"
+        # "10.sh:4_1M.txt"
+        # # "11.sh:4_1M.txt"
+        # "13.sh:5_1M.txt"
+        # # "14.sh:6_1M.txt"
+        # "15.sh:7_1M.txt"
+        # "17.sh:7_1M.txt"
+        # "18.sh:8_1M.txt"
+        # "19.sh:8_1M.txt"
+        # "20.sh:8_1M.txt"
+        # # "21.sh:8_1M.txt"
+        # "23.sh:9.1_1M.txt"
+        # "24.sh:9.2_1M.txt"
+        # "25.sh:9.3_1M.txt"
+        # "26.sh:9.4_1M.txt"
+        # "28.sh:9.6_1M.txt"
+        # "29.sh:9.7_1M.txt"
+        # "30.sh:9.8_1M.txt"
+        # "31.sh:9.9_1M.txt"
+        # "32.sh:10_1M.txt"
+        # "33.sh:10_1M.txt"
+        # "35.sh:11_1M.txt"
+    )
+    INPUT_TYPE=".small"
+
+elif [[ "$*" == *"--medium"* ]]; then
+    SCRIPT_INPUT_WIDTH=(
+        # "1.sh:1_1M.txt"
+        # # "2.sh:1_1M.txt"
+        # "3.sh:1_1M.txt"
+        # "4.sh:1_1M.txt"
+        # "5.sh:2_1M.txt"
+        "6.sh:3_5G.txt"
         # "7.sh:4_1M.txt"
         # "8.sh:4_1M.txt"
         # "9.sh:4_1M.txt"
@@ -203,148 +261,188 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     SCRIPT=$(echo "$SCRIPT_INPUT" | cut -d: -f1)
     INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
     WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
-    WIDTH=${WIDTH:-16}
+    WIDTH=${WIDTH:-32}
 
     # Mode 1: WITHOUT optimization (baseline)
-    echo "------------------------------------------------------------------------"
-    echo "[MODE 1/2] WITHOUT S3 direct streaming optimization"
-    echo "Running $SCRIPT with input $INPUT and width $WIDTH"
-    echo "------------------------------------------------------------------------"
+    if [ "$RUN_NOOPT" = true ]; then
+        echo "------------------------------------------------------------------------"
+        echo "[MODE 1/2] WITHOUT S3 direct streaming optimization"
+        echo "Running $SCRIPT with input $INPUT and width $WIDTH"
+        echo "------------------------------------------------------------------------"
 
-    # Capture start timestamp (milliseconds since epoch)
-    # Subtract 10 seconds (10000ms) to account for clock skew between local machine and AWS
-    START_TIME_MS=$(($(date +%s%3N) - 10000))
-    echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
+        # Generate unique job ID for this execution
+        JOB_ID="noopt_${SCRIPT//\//_}_${INPUT//\//_}_${WIDTH}_$(date +%s%N)"
+        export PASH_JOB_ID="$JOB_ID"
+        echo "Job ID: $JOB_ID"
 
-    # time USE_SMART_BOUNDARIES=false IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3opt" \
-    #     $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT"
+        # Capture start timestamp (milliseconds since epoch)
+        # Subtract 10 seconds (10000ms) to account for clock skew between local machine and AWS
+        START_TIME_MS=$(($(date +%s%3N) - 10000))
+        echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
 
-    # exit
+        # time USE_SMART_BOUNDARIES=false IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3opt" \
+        #     $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT"
 
-    time  IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:noopt" \
-        $PASH_TOP/pa.sh --serverless_exec  -w"$WIDTH" scripts/"$SCRIPT" #\
-        #--graphviz svg --graphviz_dir "$PWD/pash_graphviz_noopt_$(date +%y-%m-%d-%H:%M:%S)"
+        # exit
 
-    
-    sleep 20
-
-    logs_dir="logs/$SCRIPT:$INPUT:$WIDTH:noopt"
-    if [ -d "$logs_dir" ]; then
-        echo "Removing existing logs directory: $logs_dir"
-        rm -rf "$logs_dir"
-    fi
-    python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" "$START_TIME_MS"
-
-    # Download noopt output from S3
-    echo ""
-    echo "Downloading noopt output from S3..."
-    noopt_s3_key="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:nooptstdout.txt"
-    noopt_local_file="/tmp/compare_noopt_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
-    download_s3_output "$noopt_s3_key" "$noopt_local_file"
-
-    
-
-    echo ""
-    echo "------------------------------------------------------------------------"
-    echo "[MODE 2.1/2] WITH S3 direct streaming optimization (--enable_s3_direct) and smart boundaries"
-    echo "Running $SCRIPT with input $INPUT and width $WIDTH"
-    echo "------------------------------------------------------------------------"
-
-    # Capture start timestamp (milliseconds since epoch)
-    # Subtract 10 seconds (10000ms) to account for clock skew between local machine and AWS
-    START_TIME_MS=$(($(date +%s%3N) - 10000))
-    echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
-
-    time USE_SMART_BOUNDARIES=true IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3opt" \
-        $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT" #\
-        #--graphviz svg --graphviz_dir "$PWD/pash_graphviz_s3opt_$(date +%y-%m-%d-%H:%M:%S)"
-
-    sleep 20
-
-    logs_dir="logs/$SCRIPT:$INPUT:$WIDTH:s3opt"
-    if [ -d "$logs_dir" ]; then
-        echo "Removing existing logs directory: $logs_dir"
-        rm -rf "$logs_dir"
-    fi
-    python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" "$START_TIME_MS"
-
-    # Download s3opt output from S3
-    echo ""
-    echo "Downloading s3opt output from S3..."
-    s3opt_s3_key="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3optstdout.txt"
-    s3opt_local_file="/tmp/compare_s3opt_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
-    download_s3_output "$s3opt_s3_key" "$s3opt_local_file"
+        time  IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:noopt" \
+            $PASH_TOP/pa.sh --serverless_exec  -w"$WIDTH" scripts/"$SCRIPT" #\
+            #--graphviz svg --graphviz_dir "$PWD/pash_graphviz_noopt_$(date +%y-%m-%d-%H:%M:%S)"
 
 
-    echo ""
-    echo "------------------------------------------------------------------------"
-    echo "[MODE 2.2/2] WITH S3 direct streaming optimization (--enable_s3_direct) and approximate non smart boundaries"
-    echo "Running $SCRIPT with input $INPUT and width $WIDTH"
-    echo "------------------------------------------------------------------------"
+        sleep 30
 
-    # Capture start timestamp (milliseconds since epoch)
-    # Subtract 10 seconds (10000ms) to account for clock skew between local machine and AWS
-    START_TIME_MS=$(($(date +%s%3N) - 10000))
-    echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
+        logs_dir="logs/$SCRIPT:$INPUT:$WIDTH:noopt"
+        if [ -d "$logs_dir" ]; then
+            echo "Removing existing logs directory: $logs_dir"
+            rm -rf "$logs_dir"
+        fi
+        python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" "$START_TIME_MS" "$JOB_ID"
 
-    time USE_SMART_BOUNDARIES=false IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3optnonsmart" \
-        $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT" #\
-        #--graphviz svg --graphviz_dir "$PWD/pash_graphviz_s3opt_$(date +%y-%m-%d-%H:%M:%S)"
-
-    sleep 20
-
-    logs_dir="logs/$SCRIPT:$INPUT:$WIDTH:s3optnonsmart"
-    if [ -d "$logs_dir" ]; then
-        echo "Removing existing logs directory: $logs_dir"
-        rm -rf "$logs_dir"
-    fi
-    python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" "$START_TIME_MS"
-
-    # Download s3optnonsmart output from S3
-    echo ""
-    echo "Downloading s3optnonsmart output from S3..."
-    s3optnonsmart_s3_key="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3optnonsmartstdout.txt"
-    s3optnonsmart_local_file="/tmp/compare_s3optnonsmart_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
-    download_s3_output "$s3optnonsmart_s3_key" "$s3optnonsmart_local_file"
-
-    # Compare outputs
-    echo ""
-    echo "╔════════════════════════════════════════════════════════════════════════╗"
-    echo "║  LIVE COMPARISON FOR: $SCRIPT_INPUT (noopt vs s3opt)"
-    echo "╚════════════════════════════════════════════════════════════════════════╝"
-    echo ""
-    if compare_outputs "$noopt_local_file" "$s3opt_local_file" "noopt" "s3opt"; then
-        comparison_results+=("$SCRIPT_INPUT (smart): ✓ MATCH")
+        # Download noopt output from S3
         echo ""
-        echo "╔════════════════════════════════════════════════════════════════════════╗"
-        echo "║  ✓ RESULT: OUTPUTS MATCH for $SCRIPT_INPUT (noopt vs s3opt)"
-        echo "╚════════════════════════════════════════════════════════════════════════╝"
+        echo "Downloading noopt output from S3..."
+        noopt_s3_key="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:nooptstdout.txt"
+        noopt_local_file="/tmp/compare_noopt_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
+        download_s3_output "$noopt_s3_key" "$noopt_local_file"
+
+        echo ""
     else
-        comparison_results+=("$SCRIPT_INPUT (smart): ✗ DIFFER")
+        echo "------------------------------------------------------------------------"
+        echo "[MODE 1/2] SKIPPING noopt mode (--noopt flag not specified)"
+        echo "------------------------------------------------------------------------"
         echo ""
-        echo "╔════════════════════════════════════════════════════════════════════════╗"
-        echo "║  ✗ RESULT: OUTPUTS DIFFER for $SCRIPT_INPUT (noopt vs s3opt)"
-        echo "╚════════════════════════════════════════════════════════════════════════╝"
     fi
 
-    # Compare noopt with s3optnonsmart
-    echo ""
-    echo "╔════════════════════════════════════════════════════════════════════════╗"
-    echo "║  LIVE COMPARISON FOR: $SCRIPT_INPUT (noopt vs s3optnonsmart)"
-    echo "╚════════════════════════════════════════════════════════════════════════╝"
-    echo ""
-    if compare_outputs "$noopt_local_file" "$s3optnonsmart_local_file" "noopt" "s3optnonsmart"; then
-        comparison_results+=("$SCRIPT_INPUT (nonsmart): ✓ MATCH")
+
+    if [ "$RUN_S3OPT" = true ]; then
+        echo "------------------------------------------------------------------------"
+        echo "[MODE 2.1/2] WITH S3 direct streaming optimization (--enable_s3_direct) and smart boundaries"
+        echo "Running $SCRIPT with input $INPUT and width $WIDTH"
+        echo "------------------------------------------------------------------------"
+
+        # Generate unique job ID for this execution
+        JOB_ID="s3opt_${SCRIPT//\//_}_${INPUT//\//_}_${WIDTH}_$(date +%s%N)"
+        export PASH_JOB_ID="$JOB_ID"
+        echo "Job ID: $JOB_ID"
+
+        # Capture start timestamp (milliseconds since epoch)
+        # Subtract 10 seconds (10000ms) to account for clock skew between local machine and AWS
+        START_TIME_MS=$(($(date +%s%3N) - 10000))
+        echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
+
+        time PASH_S3_CHUNKS_PER_LAMBDA=16 USE_SMART_BOUNDARIES=true IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3opt" \
+            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT" #\
+            #--graphviz svg --graphviz_dir "$PWD/pash_graphviz_s3opt_$(date +%y-%m-%d-%H:%M:%S)"
+
+        sleep 30
+
+        logs_dir="logs/$SCRIPT:$INPUT:$WIDTH:s3opt"
+        if [ -d "$logs_dir" ]; then
+            echo "Removing existing logs directory: $logs_dir"
+            rm -rf "$logs_dir"
+        fi
+        python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" "$START_TIME_MS" "$JOB_ID"
+
+        # Download s3opt output from S3
         echo ""
-        echo "╔════════════════════════════════════════════════════════════════════════╗"
-        echo "║  ✓ RESULT: OUTPUTS MATCH for $SCRIPT_INPUT (noopt vs s3optnonsmart)"
-        echo "╚════════════════════════════════════════════════════════════════════════╝"
+        echo "Downloading s3opt output from S3..."
+        s3opt_s3_key="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3optstdout.txt"
+        s3opt_local_file="/tmp/compare_s3opt_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
+        download_s3_output "$s3opt_s3_key" "$s3opt_local_file"
+
+        echo ""
     else
-        comparison_results+=("$SCRIPT_INPUT (nonsmart): ✗ DIFFER")
+        echo "------------------------------------------------------------------------"
+        echo "[MODE 2.1/2] SKIPPING s3opt mode (--s3opt flag not specified)"
+        echo "------------------------------------------------------------------------"
+        echo ""
+    fi
+
+
+    if [ "$RUN_S3OPTNONSMART" = true ]; then
+        echo "------------------------------------------------------------------------"
+        echo "[MODE 2.2/2] WITH S3 direct streaming optimization (--enable_s3_direct) and approximate non smart boundaries"
+        echo "Running $SCRIPT with input $INPUT and width $WIDTH"
+        echo "------------------------------------------------------------------------"
+
+        # Generate unique job ID for this execution
+        JOB_ID="s3optnonsmart_${SCRIPT//\//_}_${INPUT//\//_}_${WIDTH}_$(date +%s%N)"
+        export PASH_JOB_ID="$JOB_ID"
+        echo "Job ID: $JOB_ID"
+
+        # Capture start timestamp (milliseconds since epoch)
+        # Subtract 10 seconds (10000ms) to account for clock skew between local machine and AWS
+        START_TIME_MS=$(($(date +%s%3N) - 10000))
+        echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
+
+        time USE_SMART_BOUNDARIES=false IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3optnonsmart" \
+            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT" #\
+            #--graphviz svg --graphviz_dir "$PWD/pash_graphviz_s3opt_$(date +%y-%m-%d-%H:%M:%S)"
+
+        sleep 30
+
+        logs_dir="logs/$SCRIPT:$INPUT:$WIDTH:s3optnonsmart"
+        if [ -d "$logs_dir" ]; then
+            echo "Removing existing logs directory: $logs_dir"
+            rm -rf "$logs_dir"
+        fi
+        python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" "$START_TIME_MS" "$JOB_ID"
+
+        # Download s3optnonsmart output from S3
+        echo ""
+        echo "Downloading s3optnonsmart output from S3..."
+        s3optnonsmart_s3_key="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:s3optnonsmartstdout.txt"
+        s3optnonsmart_local_file="/tmp/compare_s3optnonsmart_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
+        download_s3_output "$s3optnonsmart_s3_key" "$s3optnonsmart_local_file"
+    else
+        echo "------------------------------------------------------------------------"
+        echo "[MODE 2.2/2] SKIPPING s3optnonsmart mode (--s3optnonsmart flag not specified)"
+        echo "------------------------------------------------------------------------"
+    fi
+
+    # Compare outputs (only if both modes were run)
+    if [ "$RUN_NOOPT" = true ] && [ "$RUN_S3OPT" = true ]; then
         echo ""
         echo "╔════════════════════════════════════════════════════════════════════════╗"
-        echo "║  ✗ RESULT: OUTPUTS DIFFER for $SCRIPT_INPUT (noopt vs s3optnonsmart)"
+        echo "║  LIVE COMPARISON FOR: $SCRIPT_INPUT (noopt vs s3opt)"
         echo "╚════════════════════════════════════════════════════════════════════════╝"
+        echo ""
+        if compare_outputs "$noopt_local_file" "$s3opt_local_file" "noopt" "s3opt"; then
+            comparison_results+=("$SCRIPT_INPUT (smart): ✓ MATCH")
+            echo ""
+            echo "╔════════════════════════════════════════════════════════════════════════╗"
+            echo "║  ✓ RESULT: OUTPUTS MATCH for $SCRIPT_INPUT (noopt vs s3opt)"
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+        else
+            comparison_results+=("$SCRIPT_INPUT (smart): ✗ DIFFER")
+            echo ""
+            echo "╔════════════════════════════════════════════════════════════════════════╗"
+            echo "║  ✗ RESULT: OUTPUTS DIFFER for $SCRIPT_INPUT (noopt vs s3opt)"
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+        fi
+    fi
+
+    # Compare noopt with s3optnonsmart (only if both modes were run)
+    if [ "$RUN_NOOPT" = true ] && [ "$RUN_S3OPTNONSMART" = true ]; then
+        echo ""
+        echo "╔════════════════════════════════════════════════════════════════════════╗"
+        echo "║  LIVE COMPARISON FOR: $SCRIPT_INPUT (noopt vs s3optnonsmart)"
+        echo "╚════════════════════════════════════════════════════════════════════════╝"
+        echo ""
+        if compare_outputs "$noopt_local_file" "$s3optnonsmart_local_file" "noopt" "s3optnonsmart"; then
+            comparison_results+=("$SCRIPT_INPUT (nonsmart): ✓ MATCH")
+            echo ""
+            echo "╔════════════════════════════════════════════════════════════════════════╗"
+            echo "║  ✓ RESULT: OUTPUTS MATCH for $SCRIPT_INPUT (noopt vs s3optnonsmart)"
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+        else
+            comparison_results+=("$SCRIPT_INPUT (nonsmart): ✗ DIFFER")
+            echo ""
+            echo "╔════════════════════════════════════════════════════════════════════════╗"
+            echo "║  ✗ RESULT: OUTPUTS DIFFER for $SCRIPT_INPUT (noopt vs s3optnonsmart)"
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+        fi
     fi
 
     echo ""

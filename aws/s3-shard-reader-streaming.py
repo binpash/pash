@@ -177,6 +177,7 @@ def stream_s3_to_fifo(fifo_handle, bucket, key, start_byte, end_byte, debug=Fals
     # Directly pipe S3 stream to FIFO
     # copyfileobj reads chunks and writes them - simple and efficient
     shutil.copyfileobj(response['Body'], fifo_handle, length=CHUNK_SIZE)
+    
 
     bytes_streamed = end_byte - start_byte + 1
 

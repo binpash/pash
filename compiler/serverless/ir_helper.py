@@ -3,13 +3,19 @@
 
 import argparse
 from copy import deepcopy
+from fileinput import filename
 from typing import Dict, List, Tuple
 import sys
 import os
+import json
 from uuid import uuid4
 
 import boto3
+import time
+from contextlib import contextmanager
+
 sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
+from compiler.serverless.graph_print_helper import pretty_print_subgraphs
 import definitions.ir.nodes.serverless_remote_pipe as serverless_remote_pipe
 import definitions.ir.nodes.serverless_lambda_invoke as serverless_lambda_invoke
 from definitions.ir.nodes.r_wrap import RWrap
@@ -28,11 +34,45 @@ from definitions.ir.dfg_node import DFGNode
 from definitions.ir.arg import Arg
 
 
+# ============================================================================
+# Timing instrumentation utilities
+# ============================================================================
+
+# Global timing store
+_timing_data = {}
+
+@contextmanager
+def time_block(label):
+    """Context manager to time a code block and store results."""
+    start = time.time()
+    try:
+        yield
+    finally:
+        elapsed = time.time() - start
+        _timing_data[label] = elapsed
+        print(f"[TIMING] {label}: {elapsed:.3f}s")
+
+def get_timing(label):
+    """Retrieve a timing measurement."""
+    return _timing_data.get(label, 0.0)
+
+def print_timing_summary():
+    """Print all timing measurements."""
+    if not _timing_data:
+        return
+    print("\n" + "="*60)
+    print("TIMING SUMMARY")
+    print("="*60)
+    for label, elapsed in _timing_data.items():
+        print(f"  {label:<40} {elapsed:>8.3f}s")
+    print("="*60 + "\n")
+
+
 # Debugpy setup - connect before main logic runs
 debug = False
 import debugpy
 if debug:
-    debugpy.listen(5684)
+    debugpy.listen(5000)
     print("🐛 Debugger listening on port 5684. Attach VSCode now!")
     debugpy.wait_for_client()
     print("✅ Debugger attached! Continuing execution...")
@@ -339,7 +379,42 @@ def get_downstream_subgraphs(subgraph: IR, input_fifo_map: Dict[int, Tuple]) -> 
     return downstream
 
 
+"""
+Apply byte-range optimizations across a set of subgraphs reachable from given worker subgraphs.
+
+    This function performs a breadth-first traversal starting from the subgraphs listed in
+    `worker_subgraphs` and applies two byte-range related optimizations to each visited subgraph:
+    - unwrap RWrap nodes (collapsing unnecessary wrappers around byte-range values)
+    - replace RMerge nodes in merger subgraphs with a concatenation ("cat") operation
+
+    Traversal and behavior:
+    - The traversal is BFS and tracks visited subgraphs by their Python id() to avoid revisiting.
+    - For each visited subgraph:
+        1. Call unwrap_rwraps_in_subgraph(subgraph). If any RWrap nodes are unwrapped, a message
+             is printed summarizing how many were removed.
+        2. If is_merger_subgraph(subgraph) returns True, the function attempts to replace any
+             RMerge node(s) in that subgraph with a cat operation by calling replace_rmerge_with_cat(subgraph).
+             If replacement occurs, a message is printed. After processing a merger subgraph, traversal
+             does NOT continue past it (the merger is a stopping point).
+        3. If the subgraph is not a merger, downstream subgraphs are discovered via
+             get_downstream_subgraphs(subgraph, input_fifo_map) and enqueued for processing (unless already visited).
+
+    Parameters:
+    - worker_subgraphs (List[IR]):
+            List of IR subgraph objects that are the initial workers fed by rsplit outputs.
+            These serve as BFS roots for the optimization pass.
+    - all_subgraphs (List[IR]):
+            All subgraphs in the pipeline. Note: the current implementation does not use this
+            argument directly, but it can be provided for future needs or for callers that
+            expect a complete pipeline view.
+    - input_fifo_map (Dict[int, Tuple]):
+            Mapping used by get_downstream_subgraphs to resolve downstream connectivity. Keys are
+            FIFO identifiers (or other integer keys) and values are tuples describing the consumer
+            connection. The exact shape is determined by the graph representation and helper utilities.
+
+"""
 def apply_byte_range_optimizations(
+    
     worker_subgraphs: List[IR],
     all_subgraphs: List[IR],
     input_fifo_map: Dict[int, Tuple]
@@ -452,6 +527,9 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
                             in_edge
                         )
 
+                        # Apply byte-range optimizations ONLY in single-chunk mode
+                        chunks_per_lambda_opt = int(os.environ.get('PASH_S3_CHUNKS_PER_LAMBDA', '1'))
+
                         # Apply byte-range optimizations (unwrap RWrap, replace RMerge with cat)
                         # from workers through to the merger subgraph
                         if total_lambdas > 0 and input_fifo_map is not None:
@@ -465,245 +543,345 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
 
                             # Apply optimizations from workers through to merger
                             if worker_subgraphs:
-                                apply_byte_range_optimizations(worker_subgraphs, subgraphs, input_fifo_map)
+                                if chunks_per_lambda_opt == 1:
+                                    # Single-chunk mode: Apply optimizations (unwrap RWrap, replace r_merge with cat)
+                                    apply_byte_range_optimizations(worker_subgraphs, subgraphs, input_fifo_map)
+                                    print("[IR Helper] Applied byte-range optimizations (unwrapped RWrap, replaced r_merge)")
+                                else:
+                                    # Multi-chunk mode: SKIP optimizations - we NEED r_merge for block ordering
+                                    print(f"[IR Helper] Skipping byte-range optimizations (chunks_per_lambda={chunks_per_lambda_opt})")
+                                    print("[IR Helper] Keeping RWrap nodes and r_merge for multi-chunk block ordering")
 
                         return subgraphs[1:], in_edge, total_lambdas
 
     return subgraphs, None, 0
 
-def make_tee_node(input_id, original_output_id, s3_output_id):
-    """
-    Creates a tee node that reads from input and writes to both outputs.
 
-    This duplicates the stream:
-    - Reads from input_id (rsplit temp output)
-    - Writes to original_output_id via stdout (for downstream subgraph)
-    - Writes to s3_output_id as file argument (for s3-put-object)
+
+
+def expand_search_for_newline(s3, bucket, key, start_pos, file_size, max_search=100*1024*1024):
+    """
+    Exponentially expand search window if newline not found in initial window.
+    Handles edge cases like very long lines (>1MB).
 
     Args:
-        input_id: Input fifo edge ID
-        original_output_id: Output edge ID for downstream processing
-        s3_output_id: Output edge ID for file/S3 upload
+        s3: boto3 S3 client
+        bucket: S3 bucket name
+        key: S3 key
+        start_pos: Starting byte position to search from
+        file_size: Total file size
+        max_search: Maximum bytes to search (default 100MB)
 
     Returns:
-        DFGNode configured as tee command
+        Tuple of (position, found) where:
+        - position: Byte position of newline +1, or end of search range if not found
+        - found: True if newline was found, False otherwise
     """
-    print(f"[DEBUG make_tee_node] Creating tee node:")
-    print(f"  input_id: {input_id} (type: {type(input_id)})")
-    print(f"  original_output_id: {original_output_id} (type: {type(original_output_id)})")
-    print(f"  s3_output_id: {s3_output_id} (type: {type(s3_output_id)})")
+    current_pos = start_pos
+    chunk_size = 1 * 1024 * 1024  # Start with 1MB
 
-    access_map = {
-        input_id: make_stream_input(),           # Input from rsplit
-        original_output_id: make_stream_output(), # Stdout → original fifo
-        s3_output_id: make_stream_output()        # File arg → s3 upload fifo
-    }
-    print(f"[DEBUG make_tee_node] access_map created: {access_map}")
+    while current_pos < min(start_pos + max_search, file_size):
+        try:
+            end_pos = min(current_pos + chunk_size - 1, file_size - 1)
+            response = s3.get_object(
+                Bucket=bucket,
+                Key=key,
+                Range=f'bytes={current_pos}-{end_pos}'
+            )
+            chunk = response['Body'].read()
 
-    # tee command: tee <file_operand>
-    # Reads stdin, writes to stdout AND to <file_operand>
-    operand_list = [s3_output_id]  # File argument for S3 copy
-    print(f"[DEBUG make_tee_node] operand_list: {operand_list}")
+            newline_pos = chunk.index(b'\n')
+            return (current_pos + newline_pos + 1, True)  # Found newline
+        except ValueError:
+            # No newline in this chunk, continue
+            current_pos += chunk_size
+            chunk_size = min(chunk_size * 2, 10*1024*1024)  # Double size, cap at 10MB
+        except Exception as e:
+            if 'InvalidRange' in str(e):
+                break
+            raise
 
-    cmd_inv = CommandInvocationWithIOVars(
-        cmd_name="tee",
-        flag_option_list=[],
-        operand_list=operand_list,
-        implicit_use_of_streaming_input=input_id,
-        implicit_use_of_streaming_output=original_output_id,
-        access_map=access_map
-    )
-    print(f"[DEBUG make_tee_node] cmd_inv created: {cmd_inv}")
+    # No newline found in max_search range
+    return (min(start_pos + max_search, file_size), False)  # Not found
 
-    node = DFGNode(cmd_inv)
-    print(f"[DEBUG make_tee_node] DFGNode created with id: {node.get_id()}")
-    return node
 
-def make_s3_put_node(input_id, s3_key, version_arg="$1"):
+def estimate_avg_line_length(s3, bucket, key, file_size, num_samples=5,
+                             sample_size=256*1024, debug=False):
     """
-    Creates an s3-put-object node.
+    Estimate average line length by sampling multiple points across the file.
 
-    Command: python3.9 aws/s3-put-object.py <s3_key> <input_fifo> <version>
+    Takes small samples from beginning, middle, end, and intermediate positions
+    to get a representative average that handles variable line lengths.
 
     Args:
-        input_id: Input fifo edge ID
-        s3_key: S3 key for the uploaded object
-        version_arg: Version argument passed to s3-put-object.py (default "$1")
+        s3: boto3 S3 client
+        bucket: S3 bucket name
+        key: S3 key
+        file_size: Total file size in bytes
+        num_samples: Number of sample points (default 5: start, 25%, 50%, 75%, end)
+        sample_size: Bytes per sample (default 256KB)
+        debug: Enable debug output
 
     Returns:
-        DFGNode configured for aws/s3-put-object.py
+        Estimated average line length in bytes
     """
-    print(f"[DEBUG make_s3_put_node] Creating s3-put node:")
-    print(f"  input_id: {input_id} (type: {type(input_id)})")
-    print(f"  s3_key: {s3_key}")
-    print(f"  version_arg: {version_arg}")
+    try:
+        total_bytes = 0
+        total_newlines = 0
 
-    access_map = {input_id: make_stream_input()}
-    print(f"[DEBUG make_s3_put_node] access_map: {access_map}")
+        # Calculate sample positions evenly distributed across file
+        sample_positions = []
+        if num_samples == 1:
+            sample_positions = [0]
+        else:
+            for i in range(num_samples):
+                # Distribute samples evenly: 0%, 25%, 50%, 75%, 100%
+                position = int((file_size - sample_size) * i / (num_samples - 1))
+                position = max(0, min(position, file_size - sample_size))
+                sample_positions.append(position)
 
-    operand_list = [
-        Operand(Arg.string_to_arg(s3_key)),      # S3 key
-        input_id,                                 # Input fifo
-        Operand(Arg.string_to_arg(version_arg))  # Version ($1)
-    ]
-    print(f"[DEBUG make_s3_put_node] operand_list: {operand_list}")
+        if debug:
+            print(f"[Sampling] File size: {file_size} bytes, taking {num_samples} samples of {sample_size} bytes each")
 
-    full_operand_list = [Operand(Arg.string_to_arg("aws/s3-put-object.py"))] + operand_list
-    print(f"[DEBUG make_s3_put_node] full_operand_list: {full_operand_list}")
+        for idx, start_pos in enumerate(sample_positions):
+            end_pos = min(start_pos + sample_size - 1, file_size - 1)
 
-    cmd_inv = CommandInvocationWithIOVars(
-        cmd_name="python3.9",
-        flag_option_list=[],
-        operand_list=full_operand_list,
-        implicit_use_of_streaming_input=None,
-        implicit_use_of_streaming_output=None,
-        access_map=access_map
-    )
-    print(f"[DEBUG make_s3_put_node] cmd_inv created: {cmd_inv}")
+            # Download sample
+            response = s3.get_object(
+                Bucket=bucket,
+                Key=key,
+                Range=f'bytes={start_pos}-{end_pos}'
+            )
+            sample = response['Body'].read()
 
-    node = DFGNode(cmd_inv)
-    print(f"[DEBUG make_s3_put_node] DFGNode created with id: {node.get_id()}")
-    return node
+            # Count newlines in this sample
+            newline_count = sample.count(b'\n')
+            total_newlines += newline_count
+            total_bytes += len(sample)
 
-def add_tee_nodes_after_rsplit(
-    first_subgraph: IR,
-    file_id_gen: FileIdGen,
-    s3_output_prefix: str = "outputs/"
-) -> bool:
+            if debug:
+                sample_avg = len(sample) / newline_count if newline_count > 0 else 0
+                print(f"[Sampling] Sample {idx+1} @ {start_pos}: {newline_count} newlines, "
+                      f"avg={sample_avg:.1f}B/line")
+
+        if total_newlines == 0:
+            # No newlines found - assume very long lines or binary data
+            if debug:
+                print(f"[Sampling] No newlines in {total_bytes} bytes across {num_samples} samples")
+                print(f"[Sampling] Defaulting to 1MB window (likely binary or very long lines)")
+            return 1 * 1024 * 1024  # Use 1MB window as safety
+
+        avg_line_length = total_bytes / total_newlines
+
+        if debug:
+            print(f"[Sampling] Total: {total_bytes} bytes, {total_newlines} newlines")
+            print(f"[Sampling] Estimated avg line length: {avg_line_length:.1f} bytes")
+
+        return avg_line_length
+
+    except Exception as e:
+        if debug:
+            print(f"[Sampling] Error during sampling: {e}")
+            print(f"[Sampling] Defaulting to 64KB window")
+        # Fallback to conservative default
+        return 64 * 1024
+
+
+def find_line_boundaries_smart(bucket, key, num_shards, chunks_per_lambda=1, window_size=None, debug=False):
     """
-    Adds tee nodes after rsplit in the first subgraph to save copies to S3.
+    Find line-aligned byte boundaries by downloading ONLY small windows around boundaries.
 
-    This function:
-    1. Finds the rsplit node in the first subgraph
-    2. For each rsplit output:
-       - Creates intermediate temp edge
-       - Inserts tee node to duplicate the stream
-       - Creates s3-put-object node to save copy to S3
-    3. Rewires the graph to maintain original dataflow
+    If window_size is not provided, automatically determines optimal size by sampling file
+    at multiple points (beginning, middle, end) to handle variable line lengths.
 
     Args:
-        first_subgraph: The first subgraph (typically contains rsplit)
-        file_id_gen: FileIdGen to create new edge IDs
-        s3_output_prefix: S3 prefix for output files (default "outputs/")
+        bucket: S3 bucket name
+        key: S3 key
+        num_shards: Number of lambda workers
+        chunks_per_lambda: How many chunks each lambda processes
+        window_size: Size of window to download around each boundary (None = auto-detect)
+        debug: Enable debug output
 
     Returns:
-        True if tee nodes were added, False if rsplit not found or other error
+        Tuple of (ranges, all_success) where:
+        - ranges: List of (start_byte, end_byte, skip_first_line) tuples for each chunk
+          - Has num_shards × chunks_per_lambda entries
+          - skip_first_line=False if boundary was successfully line-aligned
+          - skip_first_line=True if we had to fall back to approximate boundary
+        - all_success: True if ALL boundaries were successfully found
+
+    Example for 20GB file, 16 shards, 2 chunks per lambda (all successful):
+        Total chunks: 16 × 2 = 32
+        Downloads: 31 boundaries × 1MB = 31MB
+        Returns: ([(0, 655359999, False), (655360000, 1310719999, False), ...], True)
     """
-    print("\n" + "="*80)
-    print("[DEBUG add_tee_nodes_after_rsplit] STARTING")
-    print("="*80)
+    with time_block("Total boundary scan"):
+        s3 = boto3.client('s3')
 
-    # Find rsplit node in the first subgraph
-    rsplit_node = None
-    rsplit_node_id = None
+        total_chunks = num_shards * chunks_per_lambda
 
-    print(f"[DEBUG] Searching for RSplit node in first_subgraph")
-    print(f"[DEBUG] first_subgraph has {len(first_subgraph.nodes)} nodes")
+        # Step 1: Get file size (needed for sampling positions)
+        with time_block("S3 HEAD request"):
+            response = s3.head_object(Bucket=bucket, Key=key)
+            file_size = response['ContentLength']
 
-    for node_id in first_subgraph.nodes.keys():
-        node = first_subgraph.get_node(node_id)
-        print(f"[DEBUG] Checking node {node_id}: {type(node).__name__}")
-        if isinstance(node, RSplit):
-            rsplit_node = node
-            rsplit_node_id = node_id
-            print(f"[DEBUG] Found RSplit node with id: {rsplit_node_id}")
-            break
+        # Step 2: Adaptive window sizing
+        if window_size is None:
+            # Check for env var override first
+            if 'PASH_BOUNDARY_WINDOW_KB' in os.environ:
+                window_size_kb = int(os.environ.get('PASH_BOUNDARY_WINDOW_KB'))
+                window_size = window_size_kb * 1024
+                if debug:
+                    print(f"[Boundary Scan] Using window_size={window_size/1024:.1f} KB (from env var)")
+            else:
+                # Multi-point sampling to estimate line length
+                with time_block("Multi-point file sampling"):
+                    # Take 5 samples of 256KB each = 1.25MB total
+                    # Positions: 0%, 25%, 50%, 75%, 100% through file
+                    avg_line_length = estimate_avg_line_length(
+                        s3, bucket, key, file_size,
+                        num_samples=5,
+                        sample_size=256*1024,
+                        debug=debug
+                    )
 
-    if rsplit_node is None:
-        print("[DEBUG] No rsplit found, returning False")
-        return False
+                # Set window to hold ~500 lines (with 4KB minimum, 1MB maximum)
+                # This provides safety margin while minimizing downloads
+                target_lines_per_window = 500
+                window_size = int(avg_line_length * target_lines_per_window)
+                window_size = max(4 * 1024, min(window_size, 1024 * 1024))  # Clamp 4KB-1MB
 
-    # Get rsplit output edges
-    rsplit_output_fids = first_subgraph.get_node_output_fids(rsplit_node_id)
-    print(f"[DEBUG] RSplit has {len(rsplit_output_fids)} output edges")
+                if debug:
+                    print(f"[Boundary Scan] Adaptive window_size={window_size/1024:.1f} KB "
+                          f"(avg_line={avg_line_length:.1f}B × {target_lines_per_window} lines)")
 
-    if len(rsplit_output_fids) == 0:
-        print("[DEBUG] No outputs, returning False")
-        return False
+        all_boundaries_found = True  # Track if any boundary scan failed
 
-    # For each rsplit output edge, insert tee + s3-put
-    for idx, rsplit_output_fid in enumerate(rsplit_output_fids):
-        print(f"\n[DEBUG] Processing rsplit output {idx+1}/{len(rsplit_output_fids)}")
-        original_edge_id = rsplit_output_fid.get_ident()
-        print(f"[DEBUG]   original_edge_id: {original_edge_id}")
+        # Add verbosity level control
+        verbose = debug and os.environ.get('PASH_VERBOSE_TIMING', 'false').lower() == 'true'
 
-        # Get the current consumer of the original edge
-        _fid, from_node, to_node = first_subgraph.edges[original_edge_id]
-        print(f"[DEBUG]   Edge info: from_node={from_node}, to_node={to_node}")
+        if debug:
+            print(f"[Boundary Scan] File size: {file_size} bytes, {num_shards} shards, {chunks_per_lambda} chunks/shard = {total_chunks} total chunks")
 
-        # 1. Create temp edge (between rsplit and tee)
-        print(f"[DEBUG] Step 1: Creating temp edge")
-        temp_edge = file_id_gen.next_ephemeral_file_id()
-        print(f"[DEBUG]   temp_edge id: {temp_edge.get_ident()}")
-        first_subgraph.add_edge(temp_edge)
+        # Edge case: Empty file
+        if file_size == 0:
+            if debug:
+                print(f"[Boundary Scan] Empty file - returning trivial ranges")
+            # All chunks get empty ranges, no skip needed
+            return ([(0, 0, False) for _ in range(total_chunks)], True)
 
-        # 2. Create s3 upload edge (between tee and s3-put)
-        print(f"[DEBUG] Step 2: Creating s3 edge")
-        s3_edge = file_id_gen.next_ephemeral_file_id()
-        print(f"[DEBUG]   s3_edge id: {s3_edge.get_ident()}")
-        first_subgraph.add_edge(s3_edge)
+        # Edge case: Single chunk
+        if total_chunks == 1:
+            if debug:
+                print(f"[Boundary Scan] Single chunk - no boundaries to scan")
+            return ([(0, file_size - 1, False)], True)
 
-        # 3. Rewire rsplit → temp_edge (instead of rsplit → original_edge)
-        print(f"[DEBUG] Step 3: Rewiring rsplit → temp_edge")
-        rsplit_node.replace_edge(original_edge_id, temp_edge.get_ident())
-        first_subgraph.set_edge_from(rsplit_node_id, temp_edge)
+        # Step 2: Calculate approximate chunk size
+        approx_chunk_size = file_size // total_chunks
 
-        # 4. Create and add tee node
-        print(f"[DEBUG] Step 4: Creating tee node")
-        tee_node = make_tee_node(
-            temp_edge.get_ident(),      # Input: from rsplit
-            original_edge_id,            # Output 1: to downstream (original path)
-            s3_edge.get_ident()         # Output 2: to s3-put
-        )
-        print(f"[DEBUG]   Adding tee node to subgraph")
-        first_subgraph.add_node(tee_node)
+        # Track which boundaries were successfully found (vs fell back to approximate)
+        # Index 0 is always 0 (start of file), so no skip needed for chunk 0
+        boundary_success = [True]  # Chunk 0 starts at 0, always line-aligned
 
-        # 5. Connect edges to/from tee
-        print(f"[DEBUG] Step 5: Connecting edges to/from tee")
-        first_subgraph.set_edge_to(temp_edge.get_ident(), tee_node.get_id())       # temp → tee (input)
+        boundaries = [0]  # First chunk starts at byte 0
 
-        # Get the actual FileId from the graph's edges for the original edge
-        original_fid = first_subgraph.edges[original_edge_id][0]
-        print(f"[DEBUG]   Retrieved original_fid from graph: {original_fid}")
+        # Step 3: Find exact line boundaries
+        with time_block(f"Boundary scan ({total_chunks-1} boundaries)"):
+            for i in range(1, total_chunks):
+                approx_boundary = i * approx_chunk_size
+                found_newline = False
 
-        first_subgraph.set_edge_from(original_fid, tee_node.get_id())               # tee → original (stdout)
-        print("HEREHERE")
-        first_subgraph.set_edge_from(s3_edge, tee_node.get_id())                    # tee → s3 (file arg)
-        print(f"[DEBUG]   Edges connected")
+                # Download small window around the approximate boundary
+                # 1MB window: 512KB before + 512KB after
+                start = max(0, approx_boundary - window_size // 2)
+                end = min(file_size - 1, approx_boundary + window_size // 2)
 
-        # 6. Original edge now flows from tee (not rsplit)
-        # Keep the downstream connection intact: original_edge → to_node
-        print(f"[DEBUG] Step 6: Setting original edge downstream connection")
-        first_subgraph.set_edge_to(original_edge_id, to_node)
+                if verbose:  # Only print per-chunk details if explicitly enabled
+                    print(f"[Boundary Scan] Chunk {i}: downloading bytes {start}-{end} (window around {approx_boundary})")
+                elif debug and i % 50 == 0:  # Print every 50th chunk as progress indicator
+                    print(f"[Boundary Scan] Progress: {i}/{total_chunks} boundaries scanned")
 
-        # 7. Create and add s3-put node
-        print(f"[DEBUG] Step 7: Creating s3-put node")
-        fifo_name = f"fifo{original_edge_id}"
-        s3_key = f"{s3_output_prefix}{fifo_name}.out"
-        print(f"[DEBUG]   s3_key: {s3_key}")
+                try:
+                    response = s3.get_object(
+                        Bucket=bucket,
+                        Key=key,
+                        Range=f'bytes={start}-{end}'
+                    )
+                    chunk = response['Body'].read()
 
-        s3_put_node = make_s3_put_node(
-            s3_edge.get_ident(),
-            s3_key
-        )
-        print(f"[DEBUG]   Adding s3-put node to subgraph")
-        first_subgraph.add_node(s3_put_node)
-        first_subgraph.set_edge_to(s3_edge.get_ident(), s3_put_node.get_id())
-        print(f"[DEBUG]   s3-put node connected")
+                    # Find first newline AFTER the approximate boundary
+                    offset_in_chunk = approx_boundary - start
+                    try:
+                        newline_pos = chunk.index(b'\n', offset_in_chunk)
+                        # Boundary starts AFTER the newline (+1)
+                        actual_boundary = start + newline_pos + 1
+                        found_newline = True
 
-    print("\n" + "="*80)
-    print("[DEBUG add_tee_nodes_after_rsplit] COMPLETED SUCCESSFULLY")
-    print("="*80 + "\n")
-    return True
+                        if verbose:
+                            print(f"[Boundary Scan] Chunk {i}: found newline at byte {actual_boundary}")
 
-def change_sorting(subgraphs:List[IR]) -> List[IR]:
-    for subgraph in subgraphs:
-        source_nodes = subgraph.source_nodes()    # list of ints
-        for source in source_nodes:
-            source_node = subgraph.get_node(source)
-            if source_node.cmd_name == 'sort': #todo also do this with sort -m
-                source_node.cmd_name = 'LC_ALL=C sort'
+                        boundaries.append(actual_boundary)
+                        boundary_success.append(True)
 
+                    except ValueError:
+                        # Newline not found in window - expand search
+                        if verbose:
+                            print(f"[Boundary Scan] Chunk {i}: newline not in window, expanding search...")
+
+                        actual_boundary, found = expand_search_for_newline(
+                            s3, bucket, key, approx_boundary, file_size
+                        )
+                        boundaries.append(actual_boundary)
+
+                        if found:
+                            boundary_success.append(True)
+                            if verbose:
+                                print(f"[Boundary Scan] Chunk {i}: found newline at byte {actual_boundary} (expanded search)")
+                        else:
+                            # No newline found even after expanding - use approximate, need skip
+                            boundary_success.append(False)
+                            all_boundaries_found = False
+                            if verbose:
+                                print(f"[Boundary Scan] Chunk {i}: NO NEWLINE FOUND, using approximate boundary {actual_boundary}, will skip first line")
+
+                except Exception as e:
+                    print(f"[Boundary Scan] ERROR at chunk {i}: {e}")
+                    # Fallback to approximate boundary - will need skip_first_line
+                    boundaries.append(approx_boundary)
+                    boundary_success.append(False)
+                    all_boundaries_found = False
+
+        boundaries.append(file_size)  # Last chunk ends at EOF
+
+        # Convert to (start, end, skip_first_line) ranges
+        with time_block("Range calculation"):
+            ranges = []
+            for i in range(total_chunks):
+                start_byte = boundaries[i]
+                end_byte = boundaries[i + 1] - 1  # end_byte is inclusive
+
+                # Validate range (handle edge case where boundaries collapse)
+                if end_byte < start_byte:
+                    # Empty or invalid range - give it at least one byte
+                    end_byte = start_byte
+
+                # skip_first_line is based on whether THIS chunk's START boundary was line-aligned
+                # Chunk 0 starts at byte 0 (always line-aligned, no skip)
+                # Chunk i>0 needs skip if boundary_success[i] is False
+                skip_first_line = not boundary_success[i] if i > 0 else False
+
+                ranges.append((start_byte, end_byte, skip_first_line))
+
+        if debug:
+            print(f"\n[Boundary Scan] Completed: {total_chunks} chunks, all_success={all_boundaries_found}")
+            print(f"[Boundary Scan] Total data downloaded: ~{(total_chunks-1) * window_size / (1024*1024):.1f} MB")
+            if verbose:  # Only print full range list if verbose mode enabled
+                print(f"[Boundary Scan] Final ranges:")
+                for i, (start, end, skip) in enumerate(ranges):
+                    size_mb = (end - start + 1) / (1024 * 1024)
+                    print(f"  Chunk {i}: bytes={start}-{end} ({size_mb:.2f} MB), skip={skip}")
+
+        return (ranges, all_boundaries_found)
 
 def get_s3_size(bucket, key):
     #print("Came here")
@@ -779,17 +957,6 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
 
     #generate graphviz here so we can see the diff
     # actually not trivial as we have a list of IRs here :( not a single IR 
-
-
-    # Add tee nodes after rsplit in first subgraph to capture output copies
-    if len(subgraphs) > 0 and False: # todo rm after 
-        tee_added = add_tee_nodes_after_rsplit(
-            subgraphs[0],  # First subgraph
-            file_id_gen,
-            s3_output_prefix="outputs/"
-        )
-        if tee_added:
-            print("[IR Helper] Added tee nodes after rsplit for output capture")
 
     print("AFTER OPTIMIZATION, TOTAL LAMBDAS STREAMING DIRECTLY FROM S3:", total_lambdas)
 
@@ -926,6 +1093,9 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
 
     lambda_counter = 0
     job_uid = uuid4()
+
+    shard_ranges = None  # Will be populated on first S3 lambda
+    shard_ranges_computed = False
     # Replace non ephemeral input edges with remote read/write
     for subgraph in subgraphs:
         if subgraph not in subgraph_script_id_pairs:
@@ -951,37 +1121,96 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                         # but filename can be covid-mts/inputs/in.csv so we need a more robust way
                         # Extract file size from filename (e.g., "oneliners/inputs/1M.txt" -> 1048576)
                         # size_multipliers = {"G": 1024**3, "M": 1024**2, "K": 1024}
-
-
-
-                        # # Get basename and strip extension and quotes
-                        # basename = str(filename).split("/")[-1].replace('.txt"', "").replace('"', '')
-
-                        # # Parse size with suffix (e.g., "1M" -> 1048576)
-                        # filesize = None
-                        # for suffix, multiplier in size_multipliers.items():
-                        #     if basename.endswith(suffix):
-                        #         filesize = int(basename.replace(suffix, "")) * multiplier
-                        #         break
-
-                        # # Fallback: try to parse as plain integer
-                        # if filesize is None:
-                        #     try:
-                        #         filesize = int(basename)
-                        #     except ValueError:
-                        #         # Default to 1MB if parsing fails
-                        #         print(f"Warning: Could not parse file size from '{filename}', defaulting to 1MB")
-                        #         assert False, "File size parsing failed" # important to know if this is possibly failing, also byte range will give incorrect results here
-
+                        filename_stripped = str(filename).strip('"')
                         print(f"File: {filename} -> Size: {filesize} bytes")
 
-                        # Calculate byte range for this lambda
-                        chunk_size = filesize // total_lambdas
-                        start_byte = lambda_counter * chunk_size
-                        # Last lambda gets everything remaining to handle rounding
-                        end_byte = filesize - 1 if lambda_counter == total_lambdas - 1 else (lambda_counter + 1) * chunk_size - 1
-                        byte_range = f"bytes={start_byte}-{end_byte}"
-                        print(f"Lambda {lambda_counter}: {byte_range}")
+                        # Read configuration
+                        chunks_per_lambda = int(os.environ.get('PASH_S3_CHUNKS_PER_LAMBDA', '1'))
+                        if chunks_per_lambda < 1:
+                            chunks_per_lambda = 1
+                            print(f"[IR Helper] WARNING: Invalid PASH_S3_CHUNKS_PER_LAMBDA, using 1")
+
+                        if chunks_per_lambda > 1:
+                            print(f"[IR Helper] Multi-chunk mode: {chunks_per_lambda} chunks per lambda")
+                        else:
+                            print(f"[IR Helper] Single-chunk mode (original behavior)")
+
+                        # Check if smart boundaries are enabled
+                        use_smart_boundaries = os.environ.get('USE_SMART_BOUNDARIES', 'false').lower() == 'true'
+
+                        if use_smart_boundaries:
+                            # Calculate line-aligned boundaries (only once for all lambdas)
+                            # Note: This will be called once per lambda, but we only need to calculate once
+                            # For now, we calculate per lambda (could be optimized to cache)
+                          
+
+                            if not shard_ranges_computed:
+                                print(f"[IR Helper] Scanning S3 file for line boundaries: {filename_stripped}")
+                                print(f"[IR Helper] Total lambdas: {total_lambdas}, chunks per lambda: {chunks_per_lambda}")
+
+                                with time_block("find_line_boundaries_smart call"):
+                                    shard_ranges, boundary_scan_success = find_line_boundaries_smart(
+                                        bucket=BUCKET,
+                                        key=filename_stripped,
+                                        num_shards=total_lambdas,
+                                        chunks_per_lambda=chunks_per_lambda,
+                                        window_size=None,  # Enable adaptive sizing
+                                        debug=True
+                                    )
+                                shard_ranges_computed = True
+
+                                if not boundary_scan_success:
+                                    print(f"[IR Helper] WARNING: Boundary scan had failures")
+
+                            # Assign chunks to THIS lambda (round-robin interleaved)
+                            with time_block(f"Chunk distribution (lambda {lambda_counter})"):
+                                lambda_chunks = []
+                                for chunk_index in range(chunks_per_lambda):
+                                    global_chunk_id = lambda_counter + (chunk_index * total_lambdas)
+
+                                    # Safety check
+                                    if global_chunk_id >= len(shard_ranges):
+                                        break
+
+                                    start_byte, end_byte, use_skip = shard_ranges[global_chunk_id]
+                                    lambda_chunks.append({
+                                        "start": start_byte,
+                                        "end": end_byte,
+                                        "block_id": global_chunk_id,  # CRITICAL: Global sequential ID
+                                        "skip_first_line": use_skip
+                                    })
+
+                            # Format byte_range parameter based on mode
+                            if chunks_per_lambda == 1:
+                                # Single-chunk mode: backward compatible string format
+                                chunk = lambda_chunks[0]
+                                byte_range = f"bytes={chunk['start']}-{chunk['end']}"
+                                skip_first_line = chunk['skip_first_line']
+
+                                print(f"[IR Helper] Lambda {lambda_counter}: {byte_range}, skip_first_line={skip_first_line}")
+                            else:
+                                # Multi-chunk mode: JSON array
+                                import shlex
+                                byte_range_json = json.dumps(lambda_chunks)                                                             
+                                byte_range = f"'{byte_range_json}'"
+                                # byte_range = json.dumps(lambda_chunks)
+                                skip_first_line = False  # Not used in multi-chunk mode
+
+                                total_mb = sum((c['end'] - c['start'] + 1) / (1024*1024) for c in lambda_chunks)
+                                chunk_ids = [c['block_id'] for c in lambda_chunks]
+                                print(f"[IR Helper] Lambda {lambda_counter}: {len(lambda_chunks)} chunks, IDs {chunk_ids}, {total_mb:.2f} MB total")
+
+
+                        else:
+                            # Use approximate boundaries (old behavior)
+                            skip_first_line = True
+                            chunk_size = filesize // total_lambdas
+                            start_byte = lambda_counter * chunk_size
+                            # Last lambda gets everything remaining to handle rounding
+                            end_byte = filesize - 1 if lambda_counter == total_lambdas - 1 else (lambda_counter + 1) * chunk_size - 1
+
+                            byte_range = f"bytes={start_byte}-{end_byte}"
+                            print(f"Lambda {lambda_counter}: {byte_range}")
                         remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
                                                                                 is_remote_read=True,
                                                                                 remote_key=filename,
@@ -991,7 +1220,8 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 lambda_counter=lambda_counter,
                                                                                 total_lambdas=total_lambdas,
                                                                                 byte_range=byte_range, 
-                                                                                job_uid=job_uid)
+                                                                                job_uid=job_uid,
+                                                                                skip_first_line=skip_first_line)
                         
                         # s3getobj byterange=start-end -> sort   : lambda1
                         lambda_counter += 1
@@ -1001,8 +1231,17 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 remote_key=filename,
                                                                                 output_edge=None,
                                                                                 is_tcp=False)
-                    subgraph.add_node(remote_read) # This makes a node with an s3 input (converts the input filename to an s3 get obj cmd)
+                    if in_edge == ec2_in_edge and not args.no_eager:
+                        # Add dgsh-tee for eager S3 data prefetching when using S3 direct streaming
+                        # This ensures data is pulled from S3 as fast as possible and buffered for downstream
                 
+                        pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen, is_s3=True)
+
+                    # print("Adding remote read for S3 file:", filename)
+                    subgraph.add_node(remote_read) # This makes a node with an s3 input (converts the input filename to an s3 get obj cmd)
+                    # print("Remote read node added:", remote_read)
+                    
+
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
@@ -1014,6 +1253,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         pretty_print_subgraphs(subgraphs, unified_view=True)
 
         print("="*80)
+
+    # Print timing summary if boundary scanning was performed
+    if shard_ranges_computed:
+        print_timing_summary()
 
     main_graph_script_id = uuid4()
     subgraph_script_id_pairs[main_graph] = main_graph_script_id
@@ -1196,569 +1439,3 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
             ec2_set.add(str(id_))
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set
-
-
-def _get_node_label(node, max_width=60) -> str:
-    """
-    Extract a readable label for a node including command name and key details.
-
-    Args:
-        node: DFGNode instance
-        max_width: Maximum width for the label (default 60 chars)
-
-    Returns:
-        Human-readable string representation of the node
-    """
-    cmd_inv = node.cmd_invocation_with_io_vars
-    cmd_name = str(cmd_inv.cmd_name)
-
-    # Get basename for cleaner display
-    cmd_basename = os.path.basename(cmd_name)
-
-    # Special handling for s3-shared-read - show full arguments without truncation
-    if 's3-shard-read' in cmd_basename or 's3-shar' in cmd_basename:
-        import re
-        parts = [cmd_basename]
-
-        # Extract filename and byte range from operands
-        if hasattr(cmd_inv, 'operand_list'):
-            for op in cmd_inv.operand_list:
-                op_str = str(op)
-                # Look for filename (files typically have extensions or paths)
-                if any(ext in op_str for ext in ['.csv', '.txt', '.json', 'inputs/', 'outputs/']):
-                    filename = op_str.strip('"').strip("'")
-                    if filename and not filename.startswith('bytes='):
-                        parts.append(f'"{filename}"')
-                # Look for byte range
-                elif 'bytes=' in op_str:
-                    match = re.search(r'bytes=(\d+-\d+)', op_str)
-                    if match:
-                        parts.append(match.group(0))
-                # Look for shard index
-                elif 'shard=' in op_str:
-                    match = re.search(r'shard=(\d+)', op_str)
-                    if match:
-                        parts.append(match.group(0))
-                # Look for num_shards
-                elif 'num_shards=' in op_str:
-                    match = re.search(r'num_shards=(\d+)', op_str)
-                    if match:
-                        parts.append(match.group(0))
-
-        return ' '.join(parts)  # Return without truncation
-
-    # Special handling for r_wrap - extract inner command
-    if cmd_basename == "r_wrap" or "wrap" in cmd_basename.lower():
-        # Try to extract the inner command from operands
-        if hasattr(cmd_inv, 'operand_list') and cmd_inv.operand_list:
-            for op in cmd_inv.operand_list:
-                op_str = str(op)
-                # Look for bash -c followed by command
-                if "bash" in op_str and "-c" in op_str:
-                    # Skip this one, look at next
-                    continue
-                # Check if this looks like a command (has spaces or quotes)
-                if not op_str.isdigit() and ('"' in op_str or "'" in op_str or " " in op_str):
-                    # Extract command, remove quotes
-                    inner_cmd = op_str.strip().strip('"').strip("'")
-                    # Get first command name
-                    first_word = inner_cmd.split()[0] if inner_cmd.split() else inner_cmd
-                    # Truncate if needed
-                    if len(inner_cmd) > 40:
-                        inner_cmd = inner_cmd[:37] + "..."
-                    return f"wrap: {first_word}"
-        return "wrap"
-
-    # Add flags if present
-    flags = []
-    if hasattr(cmd_inv, 'flag_option_list') and cmd_inv.flag_option_list:
-        flags = [str(flag.get_name()) if hasattr(flag, 'get_name') else str(flag)
-                 for flag in cmd_inv.flag_option_list[:3]]  # Limit to first 3 flags
-
-    # Add key operands (excluding edge IDs which are usually integers)
-    operands = []
-    if hasattr(cmd_inv, 'operand_list') and cmd_inv.operand_list:
-        for op in cmd_inv.operand_list[:2]:  # Limit to first 2 operands
-            op_str = str(op)
-            # Skip if it looks like an edge ID (pure integer)
-            if not op_str.isdigit():
-                # Detect class repr and simplify
-                if "<class '" in op_str or "pash_annotations" in op_str:
-                    # Extract just the class name
-                    if "'" in op_str:
-                        parts = op_str.split("'")
-                        if len(parts) > 1:
-                            class_path = parts[1]
-                            op_str = class_path.split(".")[-1]  # Get last part
-                operands.append(op_str if len(op_str) <= 30 else op_str[:27] + "...")
-
-    # Build label
-    label = cmd_basename
-    if flags:
-        label += " " + " ".join(flags)
-    if operands:
-        label += " " + " ".join(operands)
-
-    # Apply width cap with smart truncation
-    if len(label) > max_width:
-        # Keep start and end, truncate middle
-        keep_chars = (max_width - 5) // 2  # -5 for " ... "
-        label = label[:keep_chars] + " ... " + label[-keep_chars:]
-
-    return label
-
-
-def _get_edge_info(fid, edge_id, subgraph, is_input):
-    """
-    Extract comprehensive information about an edge for display.
-
-    Args:
-        fid: FileId object for this edge
-        edge_id: The edge identifier
-        subgraph: IR subgraph containing this edge
-        is_input: True if this is an input edge, False if output
-
-    Returns:
-        Formatted string like:
-        - "edge_16 [FILE] \"covid-mts/inputs/in_tiny.csv\""
-        - "edge_17 [FIFO] '/tmp/pash_fifo_123'"
-        - "edge_18 [stdin]"
-    """
-    info_parts = [f"edge_{edge_id}"]
-
-    # Edge type indicator
-    if fid.is_ephemeral():
-        info_parts.append("[FIFO]")
-    elif fid.has_file_descriptor_resource():
-        resource = fid.get_resource()
-        if resource.is_stdin():
-            info_parts.append("[stdin]")
-        elif resource.is_stdout():
-            info_parts.append("[stdout]")
-        else:
-            info_parts.append("[fd]")
-    elif fid.has_file_resource():
-        info_parts.append("[FILE]")
-
-    # Resource details
-    if fid.has_file_resource():
-        filename = str(fid.get_resource().uri).strip('"')
-        info_parts.append(f'"{filename}"')
-
-        # Check if this edge connects to an S3 node with byte range info
-        # Look for ServerlessRemotePipe nodes in this subgraph
-        for node_id in subgraph.nodes.keys():
-            node = subgraph.get_node(node_id)
-            # Check if this node reads from this edge
-            if edge_id in node.get_input_list():
-                # Check if it's an S3 lambda node
-                if hasattr(node, 'cmd_invocation_with_io_vars'):
-                    cmd = node.cmd_invocation_with_io_vars
-                    # Look for byte range in operands
-                    if hasattr(cmd, 'operand_list'):
-                        for op in cmd.operand_list:
-                            op_str = str(op)
-                            if 'bytes=' in op_str:
-                                # Extract byte range
-                                import re
-                                match = re.search(r'bytes=(\d+-\d+)', op_str)
-                                if match:
-                                    info_parts.append(match.group(0))
-                                    break  # Found byte range, no need to continue
-    elif fid.is_ephemeral():
-        # Show FIFO name if needed
-        fifo_suffix = fid.get_fifo_suffix()
-        if fifo_suffix:
-            info_parts.append(f"'{config.PASH_TMP_PREFIX}{fifo_suffix}'")
-
-    return " ".join(info_parts)
-
-
-def _find_edge_connections(subgraphs: List[IR]) -> Dict[int, Tuple[int, int]]:
-    """
-    Build a map of cross-subgraph edge connections.
-
-    Args:
-        subgraphs: List of IR subgraphs
-
-    Returns:
-        Dictionary mapping edge_id -> (source_subgraph_idx, dest_subgraph_idx)
-        where -1 indicates external input/output
-    """
-    edge_to_sg = {}  # edge_id -> subgraph_idx
-    edge_connections = {}  # edge_id -> (from_sg_idx, to_sg_idx)
-
-    # First pass: map each edge to its subgraph
-    for sg_idx, subgraph in enumerate(subgraphs):
-        for edge_id in subgraph.edges.keys():
-            if edge_id not in edge_to_sg:
-                edge_to_sg[edge_id] = []
-            edge_to_sg[edge_id].append(sg_idx)
-
-    # Second pass: identify cross-subgraph edges
-    for edge_id, sg_indices in edge_to_sg.items():
-        if len(sg_indices) > 1:
-            # Edge connects multiple subgraphs
-            # Find which subgraph outputs to this edge and which inputs from it
-            for sg_idx, subgraph in enumerate(subgraphs):
-                if edge_id in subgraph.edges:
-                    _, from_node, to_node = subgraph.edges[edge_id]
-
-                    # If this subgraph has a node outputting to this edge
-                    if from_node is not None and to_node is None:
-                        # This is a source subgraph for this edge
-                        for other_idx in sg_indices:
-                            if other_idx != sg_idx:
-                                edge_connections[edge_id] = (sg_idx, other_idx)
-
-    return edge_connections
-
-
-def _draw_subgraph(sg_idx: int, subgraph: IR, edge_connections: Dict[int, Tuple[int, int]]) -> List[str]:
-    """
-    Generate ASCII art for a single subgraph.
-
-    Args:
-        sg_idx: Index of this subgraph
-        subgraph: IR object representing the subgraph
-        edge_connections: Map of edge_id -> (from_sg, to_sg)
-
-    Returns:
-        List of strings (lines) representing the ASCII visualization
-    """
-    lines = []
-
-    # Header
-    node_count = len(subgraph.nodes)
-    lines.append(f"Subgraph {sg_idx} ({node_count} node{'s' if node_count != 1 else ''}):")
-
-    if node_count == 0:
-        lines.append("  (empty)")
-        return lines
-
-    # Get source nodes (nodes with no incoming edges from other nodes in subgraph)
-    source_nodes = subgraph.source_nodes()
-
-    # Build a simple topological view
-    visited = set()
-
-    def draw_node_chain(node_id, indent=2):
-        """Recursively draw nodes in execution order"""
-        if node_id in visited:
-            return
-        visited.add(node_id)
-
-        node = subgraph.get_node(node_id)
-        label = _get_node_label(node)
-
-        # Get input edges
-        input_ids = node.get_input_list()
-        output_ids = node.get_output_list()
-
-        # Check if this node has multiple external inputs (merge pattern)
-        external_inputs = []
-        for in_id in input_ids:
-            if in_id in subgraph.edges:
-                fid, from_node, _ = subgraph.edges[in_id]
-                if from_node is None:  # External input
-                    external_inputs.append((in_id, fid))
-
-        # Show converging inputs for merge nodes
-        if len(external_inputs) > 1:
-            # Draw merge pattern: inputs converge into the node
-            box_width = max(len(label) + 4, 12)
-            for i, (in_id, fid) in enumerate(external_inputs):
-                source_info = ""
-                if in_id in edge_connections:
-                    from_sg, _ = edge_connections[in_id]
-                    source_info = f" (from Subgraph {from_sg})"
-                elif fid.has_file_resource():
-                    source_info = f" (file: {fid.get_resource().uri})"
-
-                if i == 0:
-                    # First input
-                    lines.append(" " * indent + f"[edge_{in_id}{source_info}] ─┐")
-                elif i == len(external_inputs) - 1:
-                    # Last input
-                    lines.append(" " * (indent + box_width + 3) + "├─> +" + "-" * (box_width - 2) + "+")
-                    lines.append(" " * indent + f"[edge_{in_id}{source_info}] ─┘   | " + label.ljust(box_width - 4) + " |")
-                    lines.append(" " * (indent + box_width + 7) + "+" + "-" * (box_width - 2) + "+")
-                else:
-                    # Middle inputs
-                    lines.append(" " * (indent + box_width + 3) + "│")
-                    lines.append(" " * indent + f"[edge_{in_id}{source_info}] ─┤")
-        else:
-            # Single or no external input - show normally
-            for in_id in input_ids:
-                if in_id in subgraph.edges:
-                    fid, from_node, _ = subgraph.edges[in_id]
-                    if from_node is None:  # External input
-                        source_info = ""
-                        if in_id in edge_connections:
-                            from_sg, _ = edge_connections[in_id]
-                            source_info = f" (from Subgraph {from_sg})"
-                        elif fid.has_file_resource():
-                            source_info = f" (file: {fid.get_resource().uri})"
-                        lines.append(" " * indent + f"[Input: edge_{in_id}{source_info}]")
-                        lines.append(" " * indent + "    |")
-                        lines.append(" " * indent + "    v")
-
-            # Draw the node box
-            box_width = max(len(label) + 4, 12)
-            lines.append(" " * indent + "+" + "-" * (box_width - 2) + "+")
-            lines.append(" " * indent + "| " + label.ljust(box_width - 4) + " |")
-            lines.append(" " * indent + "+" + "-" * (box_width - 2) + "+")
-
-        # Get next nodes
-        next_nodes = subgraph.get_next_nodes(node_id)
-
-        # Check if this node has multiple outputs (split pattern)
-        has_multiple_outputs = len(output_ids) > 1
-
-        if has_multiple_outputs:
-            # Draw split pattern with branches (always show as branches if multiple outputs)
-            lines.append(" " * indent + "    |")
-            for i, out_id in enumerate(output_ids):
-                dest_info = ""
-                if out_id in edge_connections:
-                    _, to_sg = edge_connections[out_id]
-                    dest_info = f" (to Subgraph {to_sg})"
-                elif out_id in subgraph.edges:
-                    fid, _, to_node = subgraph.edges[out_id]
-                    if to_node is None and fid.has_file_resource():
-                        dest_info = f" (file: {fid.get_resource().uri})"
-
-                branch_marker = "├──>" if i < len(output_ids) - 1 else "└──>"
-                lines.append(" " * indent + f"    {branch_marker} [edge_{out_id}{dest_info}]")
-        elif len(next_nodes) == 0:
-            # Sink node with single output
-            for out_id in output_ids:
-                lines.append(" " * indent + "    |")
-                lines.append(" " * indent + "    v")
-                dest_info = ""
-                if out_id in edge_connections:
-                    _, to_sg = edge_connections[out_id]
-                    dest_info = f" (to Subgraph {to_sg})"
-                elif out_id in subgraph.edges:
-                    fid, _, to_node = subgraph.edges[out_id]
-                    if to_node is None and fid.has_file_resource():
-                        dest_info = f" (file: {fid.get_resource().uri})"
-                lines.append(" " * indent + f"[Output: edge_{out_id}{dest_info}]")
-        elif len(next_nodes) == 1:
-            # Linear chain continues
-            lines.append(" " * indent + "    |")
-            lines.append(" " * indent + "    v")
-            draw_node_chain(next_nodes[0], indent)
-        else:
-            # Multiple next nodes (shouldn't happen if has_multiple_outputs handled above)
-            lines.append(" " * indent + "    |")
-            for i, next_id in enumerate(next_nodes):
-                edge_label = ""
-                for out_id in output_ids:
-                    if out_id in subgraph.edges:
-                        _, _, to_node = subgraph.edges[out_id]
-                        if to_node == next_id:
-                            edge_label = f"edge_{out_id}"
-                            if out_id in edge_connections:
-                                _, to_sg = edge_connections[out_id]
-                                edge_label += f" (to Subgraph {to_sg})"
-                            break
-
-                branch_marker = "├──>" if i < len(next_nodes) - 1 else "└──>"
-                lines.append(" " * indent + f"    {branch_marker} [{edge_label}]")
-
-    # Start from source nodes
-    for source_id in source_nodes:
-        draw_node_chain(source_id)
-        lines.append("")  # Blank line between chains
-
-    return lines
-
-
-def _create_subgraph_summary(sg_idx: int, subgraph: IR) -> str:
-    """
-    Create a one-line summary of a subgraph for compact display.
-
-    Args:
-        sg_idx: Index of the subgraph
-        subgraph: IR object
-
-    Returns:
-        String summary like "cat → r_split → [2 outputs]"
-    """
-    if len(subgraph.nodes) == 0:
-        return "(empty)"
-
-    # NEW APPROACH: Show all nodes starting with source nodes
-    # (Can't follow edges for s3 nodes since they have output_edge=None)
-
-    # Start with source nodes (nodes that start the pipeline)
-    source_nodes = subgraph.source_nodes()
-    node_ids_in_order = list(source_nodes)  # Source nodes first
-
-    # Add remaining nodes in sorted order
-    for node_id in sorted(subgraph.nodes.keys()):
-        if node_id not in node_ids_in_order:
-            node_ids_in_order.append(node_id)
-
-    # Create labels
-    node_labels = []
-    for node_id in node_ids_in_order:
-        node = subgraph.get_node(node_id)
-        label = _get_node_label(node, max_width=100)
-        node_labels.append(label)
-        if len(node_labels) >= 5:  # Limit to 5 nodes
-            break
-
-    if len(node_labels) == 0:
-        return "(no nodes)"
-
-    # Check if there are multiple outputs at the end
-    sink_nodes = subgraph.sink_nodes()
-    if len(sink_nodes) > 0:
-        total_outputs = sum(len(subgraph.get_node_output_fids(s)) for s in sink_nodes)
-        if total_outputs > 1:
-            node_labels.append(f"[{total_outputs} outputs]")
-
-    return " → ".join(node_labels)
-
-
-def _draw_unified_graph(subgraphs: List[IR], edge_connections: Dict[int, Tuple[int, int]]) -> List[str]:
-    """
-    Draw all subgraphs in a unified view with bridge connections.
-
-    Args:
-        subgraphs: List of IR subgraphs
-        edge_connections: Map of edge_id -> (from_sg, to_sg)
-
-    Returns:
-        List of lines representing the unified visualization
-    """
-    lines = []
-
-    # Build a mapping of which subgraphs connect to which
-    sg_connections = {}  # sg_idx -> {to_sg_idx: [edge_ids]}
-    for edge_id, (from_sg, to_sg) in edge_connections.items():
-        if from_sg not in sg_connections:
-            sg_connections[from_sg] = {}
-        if to_sg not in sg_connections[from_sg]:
-            sg_connections[from_sg][to_sg] = []
-        sg_connections[from_sg][to_sg].append(edge_id)
-
-    # Draw each subgraph with connections
-    for sg_idx, subgraph in enumerate(subgraphs):
-        node_count = len(subgraph.nodes)
-        summary = _create_subgraph_summary(sg_idx, subgraph)
-
-        # NEW: Find and display external INPUT edges
-        source_nodes = subgraph.source_nodes()
-        for source_id in source_nodes:
-            input_fids = subgraph.get_node_input_fids(source_id)
-            for fid in input_fids:
-                edge_id = fid.get_ident()
-                if edge_id in subgraph.edges:
-                    _, from_node, _ = subgraph.edges[edge_id]
-                    if from_node is None:  # External input
-                        edge_info = _get_edge_info(fid, edge_id, subgraph, is_input=True)
-                        lines.append(f"[Input: {edge_info}]")
-                        lines.append("    ↓")
-
-        # Create box around subgraph
-        title = f" Subgraph {sg_idx} ({node_count} node{'s' if node_count != 1 else ''}) "
-        box_width = max(len(title) + 4, len(summary) + 6, 50)
-
-        # Top border
-        lines.append("┌" + "─" * (len(title)) + "─" + "─" * (box_width - len(title) - 2) + "┐")
-        lines.append("│" + title + " " * (box_width - len(title) - 2) + "│")
-        lines.append("│" + " " * (box_width - 2) + "│")
-
-        # Content
-        lines.append("│  " + summary + " " * (box_width - len(summary) - 4) + "│")
-        lines.append("│" + " " * (box_width - 2) + "│")
-
-        # Bottom border
-        lines.append("└" + "─" * (box_width - 2) + "┘")
-
-        # NEW: Find and display external OUTPUT edges
-        sink_nodes = subgraph.sink_nodes()
-        has_external_output = False
-        for sink_id in sink_nodes:
-            output_fids = subgraph.get_node_output_fids(sink_id)
-            for fid in output_fids:
-                edge_id = fid.get_ident()
-                if edge_id in subgraph.edges:
-                    _, _, to_node = subgraph.edges[edge_id]
-                    if to_node is None and edge_id not in edge_connections:
-                        # External output (not to another subgraph)
-                        if not has_external_output:
-                            lines.append("    ↓")
-                            has_external_output = True
-                        edge_info = _get_edge_info(fid, edge_id, subgraph, is_input=False)
-                        lines.append(f"[Output: {edge_info}]")
-
-        # Draw bridge connections to next subgraphs
-        if sg_idx in sg_connections:
-            for to_sg_idx, edge_ids in sg_connections[sg_idx].items():
-                # Draw dashed line(s) to next subgraph
-                for edge_id in edge_ids:
-                    connector = f"    ╎ edge_{edge_id} ─ ─ ─ ─> (to Subgraph {to_sg_idx})"
-                    lines.append(connector)
-            lines.append("")  # Blank line after connections
-        else:
-            lines.append("")  # Blank line between subgraphs
-
-    return lines
-
-
-def pretty_print_subgraphs(subgraphs: List[IR], show_connections: bool = True, unified_view: bool = False) -> None:
-    """
-    Print a human-readable ASCII graph representation of subgraphs.
-
-    This function visualizes the structure of IR subgraphs with ASCII art,
-    showing nodes as boxes, edges as arrows, and cross-subgraph connections.
-
-    Args:
-        subgraphs: List of IR objects (subgraphs from split_ir)
-        show_connections: Whether to show edge connections summary at end (separate view only)
-        unified_view: If True, show all subgraphs in a connected layout with bridge edges
-
-    Example:
-        >>> subgraphs, mapping = split_ir(optimized_ir)
-        >>> pretty_print_subgraphs(subgraphs)  # Detailed separate view
-        >>> pretty_print_subgraphs(subgraphs, unified_view=True)  # Compact unified view
-    """
-    # Find all cross-subgraph connections
-    edge_connections = _find_edge_connections(subgraphs)
-
-    if unified_view:
-        # Unified view: all subgraphs in connected layout
-        print("=" * 80)
-        print(" " * 20 + "UNIFIED GRAPH VISUALIZATION")
-        print("=" * 80)
-        print()
-
-        lines = _draw_unified_graph(subgraphs, edge_connections)
-        for line in lines:
-            print(line)
-    else:
-        # Separate view: each subgraph shown individually
-        print("=" * 80)
-        print(" " * 25 + "SUBGRAPH VISUALIZATION")
-        print("=" * 80)
-        print()
-
-        # Draw each subgraph
-        for sg_idx, subgraph in enumerate(subgraphs):
-            lines = _draw_subgraph(sg_idx, subgraph, edge_connections)
-            for line in lines:
-                print(line)
-            print()
-
-        # Show cross-subgraph connection summary
-        if show_connections and edge_connections:
-            print("=" * 80)
-            print(" " * 20 + "CROSS-SUBGRAPH CONNECTIONS")
-            print("=" * 80)
-            for edge_id, (from_sg, to_sg) in sorted(edge_connections.items()):
-                print(f"  edge_{edge_id}: Subgraph {from_sg} → Subgraph {to_sg}")
-            print()

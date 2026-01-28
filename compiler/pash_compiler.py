@@ -350,24 +350,60 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 
 
 
-## This functions adds an eager on a given edge.
-def add_eager(eager_input_id, graph, fileIdGen):
+## This function inserts an eager evaluation node on a given edge in the dataflow graph.
+##
+## Purpose: Prevents deadlocks in parallel execution by forcing data to be buffered through
+## an intermediate "eager" node before reaching the consumer. This ensures that the producer
+## can complete its execution without waiting for the consumer to start reading.
+##
+## The transformation changes the graph structure from:
+##     [Producer] --eager_input_id--> [Consumer]
+## to:
+##     [Producer] --eager_input_id--> [Eager/Tee Node] --new_id--> [Consumer]
+##
+## Parameters:
+##   - eager_input_id: The edge ID (file identifier) where the eager node should be inserted
+##   - graph: The dataflow graph (IR) being modified
+##   - fileIdGen: File ID generator used to create new unique file identifiers
+def add_eager(eager_input_id, graph, fileIdGen, is_s3=False):
+    ## Step 1: Create a new ephemeral file identifier for the output edge of the eager node.
+    ## Ephemeral files are temporary pipes/buffers that exist only during execution.
     new_fid = fileIdGen.next_ephemeral_file_id()
+    ## Extract the integer identifier from the file ID object
     new_id = new_fid.get_ident()
 
+    ## Step 2: Create the eager node itself, implemented using dgsh-tee.
+    ## dgsh-tee is a buffering utility that reads from eager_input_id and writes to new_id,
+    ## effectively creating a buffer point in the dataflow.
     ## TODO: seperate to better use dgsh-tee params and maybe deprecate eager
-    eager_node = dgsh_tee.make_dgsh_tee_node(eager_input_id, new_id)
+    eager_node = dgsh_tee.make_dgsh_tee_node(eager_input_id, new_id, is_s3=is_s3)
 
-    ## Add the edges and the nodes to the graph
+    ## Step 3: Register the new output edge with the graph.
+    ## This adds the new_fid to the graph's edge collection so it can be referenced.
     graph.add_edge(new_fid)
 
-    ## Modify the next node inputs to be the new inputs
+    ## Step 4: Rewire the consumer node to read from the eager node's output instead
+    ## of the original edge.
+    ##
+    ## The graph.edges data structure is: edges[edge_id] = (fid, from_node_id, to_node_id)
+    ## So graph.edges[eager_input_id][2] retrieves the destination node ID.
     next_node_id = graph.edges[eager_input_id][2]
+    ## Only rewire if there is actually a consumer node (not None, which would indicate
+    ## that this edge goes to an output file or sink rather than another node)
     if(not next_node_id is None):
+        ## Retrieve the consumer node object from the graph
         next_node = graph.get_node(next_node_id)
+        ## Update the consumer node's internal state: replace its input edge reference
+        ## from eager_input_id to new_id. This tells the node to read from the eager
+        ## node's output instead of the original producer's output.
         next_node.replace_edge(eager_input_id, new_id)
+        ## Update the graph's edge routing: set new_id's destination to be next_node_id.
+        ## This completes the connection: eager_node -> new_id -> next_node
         graph.set_edge_to(new_id, next_node_id)
 
+    ## Step 5: Add the eager node to the graph's node collection.
+    ## At this point, the graph structure has been successfully transformed with the
+    ## eager node inserted as a buffer between the producer and consumer.
     graph.add_node(eager_node)
 
 

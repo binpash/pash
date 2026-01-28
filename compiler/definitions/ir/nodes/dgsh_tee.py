@@ -16,7 +16,7 @@ class DGSHTee(DFGNode):
                          com_redirs=com_redirs,
                          com_assignments=com_assignments)
 
-def make_dgsh_tee_node(input_id, output_id):
+def make_dgsh_tee_node(input_id, output_id, is_s3=False):
     dgsh_tee_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dgsh_tee_binary'])
     if config.pash_args.serverless_exec:
         dgsh_tee_bin = config.config['runtime']['dgsh_tee_binary']
@@ -24,11 +24,29 @@ def make_dgsh_tee_node(input_id, output_id):
     access_map = {output_id: make_stream_output(),
                   input_id: make_stream_input()}
 
-    flag_option_list = [OptionWithIO("-i", input_id),
+    #6.sh LEASH OOM with -I flag 
+    #TODO: tune it -m 
+    
+
+    if is_s3:
+        flag_option_list = [OptionWithIO("-i", input_id),
                         OptionWithIO("-o", output_id),
                         Flag("-I"),
-                        # Flag("-f"),
+                        OptionWithIO("-m", ArgStringType(Arg.string_to_arg("2G"))),
                         OptionWithIO("-b", ArgStringType(Arg.string_to_arg(str(config.config['runtime']['dgsh_buffer_size']))))]
+    else: #ec2 
+
+        flag_option_list = [OptionWithIO("-i", input_id),
+                        OptionWithIO("-o", output_id),
+                        # Flag("-I"),
+                        # OptionWithIO("-m", ArgStringType(Arg.string_to_arg("2G"))),
+                        OptionWithIO("-b", ArgStringType(Arg.string_to_arg(str(config.config['runtime']['dgsh_buffer_size']))))]
+
+        # Flag("-f"),
+        # OptionWithIO("-T", ArgStringType(Arg.string_to_arg("/tmp"))),
+        # OptionWithIO("-t", ArgStringType(Arg.string_to_arg(""))),
+
+    # print(flag_option_list)
 
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=dgsh_tee_bin,
