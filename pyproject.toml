@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "binpash-pash"
-version = "0.16.5"
+name = "pash"
+version = "0.16.6"
 description = "Light-touch Data-Parallel Shell Processing"
 readme = "README.md"
 license = {file = "LICENSE"}

@@ -118,7 +118,7 @@ jobs:
 
     environment:
       name: test-pypi
-      url: https://test.pypi.org/project/binpash-pash/
+      url: https://test.pypi.org/project/pash/
 
     permissions:
       id-token: write  # Required for trusted publishing
@@ -148,7 +148,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/project/binpash-pash/
+      url: https://pypi.org/project/pash/
 
     permissions:
       id-token: write  # Required for trusted publishing
