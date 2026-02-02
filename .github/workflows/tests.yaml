@@ -4,8 +4,10 @@ on:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     # the paths that trigger the ci
     paths: 
-        - compiler/**
-        - runtime/**
+        - src/pash/compiler/**
+        - src/pash/preprocessor/**
+        - src/pash/jit_src/pash/runtime/**
+        - src/pash/runtime/**
         - evaluation/**
         - annotations/**
         - scripts/**
@@ -14,8 +16,10 @@ on:
       - main
       - future
     paths: 
-        - compiler/**
-        - runtime/**
+        - src/pash/compiler/**
+        - src/pash/preprocessor/**
+        - src/pash/jit_src/pash/runtime/**
+        - src/pash/runtime/**
         - evaluation/**
         - annotations/**
         - scripts/**
@@ -28,14 +32,14 @@ jobs:
         matrix:
           os: 
             - ubuntu-24.04
-            - ubuntu-20.04
+            # - ubuntu-20.04
             # TODO: Test on other OSes (see #620)
             # - debian-12
             # - fedora-41
       runs-on: ${{ matrix.os }}
       if: github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v2 
+        - uses: actions/checkout@v4
           with:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running Correctness Tests
@@ -43,12 +47,13 @@ jobs:
             sudo touch /.githubenv
             # install the system deps and pash the environment
             sudo -E bash scripts/distro-deps.sh -o
-            # install pash
+            # install pash (uses pip install -e)
             sudo -E bash scripts/setup-pash.sh -o
-            export PASH_TOP=$PWD
+            source python_pkgs/bin/activate
+            export PASH_TOP=$PWD/src/pash
             export PATH=$PATH:$PASH_TOP
             # run all the tests (INTRO, INTERFACE, COMPILER)
-            cd scripts && bash run_tests.sh  
+            cd scripts && bash run_tests.sh
             # fetch the execution results of the passed/failed
             cd workflow && bash parse.sh > results.log 2>&1  
             # get the timer
@@ -61,7 +66,7 @@ jobs:
             cat results.log >> $GITHUB_ENV
             echo 'EOF' >> $GITHUB_ENV
         - name: Comment on PR
-          uses: actions/github-script@v3
+          uses: actions/github-script@v7
           with:
             script: |
               let body = `${{ env.VERSION }}`
@@ -70,7 +75,7 @@ jobs:
               if (context.eventName === "push" && (context.ref === "refs/heads/main" || context.ref === "refs/heads/future")) {
                 return 0;
               }
-              github.issues.createComment({
+              await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -85,7 +90,7 @@ jobs:
       runs-on: ubuntu-latest
       if: github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v3 
+        - uses: actions/checkout@v4
           with:
             ref: ${{ github.event.pull_request.head.sha }}
 
@@ -104,11 +109,11 @@ jobs:
           with:
             ignore_paths:
               annotations
-              compiler/parser/libdash
-              compiler/tests
+              src/pash/compiler/parser/libdash
+              src/pash/compiler/tests
               evaluation
               python_pkgs
-              runtime/agg/cpp/tests
+              src/pash/runtime/agg/cpp/tests
               scripts
             ignore_names:
               test_evaluation_scripts.sh

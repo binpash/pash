@@ -132,7 +132,7 @@ These should take less than 10 minutes.
 
 It runs the script on:
 - bash
-- pa.sh --width 16
+- pash --width 16
 
 The results are saved in:
 - [evaluation/results/max-temp-complete-2000-2000-seq.time](../evaluation/results/max-temp-complete-2000-2000-seq.time)

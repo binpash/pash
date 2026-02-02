@@ -33,5 +33,6 @@ if [ $(groups $(whoami) | grep -c "sudo\|root\|admin") -ge 1 ]; then
   # only run this if we are in the sudo group (or it's doomed to fail)
   bash ./pash/scripts/distro-deps.sh
 fi
-export PASH_TOP="$PWD/pash"
+export PASH_TOP="$PWD/pash/src/pash"
+export PATH="$PATH:$PWD/pash"
 bash ./pash/scripts/setup-pash.sh

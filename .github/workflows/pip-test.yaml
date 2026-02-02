@@ -1,0 +1,134 @@
+name: Test pip Install
+
+on:
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened, ready_for_review]
+    paths:
+      - src/pash/**
+      - pyproject.toml
+      - setup.py
+      - MANIFEST.in
+  push:
+    branches: [main, future]
+    paths:
+      - src/pash/**
+      - pyproject.toml
+      - setup.py
+      - MANIFEST.in
+  # Allow manual trigger
+  workflow_dispatch:
+  # Allow being called by other workflows
+  workflow_call:
+
+jobs:
+  pip-install-test:
+    runs-on: ubuntu-24.04
+    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install system dependencies
+        run: |
+          sudo touch /.githubenv
+          sudo -E bash scripts/distro-deps.sh -o
+
+      - name: Build and install via pip
+        run: |
+          pip install build
+          python -m build
+          pip install dist/*.whl
+
+      - name: Verify pash command works
+        run: |
+          pash --version
+          pash --help
+          pash -c 'echo "Hello from pip install!"'
+
+      - name: Set up test environment
+        run: |
+          # Set PASH_TOP for tests (points to installed package)
+          export PASH_TOP=$(python3 -c "import pash; print(pash.__file__.rsplit('/', 1)[0])")
+          export PATH=$PATH:$PWD
+          export TMPDIR="${TMPDIR:-/tmp/}"
+
+          # Generate test inputs
+          cd evaluation/tests/input
+          ./setup.sh
+
+      - name: Run interface tests with pip-installed pash
+        run: |
+          export PASH_TOP=$(python3 -c "import pash; print(pash.__file__.rsplit('/', 1)[0])")
+          export PATH=$PATH:$PWD
+          export TMPDIR="${TMPDIR:-/tmp/}"
+          cd evaluation/tests/interface_tests
+          ./run.sh
+
+      - name: Run intro tests with pip-installed pash
+        run: |
+          export PASH_TOP=$(python3 -c "import pash; print(pash.__file__.rsplit('/', 1)[0])")
+          export PATH=$PATH:$PWD
+          cd evaluation/intro
+          ./test.sh
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "=== Interface Tests Results ==="
+          if [ -f "evaluation/tests/interface_tests/output/result_status" ]; then
+            echo ""
+            echo "Passed tests:"
+            grep "are identical" "evaluation/tests/interface_tests/output/result_status" | awk '{print "  ✓", $1}' || echo "  (none)"
+            echo ""
+            echo "Failed tests:"
+            grep "are not identical" "evaluation/tests/interface_tests/output/result_status" | awk '{print "  ✗", $1}' || echo "  (none)"
+            echo ""
+            TOTAL=$(cat "evaluation/tests/interface_tests/output/result_status" | wc -l)
+            PASSED=$(grep -c "are identical" "evaluation/tests/interface_tests/output/result_status" || echo 0)
+            echo "Summary: ${PASSED}/${TOTAL} tests passed"
+          else
+            echo "No test results found"
+          fi
+          echo ""
+          echo "=== Intro Tests Results ==="
+          if [ -f "evaluation/intro/output/result_status" ]; then
+            echo ""
+            echo "Passed tests:"
+            grep "are identical" "evaluation/intro/output/result_status" | awk '{print "  ✓", $1}' || echo "  (none)"
+            echo ""
+            echo "Failed tests:"
+            grep "are not identical" "evaluation/intro/output/result_status" | awk '{print "  ✗", $1}' || echo "  (none)"
+            echo ""
+            TOTAL=$(cat "evaluation/intro/output/result_status" | wc -l)
+            PASSED=$(grep -c "are identical" "evaluation/intro/output/result_status" || echo 0)
+            echo "Summary: ${PASSED}/${TOTAL} tests passed"
+          else
+            echo "No test results found"
+          fi
+
+      - name: Check for failures
+        run: |
+          FAILED=0
+          if [ -f "evaluation/tests/interface_tests/output/result_status" ]; then
+            INTERFACE_FAILED=$(grep -c "are not identical" "evaluation/tests/interface_tests/output/result_status" || echo 0)
+            FAILED=$((FAILED + INTERFACE_FAILED))
+          fi
+          if [ -f "evaluation/intro/output/result_status" ]; then
+            INTRO_FAILED=$(grep -c "are not identical" "evaluation/intro/output/result_status" || echo 0)
+            FAILED=$((FAILED + INTRO_FAILED))
+          fi
+          if [ "$FAILED" -gt 0 ]; then
+            echo "::error::$FAILED test(s) failed"
+            exit 1
+          fi

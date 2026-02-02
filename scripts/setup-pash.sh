@@ -2,70 +2,65 @@
 
 set -e
 
-## TODO: Maybe hide stdout and stderr to logs by default and only if debug flag exists show
-
 cd "$(dirname "$0")"
-# set PASH_TOP
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+SCRIPT_DIR="$(pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-cd $PASH_TOP
-. "$PASH_TOP/scripts/utils.sh"
-read_cmd_args $@
+. "$SCRIPT_DIR/utils.sh"
+read_cmd_args "$@"
 
-LOG_DIR=$PASH_TOP/install_logs
-mkdir -p $LOG_DIR
-PYTHON_PKG_DIR=$PASH_TOP/python_pkgs
-# remove the folder in case it exists
-rm -rf $PYTHON_PKG_DIR
-# create the new folder
-mkdir -p $PYTHON_PKG_DIR
+LOG_DIR=$REPO_ROOT/install_logs
+mkdir -p "$LOG_DIR"
+PYTHON_PKG_DIR=$REPO_ROOT/python_pkgs
 
-echo "Installing python dependencies..."
-
-python3 -m pip install -r "$PASH_TOP/requirements.txt" --no-cache-dir --root $PYTHON_PKG_DIR --ignore-installed
-
-## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
-if [[ "$install_eval" == 1 ]];  then
-    python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
-    python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
+# Check if venv module is available
+if ! python3 -m venv --help &> /dev/null; then
+    echo "Error: python3-venv module not found. Please install it:" >&2
+    echo "  Ubuntu/Debian: sudo apt install python3-venv" >&2
+    echo "  Fedora/RHEL: sudo dnf install python3" >&2
+    exit 1
 fi
 
-# clean the python packages
-cd $PYTHON_PKG_DIR
-# can we find a better alternative to that                                      
-pkg_path=$(find . \( -name "site-packages" -or -name "dist-packages" \) -type d)
-for directory in $pkg_path; do
-  # using which to avoid the `-i` alias in many distros
-  $(which cp) -r $directory/* ${PYTHON_PKG_DIR}/
-done
+# Create virtual environment if it doesn't exist
+if [ ! -d "$PYTHON_PKG_DIR" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$PYTHON_PKG_DIR"
+fi
 
+# Upgrade pip
+echo "Upgrading pip..."
+"$PYTHON_PKG_DIR/bin/pip" install --upgrade pip
 
-# Build runtime tools: eager, split
-echo "Building runtime tools..."
-cd "$PASH_TOP/runtime/"
-case "$distro" in
-    freebsd*) 
-        gmake #&> $LOG_DIR/make.log
-        ;;
-    *)
-        make #&> $LOG_DIR/make.log
-        if [ -f /.dockerenv ]; then
-            # issue with docker only
-            python3 -m pip install -U --force-reinstall pip
-            cp "$PASH_TOP"/pa.sh /usr/bin/
-        fi
-        ;;
-esac
+# Install PaSh in editable mode (this also builds runtime binaries via setup.py)
+echo "Installing PaSh and dependencies..."
+"$PYTHON_PKG_DIR/bin/pip" install -e "$REPO_ROOT"
 
+# Install evaluation dependencies if requested
+if [[ "$install_eval" == 1 ]]; then
+    echo "Installing evaluation dependencies..."
+    "$PYTHON_PKG_DIR/bin/pip" install numpy matplotlib
+fi
+
+# Generate input files for tests
 echo "Generating input files..."
-$PASH_TOP/evaluation/tests/input/setup.sh
+"$REPO_ROOT/evaluation/tests/input/setup.sh"
 
-# export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 echo " * * * "
-echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
+echo "PaSh installation complete!"
+echo ""
+echo "To use PaSh, either:"
+echo "  1. Activate the virtual environment: source $PYTHON_PKG_DIR/bin/activate"
+echo "     Then run: pash <script.sh>"
+echo ""
+echo "  2. Or add the virtual environment to your PATH:"
+echo "     export PATH=\"$PYTHON_PKG_DIR/bin:\$PATH\""
+echo "     Then run: pash <script.sh>"
+echo ""
+echo "  3. Or set PASH_TOP for scripts that need it:"
+echo "     export PASH_TOP=$REPO_ROOT/src/pash"
 echo " * * * "
-# in case we are running on docker or CI, installation is complete at this moment
+
+# In CI/Docker environments, exit without prompting
 if [[ -f /.dockerenv || -f /.githubenv ]]; then
-    exit 0  
+    exit 0
 fi
-

@@ -47,7 +47,7 @@ echo "Executing the complete max-temp script with bash..."
 seq "$start_year" "$end_year" | { time /bin/bash $max_temp_complete_script > $seq_output ; } 2> >(tee "${seq_time}" >&2)
 
 echo "Executing the complete max-temp script with pash -w 16 (log in: ${temp_dir}/max_temp_pash_16_log)"
-seq "$start_year" "$end_year" | { time $PASH_TOP/pa.sh -w 16 --log_file "${temp_dir}/max_temp_pash_16_log" --output_time $max_temp_complete_script ; } 1> "$pash_width_16_output" 2> >(tee "$pash_width_16_time" >&2)
+seq "$start_year" "$end_year" | { time pash -w 16 --log_file "${temp_dir}/max_temp_pash_16_log" --output_time $max_temp_complete_script ; } 1> "$pash_width_16_output" 2> >(tee "$pash_width_16_time" >&2)
 echo "Checking for output equivalence..."
 diff -s $seq_output $pash_width_16_output | head
  
@@ -67,7 +67,7 @@ if [ "$execute_separate_flag" -eq 1 ]; then
     seq "$start_year" "$end_year" | { time /bin/bash $max_temp_preprocess_script > $seq_output ; } 2> >(tee "${seq_preprocess_time}" >&2)
 
     echo "Executing the preprocessing max-temp script with pash -w 16 (log in: ${temp_dir}/pash_16_log)"
-    seq "$start_year" "$end_year" | { time $PASH_TOP/pa.sh -w 16 --log_file "${temp_dir}/pash_16_log" --output_time $max_temp_preprocess_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_preprocess_time}" >&2)
+    seq "$start_year" "$end_year" | { time pash -w 16 --log_file "${temp_dir}/pash_16_log" --output_time $max_temp_preprocess_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_preprocess_time}" >&2)
     ## This equivalence takes a very long time to check (uncomment with caution)
     # echo "Checking for output equivalence..."
     # diff -s $seq_output $pash_width_16_output | head
@@ -83,7 +83,7 @@ if [ "$execute_separate_flag" -eq 1 ]; then
     { time /bin/bash $max_temp_process_script > $seq_output ; } 2> >(tee "${seq_process_time}" >&2)
 
     echo "Executing the processing max-temp script with pash -w 16 (log in: ${temp_dir}/pash_16_log)"
-    { time $PASH_TOP/pa.sh -w 16 --log_file "${temp_dir}/pash_16_log" --output_time $max_temp_process_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_process_time}" >&2)
+    { time pash -w 16 --log_file "${temp_dir}/pash_16_log" --output_time $max_temp_process_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_process_time}" >&2)
     echo "Checking for output equivalence..."
     diff -s $seq_output $pash_width_16_output | head
 fi

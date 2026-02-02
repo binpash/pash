@@ -1,12 +1,20 @@
 #!/bin/bash
 
-export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source utils for helper functions
+. "$REPO_ROOT/scripts/utils.sh"
+
+# Always set PASH_TOP to the correct location (src/pash)
+# This overrides any stale values from old PaSh installations
+export PASH_TOP="$REPO_ROOT/src/pash"
 # time: print real in seconds, to simplify parsing
 
-pash="$PASH_TOP/pa.sh --profile_driven"
-pash_with_bash="$PASH_TOP/pa.sh --profile_driven --bash"
+pash="pash -d 0 --profile_driven"
+pash_with_bash="pash -d 0 --profile_driven --bash"
 
-output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
+output_dir="$REPO_ROOT/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
 mkdir -p "$output_dir"
 
@@ -215,7 +223,10 @@ test_set_e_3()
 test_redirect()
 {
     local shell=$1
-    $shell redirect_wrapper.sh "$shell"
+    ## Previously this was: 
+    ## `$shell redirect_wrapper.sh "$shell"`
+    ## But that caused a recursive pash invocation...
+    $shell redirect_wrapper.sh "bash"
 }
 
 test_unparsing()
@@ -348,6 +359,12 @@ test_IFS()
     $shell test-IFS.sh
 }
 
+test_shell_args()
+{
+    local shell=$1
+    $shell -c "echo hi" -x 2>&1
+}
+
 run_test test1
 run_test test2
 run_test test3
@@ -391,6 +408,7 @@ run_test test_star
 run_test test_env_vars
 run_test test_redir_dup
 run_test test_IFS
+run_test test_shell_args
 
 if type lsb_release >/dev/null 2>&1 ; then
    distro=$(lsb_release -i -s)

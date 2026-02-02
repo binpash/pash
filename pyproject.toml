@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pash"
+version = "0.16.6"
+description = "Light-touch Data-Parallel Shell Processing"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.12"
+authors = [{name = "The PaSh Authors", email = "pash-devs@googlegroups.com"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: C",
+    "Topic :: System :: Shells",
+    "Topic :: System :: System Shells",
+    "Topic :: Software Development :: Compilers",
+]
+keywords = ["shell", "parallelization", "bash", "posix", "dataflow"]
+dependencies = [
+    "graphviz",
+    "libdash",
+    "pash-annotations~=0.2.4",
+    "shasta~=0.4",
+    "libbash~=0.1.14",
+    "sh-expand~=0.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "mypy",
+    "build",
+    "twine",
+]
+
+[project.scripts]
+pash = "pash.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/binpash/pash"
+Documentation = "https://github.com/binpash/pash/tree/main/docs"
+Issues = "https://github.com/binpash/pash/issues"
+Discord = "https://discord.gg/6vS9TB97be"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"pash.compiler" = ["config.json"]
+"pash.runtime" = ["*.c", "*.h", "*.sh", "Makefile"]
+"pash.jit_runtime" = ["*.sh", "speculative/*.sh"]

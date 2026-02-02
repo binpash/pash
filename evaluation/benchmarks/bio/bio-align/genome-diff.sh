@@ -11,7 +11,7 @@
 # bacteria), and any regions with less than 10 supporting reads.
 
 # Requires: samtools, minimap2, bcftools
-# Data: http://ndr.md/data/bio/R1.fastq.gz http://ndr.md/data/bio/R2.fastq.gz  http://ndr.md/data/bio/ref.fa
+# Data: atlas.cs.brown.edu/data/bio/R1.fastq.gz atlas.cs.brown.edu/data/bio/R2.fastq.gz  atlas.cs.brown.edu/data/bio/ref.fa
 
 # https://github.com/samtools/samtools/releases/latest
 # https://github.com/lh3/minimap2

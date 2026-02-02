@@ -21,8 +21,10 @@ jobs:
           wget https://raw.githubusercontent.com/binpash/pash/main/scripts/up.sh
           sh up.sh
           ## Inspect it if you wish
-          export PASH_TOP="$PWD/pash/"
+          export PASH_TOP="$PWD/pash/src/pash"
           cd pash
-          "$PASH_TOP/pa.sh" -c "echo hi"
-          "$PASH_TOP/evaluation/tests/test_evaluation_scripts.sh"
+          # activate the virtual environment to get pash command
+          source python_pkgs/bin/activate
+          pash -c "echo hi"
+          ./evaluation/tests/test_evaluation_scripts.sh
           

@@ -86,10 +86,10 @@ for n_in in "${n_inputs[@]}"; do
     fi
 
     echo "Executing pash (no eager) on sort with --width ${n_in}"
-    { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time --no_eager $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_pash_no_eager.time" >&2)
+    { time pash -w "${n_in}" --log_file /tmp/pash_log --output_time --no_eager $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_pash_no_eager.time" >&2)
     diff -s /tmp/seq_output /tmp/pash_output | head
 
     echo "Executing pash on sort with --width ${n_in}"
-    { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_pash.time" >&2)
+    { time pash -w "${n_in}" --log_file /tmp/pash_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_pash.time" >&2)
     diff -s /tmp/seq_output /tmp/pash_output | head
 done

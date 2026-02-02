@@ -1,8 +1,15 @@
 #!/bin/bash
 
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-. "$PASH_TOP/scripts/utils.sh"
-cd $(dirname $0)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source utils for helper functions
+. "$REPO_ROOT/scripts/utils.sh"
+
+# Always set PASH_TOP to the correct location (src/pash)
+# This overrides any stale values from old PaSh installations
+export PASH_TOP="$REPO_ROOT/src/pash"
+cd "$SCRIPT_DIR"
 
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 head_sz="M"
@@ -16,7 +23,7 @@ esac
 [ "$1" = "-c" ] && rm-files 1M.txt all_cmds.txt words sorted_words 10M.txt
 
 if [ ! -f ./1M.txt ]; then
-  curl -sf --connect-timeout 10 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
+  curl -sf --connect-timeout 10 'atlas.cs.brown.edu/data/dummy/1M.txt' > 1M.txt
   if [ $? -ne 0 ]; then
     curl -f 'https://zenodo.org/record/7650885/files/1M.txt' > 1M.txt
     if [ $? -ne 0 ]; then
@@ -29,7 +36,7 @@ fi
 
 if [ ! -f ./all_cmds.txt ]; then
   if [ "$(hostname)" = "deathstar" ]; then
-    curl -sf --connect-timeout 10 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt
+    curl -sf --connect-timeout 10 'atlas.cs.brown.edu/data/dummy/all_cmds.txt' > all_cmds.txt
     if [ $? -ne 0 ]; then
       curl -f 'https://zenodo.org/record/7650885/files/all_cmds.txt' > all_cmds.txt || eexit "all_cmds not found"
     fi
@@ -40,7 +47,7 @@ if [ ! -f ./all_cmds.txt ]; then
 fi
 
 if [ ! -f ./words ]; then
-  curl -sf --connect-timeout 10 'http://ndr.md/data/dummy/words' > words
+  curl -sf --connect-timeout 10 'atlas.cs.brown.edu/data/dummy/words' > words
   if [ $? -ne 0 ]; then
     curl -f 'https://zenodo.org/record/7650885/files/words' > words
     if [ $? -ne 0 ]; then

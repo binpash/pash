@@ -7,8 +7,8 @@ on:
       - main
       - local-annotations-library
     paths:
-      - compiler/**
-      - runtime/**
+      - src/pash/compiler/**
+      - src/pash/runtime/**
       - evaluation/**
       - annotations/**
       - scripts/**
@@ -16,8 +16,8 @@ on:
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     paths:
-      - compiler/**
-      - runtime/**
+      - src/pash/compiler/**
+      - src/pash/runtime/**
       - evaluation/**
       - annotations/**
       - scripts/**
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -37,18 +37,19 @@ jobs:
           sudo touch /.githubenv
           # Install system dependencies
           sudo -E bash scripts/distro-deps.sh -o
-          # Install PaSh
+          # Install PaSh (uses pip install -e)
           sudo -E bash scripts/setup-pash.sh -o
-          export PASH_TOP=$PWD
+          export PASH_TOP=$PWD/src/pash
           export PATH=$PATH:$PASH_TOP
 
       - name: Run Custom Test Scripts
         run: |
-          export PASH_TOP=$PWD
+          export PASH_TOP=$PWD/src/pash
           export PATH=$PATH:$PASH_TOP
+          source python_pkgs/bin/activate
 
-          $PASH_TOP/scripts/setup-annotations.sh
-          $PASH_TOP/scripts/ci/test_local_annotations.sh
+          ./scripts/setup-annotations.sh
+          ./scripts/ci/test_local_annotations.sh
           test_exit_code=$?
           mkdir -p artifact
           echo "$test_exit_code=$?" | tee artifact/custom_results.log

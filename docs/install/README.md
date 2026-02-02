@@ -4,15 +4,16 @@ On Ubuntu, Fedora, Debian, or Arch, run the following to get PaSh up and running
 ```sh
 wget https://raw.githubusercontent.com/binpash/pash/main/scripts/up.sh
 sh up.sh
-export PASH_TOP="$PWD/pash/"
+cd pash
+source python_pkgs/bin/activate
 ## Run PaSh with echo hi
-"$PASH_TOP/pa.sh" -c "echo hi"
+pash -c "echo hi"
 ```
 
 If on other environments or prefer manual setup, there are essentially three steps required to set PaSh up:
 1. Clone repo: `git clone git@github.com:binpash/pash.git`
 2. Run `distro-deps.sh` (with `sudo`) and `setup-pash.sh`
-3. Export `PASH_TOP` and, optionally, add it to your `PATH`
+3. Activate the virtual environment: `source python_pkgs/bin/activate`
 
 Most scripts support a `--help` flag that documents their options. These three steps are described in detail below, depending on the environment.
 

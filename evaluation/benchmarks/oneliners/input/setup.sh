@@ -61,7 +61,7 @@ setup_dataset() {
 
   # download wamerican-insane dictionary and sort according to machine
   if [ ! -f ./dict.txt ]; then
-      curl -sf 'http://ndr.md/data/dummy/dict.txt' | sort > dict.txt
+      curl -sf 'atlas.cs.brown.edu/data/dummy/dict.txt' | sort > dict.txt
       if [ $? -ne 0 ]; then
           echo 'cannot find dict.txt -- please contact the developers of pash'
           exit 1
@@ -70,7 +70,7 @@ setup_dataset() {
     fi
 
     if [ ! -f ./all_cmds.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt
+        curl -sf 'atlas.cs.brown.edu/data/dummy/all_cmds.txt' > all_cmds.txt
         if [ $? -ne 0 ]; then
             # This should be OK for tests, no need for abort
             ls /usr/bin/* > all_cmds.txt

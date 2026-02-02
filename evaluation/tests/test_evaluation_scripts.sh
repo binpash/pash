@@ -1,8 +1,16 @@
 #!/bin/bash
 # time: print real in seconds, to simplify parsing
 ## Necessary to set PASH_TOP
-cd $(dirname $0)
-export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Source utils for helper functions
+. "$REPO_ROOT/scripts/utils.sh"
+
+# Always set PASH_TOP to the correct location (src/pash)
+# This overrides any stale values from old PaSh installations
+export PASH_TOP="$REPO_ROOT/src/pash"
 export DEBUG=0
 export PASH_LOG=1
 # export DEBUG=1 # Uncomment to print pash output
@@ -35,9 +43,9 @@ if [[ "${#SHELL_CONF[@]}" == 0 ]]; then
     SHELL_CONF+=("--bash" "")
 fi
 
-microbenchmarks_dir="${PASH_TOP}/evaluation/tests"
-intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary"
-test_results_dir="${PASH_TOP}/evaluation/tests/results"
+microbenchmarks_dir="${REPO_ROOT}/evaluation/tests"
+intermediary_dir="${REPO_ROOT}/evaluation/tests/test_intermediary"
+test_results_dir="${REPO_ROOT}/evaluation/tests/results"
 results_time="$test_results_dir/results.time"
 results_time_bash=${results_time}_bash
 results_time_pash=${results_time}_pash
@@ -119,10 +127,10 @@ bash_skip=(
 execute_pash_and_check_diff() {
     TIMEFORMAT="%3R" # %3U %3S"
     if [ "$DEBUG" -eq 1 ]; then
-        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
+        { time pash $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
-        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
+        { time pash $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
         b="$(cat "$pash_time")";
         test_diff_ec=$(cmp -s "$seq_output" "$pash_output" && echo 0 || echo 1)
         # differ
