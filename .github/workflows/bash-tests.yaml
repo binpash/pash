@@ -43,11 +43,12 @@ jobs:
 
       - name: Run Bash interface tests
         run: |
+          source python_pkgs/bin/activate
           export PASH_TOP=$PWD/src/pash
           export PATH=$PATH:$PASH_TOP
           export TMPDIR="${TMPDIR:-/tmp/}"
           cd evaluation/tests/interface_tests
-          ./run_bash_tests.sh
+          bash run_bash_tests.sh
 
       - name: Report results
         if: always()
