@@ -154,7 +154,7 @@ def stream_s3_to_fifo_handle(fifo_handle, bucket, key, chunks, debug=False):
         start_byte = chunk['start']
         end_byte = chunk['end']
         block_id = chunk['block_id']
-        is_last = 1 if chunk_idx == len(chunks) - 1 else 0  # Last chunk for THIS lambda
+        is_last = 1 #if chunk_idx == len(chunks) - 1 else 0  # Last chunk for THIS lambda
 
         # Download chunk from S3
         if debug:
