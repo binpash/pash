@@ -196,7 +196,7 @@ def main():
 
         if debug:
             chunk_ids = [chunk["block_id"] for chunk in chunks]
-            print(f"[{_now_ts()}][MAIN {shard_index}] strategy=smart_prealigned", file=sys.stderr)
+            print(f"[{_now_ts()}][MAIN {shard_index}] strategy=s3_smart_prealigned", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] S3: {s3_bucket}/{s3_key}", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] shard: {shard_index}/{num_shards}", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] UID: {job_uid}", file=sys.stderr)

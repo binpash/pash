@@ -141,7 +141,7 @@ class BoundaryCalculator:
 
         elif self.config.use_smart_boundaries:
             # Smart mode: EC2-side boundary scanning
-            from compiler.serverless.s3_smart import calculate_smart_boundaries
+            from compiler.serverless.s3_smart_prealigned import calculate_smart_boundaries
 
             self.shard_ranges, self.cached_window_size = calculate_smart_boundaries(
                 bucket=bucket,

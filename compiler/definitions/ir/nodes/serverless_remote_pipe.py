@@ -5,14 +5,23 @@ from pash_annotations.datatypes.BasicDatatypes import Operand
 import os
 
 
-S3_READER_STRATEGY_APPROX_CORRECTION = "approx_correction"
-S3_READER_STRATEGY_SMART_PREALIGNED = "smart_prealigned"
-S3_READER_STRATEGY_APPROX_TAIL_COORDINATION = "approx_tail_coordination"
+# Canonical strategy names aligned with evaluation/benchmarks/run-leash-benchmark-matrix.sh.
+S3_READER_STRATEGY_S3_APPROX_CORRECTION = "s3_approx_correction"
+S3_READER_STRATEGY_S3_SMART_PREALIGNED = "s3_smart_prealigned"
+S3_READER_STRATEGY_S3_APPROX_TAIL_COORD = "s3_approx_tail_coord"
 
 S3_READER_SCRIPT_BY_STRATEGY = {
-    S3_READER_STRATEGY_APPROX_CORRECTION: "aws/s3-chunk-reader-approx-correction.py",
-    S3_READER_STRATEGY_SMART_PREALIGNED: "aws/s3-chunk-reader-smart-prealigned.py",
-    S3_READER_STRATEGY_APPROX_TAIL_COORDINATION: "aws/s3-chunk-reader-approx-tail-coordination.py",
+    S3_READER_STRATEGY_S3_APPROX_CORRECTION: "aws/s3-chunk-reader-approx-correction.py",
+    S3_READER_STRATEGY_S3_SMART_PREALIGNED: "aws/s3-chunk-reader-smart-prealigned.py",
+    S3_READER_STRATEGY_S3_APPROX_TAIL_COORD: "aws/s3-chunk-reader-approx-tail-coord.py",
+}
+
+CORRECTION_STRATEGIES = {
+    S3_READER_STRATEGY_S3_APPROX_CORRECTION,
+}
+
+TAIL_COORD_STRATEGIES = {
+    S3_READER_STRATEGY_S3_APPROX_TAIL_COORD,
 }
 
 
@@ -35,12 +44,12 @@ def _determine_s3_reader_strategy_from_env(skip_first_line):
         )
     )
     if correction_mode:
-        return S3_READER_STRATEGY_APPROX_CORRECTION, True
+        return S3_READER_STRATEGY_S3_APPROX_CORRECTION, True
 
     if _env_flag("USE_SMART_BOUNDARIES") and not skip_first_line:
-        return S3_READER_STRATEGY_SMART_PREALIGNED, False
+        return S3_READER_STRATEGY_S3_SMART_PREALIGNED, False
 
-    return S3_READER_STRATEGY_APPROX_TAIL_COORDINATION, False
+    return S3_READER_STRATEGY_S3_APPROX_TAIL_COORD, False
 
 class ServerlessRemotePipe(DFGNode):
     def __init__(self,
@@ -85,7 +94,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                     strategy, correction_mode = _determine_s3_reader_strategy_from_env(skip_first_line)
                 else:
                     strategy = s3_reader_strategy
-                    correction_mode = (strategy == S3_READER_STRATEGY_APPROX_CORRECTION)
+                    correction_mode = (strategy in CORRECTION_STRATEGIES)
 
                 if strategy not in S3_READER_SCRIPT_BY_STRATEGY:
                     raise ValueError(f"Unknown S3 reader strategy: {strategy}")
@@ -101,7 +110,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                 operand_list.append(Operand(Arg.string_to_arg(f"job_uid={job_uid}"))) # job uid
                 operand_list.append(Operand(Arg.string_to_arg(f"debug=True")))
 
-                if strategy == S3_READER_STRATEGY_APPROX_TAIL_COORDINATION:
+                if strategy in TAIL_COORD_STRATEGIES:
                     operand_list.append(
                         Operand(Arg.string_to_arg(f"skip_first_line={'true' if skip_first_line else 'false'}"))
                     )

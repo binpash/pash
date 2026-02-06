@@ -38,7 +38,7 @@ from compiler.serverless.s3_config import BoundaryConfig, S3BoundaryConstants, C
 from compiler.serverless.s3_chunking import distribute_chunks_to_lambda, format_byte_range_parameter, get_s3_size
 from compiler.serverless.s3_boundary_calculator import BoundaryCalculator
 
-# Note: Mode-specific modules (s3_smart, s3_approx_correction, etc.) are imported
+# Note: Mode-specific modules (s3_smart_prealigned, s3_approx_correction, etc.) are imported
 # internally by BoundaryCalculator - no need to import them directly in ir_helper
 
 
@@ -151,8 +151,6 @@ def adjust_lambda_incoming_edges(
         source_nodes = subgraph.source_nodes()
 
         for source_node_id in source_nodes:
-            source_node = subgraph.get_node(source_node_id)
-
             # Get all input edges of this source node
             input_fids = subgraph.get_node_input_fids(source_node_id)
 
@@ -164,92 +162,6 @@ def adjust_lambda_incoming_edges(
                     # YES - Replace with in edge from ec2
                     subgraph.replace_edge(in_edge_id, ec2_file_in_edge)
                     total_lambdas += 1
-
-
-                    # next step: replace with a byte range command 
-
-
-                    #TODO. replace incoming edges of lambdas with the in_edge
-
-                    #ephemeral_edge = file_id_gen.next_ephemeral_file_id()
-
-                    # 2. Replace old rsplit edge with new edge
-                    #subgraph.replace_edge(in_edge_id, ephemeral_edge)
-
-                    # 3. Add S3 read node
-                    # #remote_read = serverless_remote_pipe.make_serverless_remote_pipe(
-                    #     local_fifo_id=ephemeral_edge.get_ident(),
-                    #     is_remote_read=True,
-                    #     remote_key=s3_file_path,
-                    #     output_edge=None,
-                    #     is_tcp=False
-                    # )
-                    #subgraph.add_node(remote_read)
-
-                    # 4. Add eager/dgsh-tee after S3 read (THIS IS THE MISSING PIECE!)
-                    #pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen)
-
-
-                    """
-                    # 1. Create ephemeral edge
-                    file_id_gen.next_ephemeral_file_id()
-                    ephemeral_edge = file_id_gen.next_ephemeral_file_id() #todo. is this not unique 
-                    # 2. Replace old edge (adds ephemeral_edge to graph, connects TO source_node)
-                    subgraph.replace_edge(in_edge_id, ephemeral_edge)
-                    #subgraph.add_to_edge(ephemeral_edge, source_node_id)
-
-                    # 3. Create remote_read node
-                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(
-                        local_fifo_id=ephemeral_edge.get_ident(),  # <-  Sets as implicit output
-                        is_remote_read=True,
-                        remote_key=s3_file_path,
-                        output_edge=None,
-                        is_tcp=False
-                    )
-
-                    # 4. Add node (auto-connects remote_read → ephemeral_edge via set_edge_from)
-                    subgraph.add_node(remote_read)
-                    #then we need to connect it to the source node 
-                    # we need to create a new edge for this 
-                    ephemeral_edge2 = file_id_gen.next_ephemeral_file_id()
-
-                    subgraph.add_from_edge(remote_read.get_id(), ephemeral_edge2)
-                    subgraph.set_edge_to(ephemeral_edge2.get_ident(), source_node_id)
-                    """
-                    #TODO. make this better or use the implicit ouput so you don't have to create a new edge like this
-
-                    """
-                    # 1. Create new ephemeral edge
-                    ephemeral_edge = file_id_gen.next_ephemeral_file_id()
-
-                    # 2. Add ephemeral edge to graph
-                    subgraph.add_edge(ephemeral_edge)
-
-                    # 3. Create remote_read node
-                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(
-                        local_fifo_id=ephemeral_edge.get_ident(),
-                        is_remote_read=True,
-                        remote_key=s3_file_path,
-                        output_edge=None,
-                        is_tcp=False
-                    )
-
-                    # 4. Add remote_read node (auto-connects its declared edges)
-                    subgraph.add_node(remote_read)
-
-                    # 5. Connect remote_read → ephemeral_edge
-                    subgraph.add_from_edge(remote_read.get_id(), ephemeral_edge)
-
-                    # 6. Update source_node to use ephemeral_edge as input (targeted, not global)
-                    source_node = subgraph.get_node(source_node_id)
-                    source_node.replace_edge(in_edge_id, ephemeral_edge.get_ident())
-
-                    # 7. Connect ephemeral_edge → source_node
-                    subgraph.set_edge_to(ephemeral_edge.get_ident(), source_node_id)
-
-                    # 8. Disconnect old edge from source_node
-                    subgraph.set_edge_to(in_edge_id, None)
-                    """
     return total_lambdas
 
 
@@ -352,7 +264,7 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
 # ============================================================================
 # NOTE: The following functions have been moved to dedicated modules:
 #   - expand_search_for_newline, estimate_avg_line_length -> s3_sampling.py
-#   - find_line_boundaries_smart -> s3_smart.py
+#   - find_line_boundaries_smart -> s3_smart_prealigned.py
 #   - get_s3_size, distribute_chunks_to_lambda, format_byte_range_parameter -> s3_chunking.py
 #   - BoundaryCalculator -> s3_boundary_calculator.py
 # These are imported at the top of this file.
@@ -701,11 +613,11 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                 chunks_per_lambda_param = chunks_per_lambda if chunks_per_lambda > 1 else None
 
                             if correction_mode:
-                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_APPROX_CORRECTION
+                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_S3_APPROX_CORRECTION
                             elif boundary_config.use_smart_boundaries and not skip_first_line:
-                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_SMART_PREALIGNED
+                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_S3_SMART_PREALIGNED
                             else:
-                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_APPROX_TAIL_COORDINATION
+                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_S3_APPROX_TAIL_COORD
 
                         else:
                             # Legacy approximate mode - calculate inline
@@ -721,7 +633,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                             window_size_param = None
                             window_after_vec_param = None
                             chunks_per_lambda_param = None
-                            s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_APPROX_TAIL_COORDINATION
+                            s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_S3_APPROX_TAIL_COORD
 
                         # Determine if we should write headers
                         # RSplit with -r flag means no headers in the split, so no headers in the entire pipeline
