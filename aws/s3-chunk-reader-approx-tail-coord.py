@@ -402,7 +402,7 @@ def main():
 
         if len(sys.argv) < 4:
             print(
-                "Usage: python3.9 aws/s3-chunk-reader-approx-tail-coordination.py "
+                "Usage: python3.9 aws/s3-chunk-reader-approx-tail-coord.py "
                 "<s3_key> <output_fifo> <byte_range> shard=<N> num_shards=<N> "
                 "job_uid=<UID> [skip_first_line=true|false] [write_headers=true|false]",
                 file=sys.stderr,
@@ -432,7 +432,7 @@ def main():
         log_timing("ARGS_PARSED", f"byte_range={start_byte}-{end_byte}", debug)
 
         if debug:
-            print(f"[{_now_ts()}][MAIN {shard_index}] strategy=approx_tail_coordination", file=sys.stderr)
+            print(f"[{_now_ts()}][MAIN {shard_index}] strategy=s3_approx_tail_coord", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] S3: {s3_bucket}/{s3_key}", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] Range: {byte_range_str}", file=sys.stderr)
             print(f"[{_now_ts()}][MAIN {shard_index}] shard: {shard_index}/{num_shards}", file=sys.stderr)
