@@ -3,7 +3,7 @@ S3 Boundary Detection - Adaptive Simple Mode
 
 Samples N equidistant positions from the file, computes mean average line length,
 and derives a single fixed window size from that.  The window is handed to the
-existing lambda-correction script (s3-approx-boundaries-lambda-correction.py)
+existing lambda-correction script (s3-chunk-reader-approx-correction.py)
 as a plain integer — the same code path used by approx_with_correction.
 
 Total S3 GET requests for boundary setup: N (default 5), regardless of the number

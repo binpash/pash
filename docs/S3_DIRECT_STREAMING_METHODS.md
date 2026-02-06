@@ -88,7 +88,7 @@ With 16 lambdas each trying to buffer 1-2GB:
 
 **Implementation**: Based on DFR (Distributed File Reader) from DISH paper.
 
-**Code**: `aws/s3-shard-reader-streaming.py`
+**Code**: `aws/s3-chunk-reader-approx-tail-coordination.py`
 
 **How It Works**:
 ```
@@ -190,7 +190,7 @@ boundaries[i] = actual_boundary
 
 **Implementation**: EC2 calculates approximate boundaries with zero overhead; each Lambda independently finds its own line boundaries.
 
-**Code**: `aws/s3-approx-boundaries-lambda-correction.py`
+**Code**: `aws/s3-chunk-reader-approx-correction.py`
 
 **How It Works**:
 
@@ -205,7 +205,7 @@ for i in range(total_chunks):
     chunk_boundaries[i] = [i * chunk_size, (i+1) * chunk_size - 1]
 
 # ═══════════════════════════════════════
-# Lambda Side (aws/s3-approx-boundaries-lambda-correction.py)
+# Lambda Side (aws/s3-chunk-reader-approx-correction.py)
 # ═══════════════════════════════════════
 
 # 1. Skip partial first line (if not first chunk)
@@ -470,7 +470,7 @@ Total time = max(all lambda times) ≈ 60s
 ### Key Files
 
 #### Lambda-Side Implementation
-- **`aws/s3-approx-boundaries-lambda-correction.py`**
+- **`aws/s3-chunk-reader-approx-correction.py`**
   - Main Lambda handler
   - Implements boundary correction logic
   - Handles line boundary checking
@@ -824,7 +824,7 @@ logger.info(f"Chunk {block_id}: approx_end={approx_end}, actual_end={actual_end}
   - Inspired Method 3
 
 ### Code Locations
-- **Lambda handler**: `aws/s3-approx-boundaries-lambda-correction.py`
+- **Lambda handler**: `aws/s3-chunk-reader-approx-correction.py`
 - **EC2 optimizer**: `compiler/serverless/ir_helper.py`
   - Line 968: Main entry point
   - Lines 1174-1232: Boundary calculation

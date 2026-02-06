@@ -27,7 +27,7 @@ if use_dynamic_boundaries:
 **Lines Modified**: 44-59, 70-76
 
 - Updated mode detection to check for `USE_DYNAMIC_BOUNDARIES`
-- Both dynamic and fixed approx modes now route to same lambda script: `s3-approx-boundaries-lambda-correction.py`
+- Both dynamic and fixed approx modes now route to same lambda script: `s3-chunk-reader-approx-correction.py`
 - Modified operand passing to handle `window_size=None` case:
   - If `window_size is None`: passes string `"window_size=None"`
   - If `window_size is not None`: passes numeric value as before
@@ -35,7 +35,7 @@ if use_dynamic_boundaries:
 **Key Implementation Details**:
 ```python
 if use_dynamic_boundaries or use_approx_with_correction:
-    remote_pipe_bin = "python3 aws/s3-approx-boundaries-lambda-correction.py"
+    remote_pipe_bin = "python3 aws/s3-chunk-reader-approx-correction.py"
 
     # Pass window_size operand for both modes
     if window_size is not None:
@@ -44,7 +44,7 @@ if use_dynamic_boundaries or use_approx_with_correction:
         operand_list.append(Operand(Arg.string_to_arg("window_size=None")))
 ```
 
-### 3. Lambda Script Changes (`aws/s3-approx-boundaries-lambda-correction.py`)
+### 3. Lambda Script Changes (`aws/s3-chunk-reader-approx-correction.py`)
 
 **Lines Modified**: 468-490 (parameter parsing), 187-288 (expansion function)
 
@@ -116,20 +116,20 @@ The system now checks modes in this priority order:
 1. **`USE_DYNAMIC_BOUNDARIES=true`** (NEW - highest priority)
    - No EC2 sampling
    - Lambda starts with 1KB window, doubles exponentially
-   - Uses `s3-approx-boundaries-lambda-correction.py` with `window_size=None`
+   - Uses `s3-chunk-reader-approx-correction.py` with `window_size=None`
 
 2. **`USE_APPROX_LAMBDA_CORRECTION=true`**
    - EC2 samples for avg line length
    - Calculates fixed window size
-   - Uses `s3-approx-boundaries-lambda-correction.py` with numeric window_size
+   - Uses `s3-chunk-reader-approx-correction.py` with numeric window_size
 
 3. **`USE_SMART_BOUNDARIES=true`**
    - EC2 pre-scans S3 for exact boundaries
-   - Uses `s3-get-object-smart-and-streaming.py`
+   - Uses `s3-chunk-reader-smart-prealigned.py`
 
 4. **Default** (no env vars)
    - Old approximate mode with inter-lambda communication
-   - Uses `s3-shard-reader-streaming.py`
+   - Uses `s3-chunk-reader-approx-tail-coordination.py`
 
 ## How to Test
 
@@ -187,7 +187,7 @@ cd evaluation/benchmarks/unix50
 
 1. `compiler/serverless/ir_helper.py` - Add dynamic mode logic
 2. `compiler/definitions/ir/nodes/serverless_remote_pipe.py` - Route to correct lambda script
-3. `aws/s3-approx-boundaries-lambda-correction.py` - Implement true exponential expansion
+3. `aws/s3-chunk-reader-approx-correction.py` - Implement true exponential expansion
 4. `evaluation/benchmarks/unix50/run-leash-compare-generic.sh` - Add --dynamic flag
 
 ## Verification Checklist
