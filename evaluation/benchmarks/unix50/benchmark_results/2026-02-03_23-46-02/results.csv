@@ -1,0 +1,3 @@
+run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt
+2026-02-03_23-46-02,6.sh,3_1M.txt,2,noopt,1,4.094,5955,0.000172,baseline,baseline
+2026-02-03_23-46-02,6.sh,3_1M.txt,2,single_shot,1,3.414,4916,0.000142,true,
