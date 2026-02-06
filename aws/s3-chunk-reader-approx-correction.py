@@ -1,8 +1,12 @@
 #!/usr/bin/env python3.9
 """
-S3 reader that:
-- receives approximate chunk boundaries from EC2
-- corrects each chunk to line boundaries inside the lambda (no inter-lambda coordination)
+S3 chunk reader: approximate boundaries with in-lambda correction.
+
+Design:
+- EC2 sends approximate chunk boundaries (single range or JSON chunk list).
+- Lambda corrects each chunk to line boundaries independently.
+- No Lambda-to-Lambda coordination is required.
+- `write_headers` controls whether 24-byte r_merge block headers are emitted.
 """
 
 import boto3
@@ -317,7 +321,14 @@ def main():
         log_timing("INIT", "Lambda initialization", debug=True)
 
         if len(sys.argv) < 4:
-            print("Usage: ... <s3_key> <output_fifo> <byte_range> shard=... num_shards=... job_uid=... window_size=...", file=sys.stderr)
+            print(
+                "Usage: python3.9 aws/s3-chunk-reader-approx-correction.py "
+                "<s3_key> <output_fifo> <byte_range> shard=<N> num_shards=<N> "
+                "job_uid=<UID> window_size=<bytes|adaptive|None> "
+                "[chunks_per_lambda=<N>] [window_after_vec=a,b,c] "
+                "[write_headers=true|false]",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         s3_key, output_fifo, byte_range_str = sys.argv[1], sys.argv[2], sys.argv[3]
