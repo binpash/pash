@@ -1,0 +1,8 @@
+run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt
+2026-02-04_22-21-34,sort.sh,1G.txt,4,noopt,1,28.175,N/A,N/A,baseline,baseline
+2026-02-04_22-21-34,sort.sh,1G.txt,4,s3opt,1,22.412,N/A,N/A,false,
+2026-02-04_22-21-34,sort.sh,1G.txt,4,s3optnonsmart,1,50.719,N/A,N/A,false,-Prince Andrew with one word  one argument  ﻿;+Prince Andrew with one word  one argument  
+2026-02-04_22-21-34,sort.sh,1G.txt,4,s3optdynamic,1,21.833,N/A,N/A,false,
+2026-02-04_22-21-34,sort.sh,1G.txt,4,adaptive,1,27.242,N/A,N/A,false,
+2026-02-04_22-21-34,sort.sh,1G.txt,4,adaptive_simple,1,23.813,N/A,N/A,false,
+2026-02-04_22-21-34,sort.sh,1G.txt,4,single_shot,1,24.465,N/A,N/A,false,

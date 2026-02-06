@@ -1,0 +1,3 @@
+run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt
+2026-02-05_23-50-12,sort-sort.sh,3G.txt,16,noopt,1,95.292,2310998,0.066672,baseline,baseline
+2026-02-05_23-50-12,sort-sort.sh,3G.txt,16,s3optdynamic,1,75.150,1578114,0.045528,true,
