@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source "$PASH_TOP/compiler/orchestrator_runtime/pash_orch_lib.sh"
+## Note: pash_communicate_unix_socket and pash_wait_until_unix_socket_listening
+## are now exported from pa.sh, so no need to source pash_orch_lib.sh
 
 export PASH_SPEC_NODE_DIRECTORY="${PASH_TMP_PREFIX}/speculative/partial_order/"
 

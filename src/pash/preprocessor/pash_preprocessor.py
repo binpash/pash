@@ -204,7 +204,8 @@ def _unix_socket_send_and_forget(socket_file, msg):
     try:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(socket_file)
-        sock.sendall(msg.encode())
+        msg_with_newline = msg + '\n'
+        sock.sendall(msg_with_newline.encode('utf-8'))
         sock.close()
     except Exception as e:
         log(f"Warning: Failed to send message to scheduler socket: {e}")
