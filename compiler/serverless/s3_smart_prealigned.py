@@ -15,7 +15,7 @@ Functions:
     - calculate_smart_boundaries: Wrapper that returns (shard_ranges, window_size=None)
 
 Usage:
-    from compiler.serverless.s3_smart import calculate_smart_boundaries
+    from compiler.serverless.s3_smart_prealigned import calculate_smart_boundaries
 
     shard_ranges, window_size = calculate_smart_boundaries(
         bucket="mybucket", key="file.txt",
