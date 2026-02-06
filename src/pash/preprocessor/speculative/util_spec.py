@@ -43,12 +43,15 @@ def save_df_region(
     text_to_output: str, trans_options, df_region_id: int, predecessor_ids: int
 ) -> None:
     """Save a dataflow region to a file."""
-    # Associate nodes with their surrounding loops
+    # Compute basic block ID from loop context
+    # (spec_future used trans_options.current_bb() from CFG; we approximate
+    #  using the first loop context entry, defaulting to bb 0)
     current_loop_context = trans_options.get_current_loop_context()
-    log("Df region:", df_region_id, "loop context:", current_loop_context)
+    bb_id = current_loop_context[0] if current_loop_context else 0
+    log("Df region:", df_region_id, "bb:", bb_id)
 
-    # Add the loop context to the partial_order state
-    trans_options.add_node_loop_context(df_region_id, current_loop_context)
+    # Store bb_id (int) in the partial_order state
+    trans_options.add_node_loop_context(df_region_id, bb_id)
 
     # Save df_region as text in its own file
     df_region_path = f"{partial_order_directory()}/{df_region_id}"
@@ -75,10 +78,9 @@ def serialize_number_of_var_assignments(number_of_var_assignments: int) -> str:
     return f"{number_of_var_assignments}\n"
 
 
-def serialize_loop_context(node_id: int, loop_contexts) -> str:
-    """Serialize a loop context."""
-    loop_contexts_str = ",".join([str(loop_ctx) for loop_ctx in loop_contexts])
-    return f"{node_id}-loop_ctx-{loop_contexts_str}\n"
+def serialize_loop_context(node_id: int, bb_id) -> str:
+    """Serialize a loop context (basic block ID for a node)."""
+    return f"{node_id}-loop_ctx-{bb_id}\n"
 
 
 def serialize_var_assignments(node_id: int) -> str:
@@ -113,14 +115,14 @@ def save_number_of_nodes(trans_options):
 
 
 def save_loop_contexts(trans_options):
-    """Save loop contexts to the partial order file."""
-    loop_context_dict = trans_options.get_all_loop_contexts()
-    log("Loop context dict:", loop_context_dict)
+    """Save loop contexts (bb IDs) to the partial order file."""
+    node_bb_dict = trans_options.get_all_loop_contexts()
+    log("Loop context dict:", node_bb_dict)
     po_file_path = trans_options.get_partial_order_file()
     with open(po_file_path, "a") as po_file:
-        for node_id in sorted(loop_context_dict.keys()):
-            loop_ctx = loop_context_dict[node_id]
-            po_file.write(serialize_loop_context(node_id, loop_ctx))
+        for node_id in sorted(node_bb_dict.keys()):
+            bb_id = node_bb_dict[node_id]
+            po_file.write(serialize_loop_context(node_id, bb_id))
 
 
 def save_var_assignment_contexts(trans_options):
