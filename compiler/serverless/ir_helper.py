@@ -33,6 +33,21 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvoca
 from definitions.ir.dfg_node import DFGNode
 from definitions.ir.arg import Arg
 
+# S3 boundary and chunking imports (organized by mode)
+from compiler.serverless.s3_config import BoundaryConfig, S3BoundaryConstants, ChunkingConstants
+from compiler.serverless.s3_chunking import distribute_chunks_to_lambda, format_byte_range_parameter, get_s3_size
+from compiler.serverless.s3_boundary_calculator import BoundaryCalculator
+
+# Note: Mode-specific modules (s3_smart, s3_approx_correction, etc.) are imported
+# internally by BoundaryCalculator - no need to import them directly in ir_helper
+
+
+# ============================================================================
+# Constants
+# ============================================================================
+# NOTE: S3BoundaryConstants, ChunkingConstants, and BoundaryConfig have been
+# moved to compiler/serverless/s3_config.py and are imported above
+
 
 # ============================================================================
 # Timing instrumentation utilities
@@ -40,6 +55,9 @@ from definitions.ir.arg import Arg
 
 # Global timing store
 _timing_data = {}
+
+# Global debug flag (read from environment)
+_debug_enabled = os.environ.get('PASH_DEBUG', 'false').lower() == 'true'
 
 @contextmanager
 def time_block(label):
@@ -50,7 +68,8 @@ def time_block(label):
     finally:
         elapsed = time.time() - start
         _timing_data[label] = elapsed
-        print(f"[TIMING] {label}: {elapsed:.3f}s")
+        if _debug_enabled:
+            print(f"[TIMING] {label}: {elapsed:.3f}s")
 
 def get_timing(label):
     """Retrieve a timing measurement."""
@@ -58,7 +77,7 @@ def get_timing(label):
 
 def print_timing_summary():
     """Print all timing measurements."""
-    if not _timing_data:
+    if not _timing_data or not _debug_enabled:
         return
     print("\n" + "="*60)
     print("TIMING SUMMARY")
@@ -234,238 +253,14 @@ def adjust_lambda_incoming_edges(
     return total_lambdas
 
 
+
 # ============================================================================
-# Byte-range optimization helpers (for S3 direct lambda streaming)
+# Graph Optimization Utilities (S3 Direct Streaming)
 # ============================================================================
 
-def unwrap_rwrap_node(rwrap_node: RWrap) -> DFGNode:
-    """
-    Extract the inner command from an RWrap node and create a plain DFGNode
-    that runs it directly without the r_wrap wrapper.
-
-    RWrap structure: r_wrap bash -c 'command'
-    Unwrapped:       bash -c 'command'
-    """
-    cmd_inv = rwrap_node.cmd_invocation_with_io_vars
-
-    # operand_list = ["bash -c", "'command args...'"]
-    # We want to run: bash -c 'command args...'
-    operand_list = cmd_inv.operand_list
-
-    # Extract the inner command string (operand_list[1])
-    inner_cmd = operand_list[1] if len(operand_list) > 1 else operand_list[0]
-
-    input_id = cmd_inv.implicit_use_of_streaming_input
-    output_id = cmd_inv.implicit_use_of_streaming_output
-
-    access_map = {
-        input_id: make_stream_input(),
-        output_id: make_stream_output()
-    }
-
-    # Create bash -c command
-    new_cmd_inv = CommandInvocationWithIOVars(
-        cmd_name="bash",
-        flag_option_list=[],
-        operand_list=[Operand(Arg.string_to_arg("-c")), inner_cmd],
-        implicit_use_of_streaming_input=input_id,
-        implicit_use_of_streaming_output=output_id,
-        access_map=access_map
-    )
-
-    return DFGNode(new_cmd_inv,
-                   com_redirs=rwrap_node.com_redirs,
-                   com_assignments=rwrap_node.com_assignments)
-
-
-def unwrap_rwraps_in_subgraph(subgraph: IR) -> int:
-    """
-    Find all RWrap nodes in a subgraph and replace them with unwrapped
-    versions that run the inner command directly.
-
-    Returns: Number of RWrap nodes unwrapped
-    """
-    unwrapped_count = 0
-
-    # Collect RWrap node IDs first (avoid modifying dict during iteration)
-    rwrap_ids = [nid for nid, node in subgraph.nodes.items() if isinstance(node, RWrap)]
-
-    for rwrap_id in rwrap_ids:
-        rwrap_node = subgraph.get_node(rwrap_id)
-
-        # Create unwrapped node with same edges
-        unwrapped_node = unwrap_rwrap_node(rwrap_node)
-
-        # Remove old RWrap node (disconnects edges)
-        subgraph.remove_node(rwrap_id)
-
-        # Add new unwrapped node (reconnects edges)
-        subgraph.add_node(unwrapped_node)
-
-        unwrapped_count += 1
-
-    return unwrapped_count
-
-
-def replace_rmerge_with_cat(subgraph: IR) -> bool:
-    """
-    Replace RMerge nodes (runtime/r_merge) with cat nodes.
-
-    Returns: True if any replacement was made
-    """
-    replaced = False
-
-    # Collect RMerge node IDs
-    rmerge_ids = [nid for nid, node in subgraph.nodes.items() if isinstance(node, RMerge)]
-
-    for rmerge_id in rmerge_ids:
-        rmerge_node = subgraph.get_node(rmerge_id)
-
-        input_ids = rmerge_node.get_input_list()
-        output_ids = rmerge_node.get_output_list()
-
-        if len(output_ids) != 1:
-            continue  # Unexpected structure
-
-        output_id = output_ids[0]
-
-        # Create cat node with same inputs and output
-        cat_node = make_cat_node(input_ids, output_id)
-
-        # Remove old RMerge
-        subgraph.remove_node(rmerge_id)
-
-        # Add cat node (this reconnects the edges)
-        subgraph.add_node(cat_node)
-
-        replaced = True
-
-    return replaced
-
-
-def is_merger_subgraph(subgraph: IR) -> bool:
-    """
-    Check if a subgraph is a merger/EC2 node by looking for RMerge nodes.
-    """
-    for node in subgraph.nodes.values():
-        if isinstance(node, RMerge):
-            return True
-    return False
-
-
-def get_downstream_subgraphs(subgraph: IR, input_fifo_map: Dict[int, Tuple]) -> List[IR]:
-    """
-    Find all subgraphs that consume outputs from the given subgraph.
-
-    Args:
-        subgraph: The source subgraph
-        input_fifo_map: Mapping from output edge id to (consuming_subgraph, ...)
-
-    Returns:
-        List of downstream subgraphs
-    """
-    downstream = []
-    sink_nodes = subgraph.sink_nodes()
-
-    for sink_id in sink_nodes:
-        out_edges = subgraph.get_node_output_fids(sink_id)
-        for out_edge in out_edges:
-            out_edge_id = out_edge.get_ident()
-            if out_edge_id in input_fifo_map:
-                downstream_subgraph = input_fifo_map[out_edge_id][0]
-                if downstream_subgraph not in downstream:
-                    downstream.append(downstream_subgraph)
-
-    return downstream
-
-
-"""
-Apply byte-range optimizations across a set of subgraphs reachable from given worker subgraphs.
-
-    This function performs a breadth-first traversal starting from the subgraphs listed in
-    `worker_subgraphs` and applies two byte-range related optimizations to each visited subgraph:
-    - unwrap RWrap nodes (collapsing unnecessary wrappers around byte-range values)
-    - replace RMerge nodes in merger subgraphs with a concatenation ("cat") operation
-
-    Traversal and behavior:
-    - The traversal is BFS and tracks visited subgraphs by their Python id() to avoid revisiting.
-    - For each visited subgraph:
-        1. Call unwrap_rwraps_in_subgraph(subgraph). If any RWrap nodes are unwrapped, a message
-             is printed summarizing how many were removed.
-        2. If is_merger_subgraph(subgraph) returns True, the function attempts to replace any
-             RMerge node(s) in that subgraph with a cat operation by calling replace_rmerge_with_cat(subgraph).
-             If replacement occurs, a message is printed. After processing a merger subgraph, traversal
-             does NOT continue past it (the merger is a stopping point).
-        3. If the subgraph is not a merger, downstream subgraphs are discovered via
-             get_downstream_subgraphs(subgraph, input_fifo_map) and enqueued for processing (unless already visited).
-
-    Parameters:
-    - worker_subgraphs (List[IR]):
-            List of IR subgraph objects that are the initial workers fed by rsplit outputs.
-            These serve as BFS roots for the optimization pass.
-    - all_subgraphs (List[IR]):
-            All subgraphs in the pipeline. Note: the current implementation does not use this
-            argument directly, but it can be provided for future needs or for callers that
-            expect a complete pipeline view.
-    - input_fifo_map (Dict[int, Tuple]):
-            Mapping used by get_downstream_subgraphs to resolve downstream connectivity. Keys are
-            FIFO identifiers (or other integer keys) and values are tuples describing the consumer
-            connection. The exact shape is determined by the graph representation and helper utilities.
-
-"""
-def apply_byte_range_optimizations(
-    
-    worker_subgraphs: List[IR],
-    all_subgraphs: List[IR],
-    input_fifo_map: Dict[int, Tuple]
-) -> None:
-    """
-    Apply byte-range optimizations (unwrap RWrap, replace RMerge) to:
-    1. Worker subgraphs (fed by rsplit outputs)
-    2. Their consumer subgraphs (may be multiple consecutive workers)
-    3. Continue until reaching a merger subgraph (contains RMerge)
-    4. Apply to merger, then STOP (don't process downstream of merger)
-
-    Example pipeline:
-      rsplit -> worker1 -> worker2 -> worker3 -> merger (RMerge) -> downstream
-                ↑          ↑          ↑          ↑
-                process    process    process    process & STOP
-    """
-    processed = set()  # Track processed subgraphs by id
-    queue = list(worker_subgraphs)  # BFS queue
-
-    while queue:
-        subgraph = queue.pop(0)
-        sg_id = id(subgraph)
-
-        if sg_id in processed:
-            continue
-        processed.add(sg_id)
-
-        # Apply optimizations to this subgraph
-        rwraps_unwrapped = unwrap_rwraps_in_subgraph(subgraph)
-        if rwraps_unwrapped > 0:
-            print(f"[IR Helper] Unwrapped {rwraps_unwrapped} RWrap nodes")
-
-        # Check if this is a merger subgraph
-        if is_merger_subgraph(subgraph):
-            # Replace RMerge with cat in the merger
-            if replace_rmerge_with_cat(subgraph):
-                print("[IR Helper] Replaced RMerge with cat in merger subgraph")
-            # STOP - don't process downstream of merger
-            continue
-
-        # Not a merger - continue to downstream subgraphs
-        downstream = get_downstream_subgraphs(subgraph, input_fifo_map)
-        for ds in downstream:
-            if id(ds) not in processed:
-                queue.append(ds)
-
-
-# cat -> split
 def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict[int, Tuple] = None):
-    if len(subgraphs) == 1: #no point in optimizing here 
-        return subgraphs, None, 0
+    if len(subgraphs) == 1: #no point in optimizing here
+        return subgraphs, None, 0, False
     
     first_subgraph = subgraphs[0]
     file_id_gen = first_subgraph.get_file_id_gen()
@@ -476,21 +271,14 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
     # if true then we can remove and
     # at any point if false return subgraphs
 
-    # byte range 0-500 500-1000
-    #worst case have to read entire file
-    # expected best case, lambdas can coordinate to read different parts of the file
-    #if "file->cat->split":
-        #change lambda incoming edges
-        #pash posh shark 
-
     source_nodes = first_subgraph.source_nodes()    # list of ints
     if len(source_nodes) != 1:
-        return subgraphs, None, 0
-    #TODO. encode assertions to run on narrow execution path 
+        return subgraphs, None, 0, False
+
     for source in source_nodes:
         in_edges = first_subgraph.get_node_input_fids(source)
         if len(in_edges) != 1:
-            return subgraphs, None, 0
+            return subgraphs, None, 0, False
         
         for in_edge in in_edges:
             # (isinstance(self.resource, FileResource))
@@ -506,11 +294,20 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
                     #           ir obj has no attribute get edge consumers
 
                     if len(next_nodes_ids) != 1:
-                        return subgraphs, None, 0
+                        return subgraphs, None, 0, False
                     next_node_id = next_nodes_ids[0]
                     next_node = first_subgraph.get_node(next_node_id)
 
                     if isinstance(next_node, RSplit):
+                        # Detect -r flag (no headers / line-mode split)
+                        rsplit_has_r_flag = any(
+                            flag.get_name() == "-r"
+                            for flag in next_node.cmd_invocation_with_io_vars.flag_option_list
+                        )
+                        if rsplit_has_r_flag:
+                            print("[IR Helper] RSplit has -r flag (no headers) — forcing chunks_per_lambda=1, "
+                                  "boundary mode = approx+correction (fallback: smart)")
+
                         # Extract rsplit output edge IDs
                         #can do in a more straightforward way with a helper method in ir
                         rsplit_output_fids = first_subgraph.get_node_output_fids(next_node_id)
@@ -529,370 +326,41 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
 
                         # Apply byte-range optimizations ONLY in single-chunk mode
                         chunks_per_lambda_opt = int(os.environ.get('PASH_S3_CHUNKS_PER_LAMBDA', '1'))
-
-                        # Apply byte-range optimizations (unwrap RWrap, replace RMerge with cat)
-                        # from workers through to the merger subgraph
-                        if total_lambdas > 0 and input_fifo_map is not None:
-                            # Worker subgraphs are those that receive rsplit output edges
-                            worker_subgraphs = []
-                            for rsplit_output_id in rsplit_output_ids:
-                                if rsplit_output_id in input_fifo_map:
-                                    worker_sg = input_fifo_map[rsplit_output_id][0]
-                                    if worker_sg not in worker_subgraphs:
-                                        worker_subgraphs.append(worker_sg)
-
-                            # Apply optimizations from workers through to merger
-                            if worker_subgraphs:
-                                if chunks_per_lambda_opt == 1:
-                                    # Single-chunk mode: Apply optimizations (unwrap RWrap, replace r_merge with cat)
-                                    apply_byte_range_optimizations(worker_subgraphs, subgraphs, input_fifo_map)
-                                    print("[IR Helper] Applied byte-range optimizations (unwrapped RWrap, replaced r_merge)")
-                                else:
-                                    # Multi-chunk mode: SKIP optimizations - we NEED r_merge for block ordering
-                                    print(f"[IR Helper] Skipping byte-range optimizations (chunks_per_lambda={chunks_per_lambda_opt})")
-                                    print("[IR Helper] Keeping RWrap nodes and r_merge for multi-chunk block ordering")
-
-                        return subgraphs[1:], in_edge, total_lambdas
-
-    return subgraphs, None, 0
-
-
-
-
-def expand_search_for_newline(s3, bucket, key, start_pos, file_size, max_search=100*1024*1024):
-    """
-    Exponentially expand search window if newline not found in initial window.
-    Handles edge cases like very long lines (>1MB).
-
-    Args:
-        s3: boto3 S3 client
-        bucket: S3 bucket name
-        key: S3 key
-        start_pos: Starting byte position to search from
-        file_size: Total file size
-        max_search: Maximum bytes to search (default 100MB)
-
-    Returns:
-        Tuple of (position, found) where:
-        - position: Byte position of newline +1, or end of search range if not found
-        - found: True if newline was found, False otherwise
-    """
-    current_pos = start_pos
-    chunk_size = 1 * 1024 * 1024  # Start with 1MB
-
-    while current_pos < min(start_pos + max_search, file_size):
-        try:
-            end_pos = min(current_pos + chunk_size - 1, file_size - 1)
-            response = s3.get_object(
-                Bucket=bucket,
-                Key=key,
-                Range=f'bytes={current_pos}-{end_pos}'
-            )
-            chunk = response['Body'].read()
-
-            newline_pos = chunk.index(b'\n')
-            return (current_pos + newline_pos + 1, True)  # Found newline
-        except ValueError:
-            # No newline in this chunk, continue
-            current_pos += chunk_size
-            chunk_size = min(chunk_size * 2, 10*1024*1024)  # Double size, cap at 10MB
-        except Exception as e:
-            if 'InvalidRange' in str(e):
-                break
-            raise
-
-    # No newline found in max_search range
-    return (min(start_pos + max_search, file_size), False)  # Not found
-
-
-def estimate_avg_line_length(s3, bucket, key, file_size, num_samples=5,
-                             sample_size=256*1024, debug=False):
-    """
-    Estimate average line length by sampling multiple points across the file.
-
-    Takes small samples from beginning, middle, end, and intermediate positions
-    to get a representative average that handles variable line lengths.
-
-    Args:
-        s3: boto3 S3 client
-        bucket: S3 bucket name
-        key: S3 key
-        file_size: Total file size in bytes
-        num_samples: Number of sample points (default 5: start, 25%, 50%, 75%, end)
-        sample_size: Bytes per sample (default 256KB)
-        debug: Enable debug output
-
-    Returns:
-        Estimated average line length in bytes
-    """
-    try:
-        total_bytes = 0
-        total_newlines = 0
-
-        # Calculate sample positions evenly distributed across file
-        sample_positions = []
-        if num_samples == 1:
-            sample_positions = [0]
-        else:
-            for i in range(num_samples):
-                # Distribute samples evenly: 0%, 25%, 50%, 75%, 100%
-                position = int((file_size - sample_size) * i / (num_samples - 1))
-                position = max(0, min(position, file_size - sample_size))
-                sample_positions.append(position)
-
-        if debug:
-            print(f"[Sampling] File size: {file_size} bytes, taking {num_samples} samples of {sample_size} bytes each")
-
-        for idx, start_pos in enumerate(sample_positions):
-            end_pos = min(start_pos + sample_size - 1, file_size - 1)
-
-            # Download sample
-            response = s3.get_object(
-                Bucket=bucket,
-                Key=key,
-                Range=f'bytes={start_pos}-{end_pos}'
-            )
-            sample = response['Body'].read()
-
-            # Count newlines in this sample
-            newline_count = sample.count(b'\n')
-            total_newlines += newline_count
-            total_bytes += len(sample)
-
-            if debug:
-                sample_avg = len(sample) / newline_count if newline_count > 0 else 0
-                print(f"[Sampling] Sample {idx+1} @ {start_pos}: {newline_count} newlines, "
-                      f"avg={sample_avg:.1f}B/line")
-
-        if total_newlines == 0:
-            # No newlines found - assume very long lines or binary data
-            if debug:
-                print(f"[Sampling] No newlines in {total_bytes} bytes across {num_samples} samples")
-                print(f"[Sampling] Defaulting to 1MB window (likely binary or very long lines)")
-            return 1 * 1024 * 1024  # Use 1MB window as safety
-
-        avg_line_length = total_bytes / total_newlines
-
-        if debug:
-            print(f"[Sampling] Total: {total_bytes} bytes, {total_newlines} newlines")
-            print(f"[Sampling] Estimated avg line length: {avg_line_length:.1f} bytes")
-
-        return avg_line_length
-
-    except Exception as e:
-        if debug:
-            print(f"[Sampling] Error during sampling: {e}")
-            print(f"[Sampling] Defaulting to 64KB window")
-        # Fallback to conservative default
-        return 64 * 1024
-
-
-def find_line_boundaries_smart(bucket, key, num_shards, chunks_per_lambda=1, window_size=None, debug=False):
-    """
-    Find line-aligned byte boundaries by downloading ONLY small windows around boundaries.
-
-    If window_size is not provided, automatically determines optimal size by sampling file
-    at multiple points (beginning, middle, end) to handle variable line lengths.
-
-    Args:
-        bucket: S3 bucket name
-        key: S3 key
-        num_shards: Number of lambda workers
-        chunks_per_lambda: How many chunks each lambda processes
-        window_size: Size of window to download around each boundary (None = auto-detect)
-        debug: Enable debug output
-
-    Returns:
-        Tuple of (ranges, all_success) where:
-        - ranges: List of (start_byte, end_byte, skip_first_line) tuples for each chunk
-          - Has num_shards × chunks_per_lambda entries
-          - skip_first_line=False if boundary was successfully line-aligned
-          - skip_first_line=True if we had to fall back to approximate boundary
-        - all_success: True if ALL boundaries were successfully found
-
-    Example for 20GB file, 16 shards, 2 chunks per lambda (all successful):
-        Total chunks: 16 × 2 = 32
-        Downloads: 31 boundaries × 1MB = 31MB
-        Returns: ([(0, 655359999, False), (655360000, 1310719999, False), ...], True)
-    """
-    with time_block("Total boundary scan"):
-        s3 = boto3.client('s3')
-
-        total_chunks = num_shards * chunks_per_lambda
-
-        # Step 1: Get file size (needed for sampling positions)
-        with time_block("S3 HEAD request"):
-            response = s3.head_object(Bucket=bucket, Key=key)
-            file_size = response['ContentLength']
-
-        # Step 2: Adaptive window sizing
-        if window_size is None:
-            # Check for env var override first
-            if 'PASH_BOUNDARY_WINDOW_KB' in os.environ:
-                window_size_kb = int(os.environ.get('PASH_BOUNDARY_WINDOW_KB'))
-                window_size = window_size_kb * 1024
-                if debug:
-                    print(f"[Boundary Scan] Using window_size={window_size/1024:.1f} KB (from env var)")
-            else:
-                # Multi-point sampling to estimate line length
-                with time_block("Multi-point file sampling"):
-                    # Take 5 samples of 256KB each = 1.25MB total
-                    # Positions: 0%, 25%, 50%, 75%, 100% through file
-                    avg_line_length = estimate_avg_line_length(
-                        s3, bucket, key, file_size,
-                        num_samples=5,
-                        sample_size=256*1024,
-                        debug=debug
-                    )
-
-                # Set window to hold ~500 lines (with 4KB minimum, 1MB maximum)
-                # This provides safety margin while minimizing downloads
-                target_lines_per_window = 500
-                window_size = int(avg_line_length * target_lines_per_window)
-                window_size = max(4 * 1024, min(window_size, 1024 * 1024))  # Clamp 4KB-1MB
-
-                if debug:
-                    print(f"[Boundary Scan] Adaptive window_size={window_size/1024:.1f} KB "
-                          f"(avg_line={avg_line_length:.1f}B × {target_lines_per_window} lines)")
-
-        all_boundaries_found = True  # Track if any boundary scan failed
-
-        # Add verbosity level control
-        verbose = debug and os.environ.get('PASH_VERBOSE_TIMING', 'false').lower() == 'true'
-
-        if debug:
-            print(f"[Boundary Scan] File size: {file_size} bytes, {num_shards} shards, {chunks_per_lambda} chunks/shard = {total_chunks} total chunks")
-
-        # Edge case: Empty file
-        if file_size == 0:
-            if debug:
-                print(f"[Boundary Scan] Empty file - returning trivial ranges")
-            # All chunks get empty ranges, no skip needed
-            return ([(0, 0, False) for _ in range(total_chunks)], True)
-
-        # Edge case: Single chunk
-        if total_chunks == 1:
-            if debug:
-                print(f"[Boundary Scan] Single chunk - no boundaries to scan")
-            return ([(0, file_size - 1, False)], True)
-
-        # Step 2: Calculate approximate chunk size
-        approx_chunk_size = file_size // total_chunks
-
-        # Track which boundaries were successfully found (vs fell back to approximate)
-        # Index 0 is always 0 (start of file), so no skip needed for chunk 0
-        boundary_success = [True]  # Chunk 0 starts at 0, always line-aligned
-
-        boundaries = [0]  # First chunk starts at byte 0
-
-        # Step 3: Find exact line boundaries
-        with time_block(f"Boundary scan ({total_chunks-1} boundaries)"):
-            for i in range(1, total_chunks):
-                approx_boundary = i * approx_chunk_size
-                found_newline = False
-
-                # Download small window around the approximate boundary
-                # 1MB window: 512KB before + 512KB after
-                start = max(0, approx_boundary - window_size // 2)
-                end = min(file_size - 1, approx_boundary + window_size // 2)
-
-                if verbose:  # Only print per-chunk details if explicitly enabled
-                    print(f"[Boundary Scan] Chunk {i}: downloading bytes {start}-{end} (window around {approx_boundary})")
-                elif debug and i % 50 == 0:  # Print every 50th chunk as progress indicator
-                    print(f"[Boundary Scan] Progress: {i}/{total_chunks} boundaries scanned")
-
-                try:
-                    response = s3.get_object(
-                        Bucket=bucket,
-                        Key=key,
-                        Range=f'bytes={start}-{end}'
-                    )
-                    chunk = response['Body'].read()
-
-                    # Find first newline AFTER the approximate boundary
-                    offset_in_chunk = approx_boundary - start
-                    try:
-                        newline_pos = chunk.index(b'\n', offset_in_chunk)
-                        # Boundary starts AFTER the newline (+1)
-                        actual_boundary = start + newline_pos + 1
-                        found_newline = True
-
-                        if verbose:
-                            print(f"[Boundary Scan] Chunk {i}: found newline at byte {actual_boundary}")
-
-                        boundaries.append(actual_boundary)
-                        boundary_success.append(True)
-
-                    except ValueError:
-                        # Newline not found in window - expand search
-                        if verbose:
-                            print(f"[Boundary Scan] Chunk {i}: newline not in window, expanding search...")
-
-                        actual_boundary, found = expand_search_for_newline(
-                            s3, bucket, key, approx_boundary, file_size
-                        )
-                        boundaries.append(actual_boundary)
-
-                        if found:
-                            boundary_success.append(True)
-                            if verbose:
-                                print(f"[Boundary Scan] Chunk {i}: found newline at byte {actual_boundary} (expanded search)")
-                        else:
-                            # No newline found even after expanding - use approximate, need skip
-                            boundary_success.append(False)
-                            all_boundaries_found = False
-                            if verbose:
-                                print(f"[Boundary Scan] Chunk {i}: NO NEWLINE FOUND, using approximate boundary {actual_boundary}, will skip first line")
-
-                except Exception as e:
-                    print(f"[Boundary Scan] ERROR at chunk {i}: {e}")
-                    # Fallback to approximate boundary - will need skip_first_line
-                    boundaries.append(approx_boundary)
-                    boundary_success.append(False)
-                    all_boundaries_found = False
-
-        boundaries.append(file_size)  # Last chunk ends at EOF
-
-        # Convert to (start, end, skip_first_line) ranges
-        with time_block("Range calculation"):
-            ranges = []
-            for i in range(total_chunks):
-                start_byte = boundaries[i]
-                end_byte = boundaries[i + 1] - 1  # end_byte is inclusive
-
-                # Validate range (handle edge case where boundaries collapse)
-                if end_byte < start_byte:
-                    # Empty or invalid range - give it at least one byte
-                    end_byte = start_byte
-
-                # skip_first_line is based on whether THIS chunk's START boundary was line-aligned
-                # Chunk 0 starts at byte 0 (always line-aligned, no skip)
-                # Chunk i>0 needs skip if boundary_success[i] is False
-                skip_first_line = not boundary_success[i] if i > 0 else False
-
-                ranges.append((start_byte, end_byte, skip_first_line))
-
-        if debug:
-            print(f"\n[Boundary Scan] Completed: {total_chunks} chunks, all_success={all_boundaries_found}")
-            print(f"[Boundary Scan] Total data downloaded: ~{(total_chunks-1) * window_size / (1024*1024):.1f} MB")
-            if verbose:  # Only print full range list if verbose mode enabled
-                print(f"[Boundary Scan] Final ranges:")
-                for i, (start, end, skip) in enumerate(ranges):
-                    size_mb = (end - start + 1) / (1024 * 1024)
-                    print(f"  Chunk {i}: bytes={start}-{end} ({size_mb:.2f} MB), skip={skip}")
-
-        return (ranges, all_boundaries_found)
-
-def get_s3_size(bucket, key):
-    #print("Came here")
-    """Get S3 object size."""
-    s3 = boto3.client('s3')
-    #print("bucket ", bucket)
-    #print("key ", key)
-    #print(boto3.client("sts").get_caller_identity())
-    response = s3.head_object(Bucket=bucket, Key=key)
-    #print("got obj")
-    return response['ContentLength']
+                        if rsplit_has_r_flag:
+                            chunks_per_lambda_opt = 1
+
+             
+
+                                # if chunks_per_lambda_opt == 1:
+                                #     # Single-chunk mode: Apply optimizations (unwrap RWrap, replace r_merge with cat)
+                                #     apply_byte_range_optimizations(worker_subgraphs, subgraphs, input_fifo_map)
+                                #     if _debug_enabled:
+                                #         print("[IR Helper] Applied byte-range optimizations (unwrapped RWrap, replaced r_merge)")
+                                # else:
+                                #     # Multi-chunk mode: SKIP optimizations - we NEED r_merge for block ordering
+                                #     if _debug_enabled:
+                                #         print(f"[IR Helper] Skipping byte-range optimizations (chunks_per_lambda={chunks_per_lambda_opt})")
+                                #         print("[IR Helper] Keeping RWrap nodes and r_merge for multi-chunk block ordering")
+
+                        return subgraphs[1:], in_edge, total_lambdas, rsplit_has_r_flag
+
+    return subgraphs, None, 0, False
+
+
+# ============================================================================
+# S3 Boundary and Chunking Functions
+# ============================================================================
+# NOTE: The following functions have been moved to dedicated modules:
+#   - expand_search_for_newline, estimate_avg_line_length -> s3_sampling.py
+#   - find_line_boundaries_smart -> s3_smart.py
+#   - get_s3_size, distribute_chunks_to_lambda, format_byte_range_parameter -> s3_chunking.py
+#   - BoundaryCalculator -> s3_boundary_calculator.py
+# These are imported at the top of this file.
+
+
+# ============================================================================
+# Main Pipeline Functions
+# ============================================================================
 
 def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace, recover: bool = False):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
@@ -948,9 +416,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
 
     ec2_in_edge = None
     total_lambdas = 0
+    rsplit_has_r_flag = False
     if args.enable_s3_direct:
         print("[IR Helper] S3 direct streaming optimization ENABLED")
-        subgraphs, ec2_in_edge, total_lambdas = optimize_s3_lambda_direct_streaming(subgraphs, input_fifo_map)
+        subgraphs, ec2_in_edge, total_lambdas, rsplit_has_r_flag = optimize_s3_lambda_direct_streaming(subgraphs, input_fifo_map)
     else:
         print("[IR Helper] S3 direct streaming optimization DISABLED (use --enable_s3_direct to enable)")
         # Keep original subgraphs unchanged - matching the "no optimization" return pattern
@@ -1122,95 +591,134 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                         # Extract file size from filename (e.g., "oneliners/inputs/1M.txt" -> 1048576)
                         # size_multipliers = {"G": 1024**3, "M": 1024**2, "K": 1024}
                         filename_stripped = str(filename).strip('"')
-                        print(f"File: {filename} -> Size: {filesize} bytes")
+                        if _debug_enabled:
+                            print(f"File: {filename} -> Size: {filesize} bytes")
 
-                        # Read configuration
-                        chunks_per_lambda = int(os.environ.get('PASH_S3_CHUNKS_PER_LAMBDA', '1'))
-                        if chunks_per_lambda < 1:
-                            chunks_per_lambda = 1
-                            print(f"[IR Helper] WARNING: Invalid PASH_S3_CHUNKS_PER_LAMBDA, using 1")
+                        # Read configuration using BoundaryConfig
+                        if not shard_ranges_computed:
+                            boundary_config = BoundaryConfig()
 
-                        if chunks_per_lambda > 1:
-                            print(f"[IR Helper] Multi-chunk mode: {chunks_per_lambda} chunks per lambda")
-                        else:
-                            print(f"[IR Helper] Single-chunk mode (original behavior)")
+                            # -r flag: force single chunk per lambda, approx+correction mode
+                            if rsplit_has_r_flag:
+                                boundary_config.chunks_per_lambda = 1
+                                # boundary_config.use_adaptive_boundaries = False
+                                # boundary_config.use_dynamic_boundaries = False
+                                # boundary_config.use_adaptive_simple = False
+                                # boundary_config.use_single_shot = False
+                                # boundary_config.use_approx_with_correction = True
+                                # boundary_config.use_smart_boundaries = False
 
-                        # Check if smart boundaries are enabled
-                        use_smart_boundaries = os.environ.get('USE_SMART_BOUNDARIES', 'false').lower() == 'true'
+                            chunks_per_lambda = boundary_config.chunks_per_lambda
 
-                        if use_smart_boundaries:
-                            # Calculate line-aligned boundaries (only once for all lambdas)
-                            # Note: This will be called once per lambda, but we only need to calculate once
-                            # For now, we calculate per lambda (could be optimized to cache)
-                          
+                            if _debug_enabled:
+                                print(f"[IR Helper] Boundary mode: {boundary_config.get_boundary_mode_name()}")
+                                if chunks_per_lambda > 1:
+                                    print(f"[IR Helper] Multi-chunk mode: {chunks_per_lambda} chunks per lambda")
+                                else:
+                                    print(f"[IR Helper] Single-chunk mode (original behavior)")
 
-                            if not shard_ranges_computed:
-                                print(f"[IR Helper] Scanning S3 file for line boundaries: {filename_stripped}")
-                                print(f"[IR Helper] Total lambdas: {total_lambdas}, chunks per lambda: {chunks_per_lambda}")
+                        # Calculate boundaries using BoundaryCalculator (once per job)
+                        if not shard_ranges_computed:
+                            calculator = BoundaryCalculator(boundary_config, debug=_debug_enabled)
 
-                                with time_block("find_line_boundaries_smart call"):
-                                    shard_ranges, boundary_scan_success = find_line_boundaries_smart(
+                            with time_block("calculate_boundaries"):
+                                try:
+                                    shard_ranges, cached_window_size = calculator.calculate_boundaries(
                                         bucket=BUCKET,
                                         key=filename_stripped,
-                                        num_shards=total_lambdas,
-                                        chunks_per_lambda=chunks_per_lambda,
-                                        window_size=None,  # Enable adaptive sizing
-                                        debug=True
+                                        filesize=filesize,
+                                        total_lambdas=total_lambdas,
+                                        chunks_per_lambda=chunks_per_lambda
                                     )
-                                shard_ranges_computed = True
+                                except Exception as e:
+                                    if rsplit_has_r_flag:
+                                        print(f"[IR Helper] approx+correction failed ({e}), falling back to smart boundaries")
+                                        boundary_config.use_approx_with_correction = False
+                                        boundary_config.use_smart_boundaries = True
+                                        # Reset calculator cache so it re-dispatches
+                                        calculator.shard_ranges = None
+                                        calculator.cached_window_size = None
+                                        shard_ranges, cached_window_size = calculator.calculate_boundaries(
+                                            bucket=BUCKET,
+                                            key=filename_stripped,
+                                            filesize=filesize,
+                                            total_lambdas=total_lambdas,
+                                            chunks_per_lambda=chunks_per_lambda
+                                        )
+                                    else:
+                                        raise
 
-                                if not boundary_scan_success:
-                                    print(f"[IR Helper] WARNING: Boundary scan had failures")
+                            shard_ranges_computed = True
 
-                            # Assign chunks to THIS lambda (round-robin interleaved)
+                        # Handle different boundary modes
+                        if shard_ranges is not None:
+                            # Modern modes: adaptive, dynamic, approx+correction, or smart
+                            # Assign chunks to this lambda (round-robin distribution)
                             with time_block(f"Chunk distribution (lambda {lambda_counter})"):
-                                lambda_chunks = []
-                                for chunk_index in range(chunks_per_lambda):
-                                    global_chunk_id = lambda_counter + (chunk_index * total_lambdas)
+                                lambda_chunks = distribute_chunks_to_lambda(
+                                    lambda_counter=lambda_counter,
+                                    total_lambdas=total_lambdas,
+                                    chunks_per_lambda=chunks_per_lambda,
+                                    shard_ranges=shard_ranges,
+                                    debug=_debug_enabled
+                                )
 
-                                    # Safety check
-                                    if global_chunk_id >= len(shard_ranges):
-                                        break
+                            # Correction modes need JSON even for single-chunk so lambdas get block_id
+                            correction_mode = (
+                                boundary_config.use_adaptive_boundaries or
+                                boundary_config.use_dynamic_boundaries or
+                                boundary_config.use_adaptive_simple or
+                                boundary_config.use_approx_with_correction or
+                                boundary_config.use_single_shot
+                            )
 
-                                    start_byte, end_byte, use_skip = shard_ranges[global_chunk_id]
-                                    lambda_chunks.append({
-                                        "start": start_byte,
-                                        "end": end_byte,
-                                        "block_id": global_chunk_id,  # CRITICAL: Global sequential ID
-                                        "skip_first_line": use_skip
-                                    })
+                            # Format byte_range parameter
+                            byte_range = format_byte_range_parameter(
+                                lambda_chunks=lambda_chunks,
+                                chunks_per_lambda=chunks_per_lambda,
+                                lambda_counter=lambda_counter,
+                                debug=_debug_enabled,
+                                force_json=correction_mode
+                            )
 
-                            # Format byte_range parameter based on mode
+                            # Extract skip_first_line for single-chunk mode
                             if chunks_per_lambda == 1:
-                                # Single-chunk mode: backward compatible string format
-                                chunk = lambda_chunks[0]
-                                byte_range = f"bytes={chunk['start']}-{chunk['end']}"
-                                skip_first_line = chunk['skip_first_line']
-
-                                print(f"[IR Helper] Lambda {lambda_counter}: {byte_range}, skip_first_line={skip_first_line}")
+                                skip_first_line = lambda_chunks[0].get('skip_first_line', False)
                             else:
-                                # Multi-chunk mode: JSON array
-                                import shlex
-                                byte_range_json = json.dumps(lambda_chunks)                                                             
-                                byte_range = f"'{byte_range_json}'"
-                                # byte_range = json.dumps(lambda_chunks)
                                 skip_first_line = False  # Not used in multi-chunk mode
 
-                                total_mb = sum((c['end'] - c['start'] + 1) / (1024*1024) for c in lambda_chunks)
-                                chunk_ids = [c['block_id'] for c in lambda_chunks]
-                                print(f"[IR Helper] Lambda {lambda_counter}: {len(lambda_chunks)} chunks, IDs {chunk_ids}, {total_mb:.2f} MB total")
-
+                            # Pass window_size to lambda (mode-specific)
+                            window_after_vec_param = None
+                            if boundary_config.use_adaptive_boundaries:
+                                window_size_param = "adaptive"
+                                if isinstance(cached_window_size, str) and cached_window_size != "adaptive":
+                                    window_after_vec_param = cached_window_size
+                            else:
+                                window_size_param = cached_window_size
+                            if correction_mode:
+                                chunks_per_lambda_param = chunks_per_lambda
+                            else:
+                                chunks_per_lambda_param = chunks_per_lambda if chunks_per_lambda > 1 else None
 
                         else:
-                            # Use approximate boundaries (old behavior)
+                            # Legacy approximate mode - calculate inline
                             skip_first_line = True
                             chunk_size = filesize // total_lambdas
                             start_byte = lambda_counter * chunk_size
-                            # Last lambda gets everything remaining to handle rounding
                             end_byte = filesize - 1 if lambda_counter == total_lambdas - 1 else (lambda_counter + 1) * chunk_size - 1
 
                             byte_range = f"bytes={start_byte}-{end_byte}"
-                            print(f"Lambda {lambda_counter}: {byte_range}")
+                            if _debug_enabled:
+                                print(f"Lambda {lambda_counter}: {byte_range}")
+
+                            window_size_param = None
+                            window_after_vec_param = None
+                            chunks_per_lambda_param = None
+
+                        # Determine if we should write headers
+                        # RSplit with -r flag means no headers in the split, so no headers in the entire pipeline
+                        write_headers = not rsplit_has_r_flag
+
                         remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
                                                                                 is_remote_read=True,
                                                                                 remote_key=filename,
@@ -1219,9 +727,13 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 is_s3_lambda=True,
                                                                                 lambda_counter=lambda_counter,
                                                                                 total_lambdas=total_lambdas,
-                                                                                byte_range=byte_range, 
+                                                                                byte_range=byte_range,
                                                                                 job_uid=job_uid,
-                                                                                skip_first_line=skip_first_line)
+                                                                                skip_first_line=skip_first_line,
+                                                                                window_size=window_size_param,
+                                                                                chunks_per_lambda=chunks_per_lambda_param,
+                                                                                window_after_vec=window_after_vec_param,
+                                                                                write_headers=write_headers)
                         
                         # s3getobj byterange=start-end -> sort   : lambda1
                         lambda_counter += 1
