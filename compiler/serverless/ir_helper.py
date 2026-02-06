@@ -700,6 +700,13 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                             else:
                                 chunks_per_lambda_param = chunks_per_lambda if chunks_per_lambda > 1 else None
 
+                            if correction_mode:
+                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_APPROX_CORRECTION
+                            elif boundary_config.use_smart_boundaries and not skip_first_line:
+                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_SMART_PREALIGNED
+                            else:
+                                s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_APPROX_TAIL_COORDINATION
+
                         else:
                             # Legacy approximate mode - calculate inline
                             skip_first_line = True
@@ -714,10 +721,17 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                             window_size_param = None
                             window_after_vec_param = None
                             chunks_per_lambda_param = None
+                            s3_reader_strategy = serverless_remote_pipe.S3_READER_STRATEGY_APPROX_TAIL_COORDINATION
 
                         # Determine if we should write headers
                         # RSplit with -r flag means no headers in the split, so no headers in the entire pipeline
                         write_headers = not rsplit_has_r_flag
+
+                        if _debug_enabled:
+                            print(
+                                f"[IR Helper] Lambda {lambda_counter}: "
+                                f"reader_strategy={s3_reader_strategy}, write_headers={write_headers}"
+                            )
 
                         remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
                                                                                 is_remote_read=True,
@@ -733,7 +747,8 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 window_size=window_size_param,
                                                                                 chunks_per_lambda=chunks_per_lambda_param,
                                                                                 window_after_vec=window_after_vec_param,
-                                                                                write_headers=write_headers)
+                                                                                write_headers=write_headers,
+                                                                                s3_reader_strategy=s3_reader_strategy)
                         
                         # s3getobj byterange=start-end -> sort   : lambda1
                         lambda_counter += 1
