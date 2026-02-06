@@ -21,6 +21,7 @@ This document lists all changes I made during the S3 reader clarity refactor and
 2. `58eac160` `refactor: rename S3 chunk readers by strategy`
 3. `1d9650a7` `refactor: choose S3 reader strategy explicitly in compiler`
 4. `7d768932` `chore: clarify benchmark and docs around reader strategies`
+5. `e2f14017` `feat: add generic leash benchmark-matrix entrypoint` (later amended with input-config split and wrappers)
 
 ## Detailed change list
 
@@ -129,6 +130,33 @@ Doc updates:
 1. Replaced old reader filenames with new strategy-based filenames in all touched docs.
 2. Updated adaptive-simple module text reference to the new correction reader filename.
 
+### 5) Generic benchmark matrix runner commit (`e2f14017`, amended)
+Purpose: keep one benchmark runner implementation while making benchmark-specific inputs explicit and isolated.
+
+Changed files:
+1. `evaluation/benchmarks/run-leash-benchmark-matrix.sh`
+2. `evaluation/benchmarks/unix50/leash-matrix-inputs.sh`
+3. `evaluation/benchmarks/oneliners/leash-matrix-inputs.sh`
+4. `evaluation/benchmarks/uniq-ips/leash-matrix-inputs.sh`
+5. `evaluation/benchmarks/unix50/run-leash-benchmark-matrix.sh`
+6. `evaluation/benchmarks/oneliners/run-leash-benchmark-matrix.sh`
+7. `evaluation/benchmarks/uniq-ips/run-leash-benchmark-matrix.sh`
+8. `evaluation/benchmarks/unix50/run-leash-compare-generic.sh`
+9. `evaluation/benchmarks/oneliners/run-leash-compare-generic.sh`
+10. `evaluation/benchmarks/uniq-ips/run-leash-compare-generic.sh`
+
+What changed:
+1. Promoted `evaluation/benchmarks/run-leash-benchmark-matrix.sh` from dispatcher to full runner implementation.
+2. Added benchmark argument support (`--benchmark <name>` or positional benchmark).
+3. Moved benchmark input selection to per-benchmark `leash-matrix-inputs.sh` files via `set_leash_benchmark_inputs()`.
+4. Kept per-benchmark scripts as thin wrappers:
+   - `run-leash-benchmark-matrix.sh` wraps top-level with benchmark name.
+   - `run-leash-compare-generic.sh` now aliases to the local benchmark-matrix wrapper for compatibility.
+5. Added explicit design notes in `--help` output so ownership is clear:
+   - top-level script owns execution/modes
+   - benchmark folders own only input matrix selection.
+6. Added `AWS_BUCKET` and `PASH_TOP` environment validation in the top-level runner.
+
 ## Old-to-new filename map
 1. `aws/s3-approx-boundaries-lambda-correction.py` -> `aws/s3-chunk-reader-approx-correction.py`
 2. `aws/s3-shard-reader-streaming.py` -> `aws/s3-chunk-reader-approx-tail-coordination.py`
@@ -143,6 +171,12 @@ Doc updates:
    - `python3 -m py_compile compiler/serverless/ir_helper.py`
 2. Shell syntax check:
    - `bash -n evaluation/benchmarks/unix50/run-leash-compare-generic.sh`
+   - `bash -n evaluation/benchmarks/run-leash-benchmark-matrix.sh`
+   - `bash -n evaluation/benchmarks/oneliners/run-leash-benchmark-matrix.sh`
+   - `bash -n evaluation/benchmarks/uniq-ips/run-leash-benchmark-matrix.sh`
+   - `bash -n evaluation/benchmarks/unix50/leash-matrix-inputs.sh`
+   - `bash -n evaluation/benchmarks/oneliners/leash-matrix-inputs.sh`
+   - `bash -n evaluation/benchmarks/uniq-ips/leash-matrix-inputs.sh`
 3. Grep verification:
    - Confirmed old reader filenames were removed from active source/docs touched by this refactor.
 
