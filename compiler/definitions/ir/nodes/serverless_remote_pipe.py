@@ -2,6 +2,45 @@ from definitions.ir.dfg_node import *
 from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars, OptionWithIOVar
 from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
 from pash_annotations.datatypes.BasicDatatypes import Operand
+import os
+
+
+S3_READER_STRATEGY_APPROX_CORRECTION = "approx_correction"
+S3_READER_STRATEGY_SMART_PREALIGNED = "smart_prealigned"
+S3_READER_STRATEGY_APPROX_TAIL_COORDINATION = "approx_tail_coordination"
+
+S3_READER_SCRIPT_BY_STRATEGY = {
+    S3_READER_STRATEGY_APPROX_CORRECTION: "aws/s3-chunk-reader-approx-correction.py",
+    S3_READER_STRATEGY_SMART_PREALIGNED: "aws/s3-chunk-reader-smart-prealigned.py",
+    S3_READER_STRATEGY_APPROX_TAIL_COORDINATION: "aws/s3-chunk-reader-approx-tail-coordination.py",
+}
+
+
+def _env_flag(name):
+    return os.environ.get(name, "false").lower() == "true"
+
+
+def _determine_s3_reader_strategy_from_env(skip_first_line):
+    """
+    Backward-compatible strategy selection when ir_helper does not pass
+    an explicit strategy.
+    """
+    correction_mode = any(
+        (
+            _env_flag("USE_ADAPTIVE_BOUNDARIES"),
+            _env_flag("USE_DYNAMIC_BOUNDARIES"),
+            _env_flag("USE_ADAPTIVE_SIMPLE"),
+            _env_flag("USE_APPROX_LAMBDA_CORRECTION"),
+            _env_flag("USE_SINGLE_SHOT"),
+        )
+    )
+    if correction_mode:
+        return S3_READER_STRATEGY_APPROX_CORRECTION, True
+
+    if _env_flag("USE_SMART_BOUNDARIES") and not skip_first_line:
+        return S3_READER_STRATEGY_SMART_PREALIGNED, False
+
+    return S3_READER_STRATEGY_APPROX_TAIL_COORDINATION, False
 
 class ServerlessRemotePipe(DFGNode):
     def __init__(self,
@@ -16,7 +55,7 @@ class ServerlessRemotePipe(DFGNode):
                          parallelizer_list=parallelizer_list,
                          cmd_related_properties=cmd_related_properties)
 #here remote key is filename on s3 in our case 
-def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, output_edge=None, is_tcp=False, is_s3_lambda=False, lambda_counter=0, total_lambdas=0, byte_range=None, job_uid=None, skip_first_line=True, window_size=None, chunks_per_lambda=None, window_after_vec=None, write_headers=True):
+def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, output_edge=None, is_tcp=False, is_s3_lambda=False, lambda_counter=0, total_lambdas=0, byte_range=None, job_uid=None, skip_first_line=True, window_size=None, chunks_per_lambda=None, window_after_vec=None, write_headers=True, s3_reader_strategy=None):
     """
     Generate a dfg node for serverless remote communication, now we handle these cases
     1. Remote read from tcp communication
@@ -42,25 +81,16 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             implicit_use_of_streaming_output = local_fifo_id
         else: #TODO modify to python3.10 as python3.9 is deprecated in april 2026
             if is_s3_lambda:
-                # Check for five possible modes
-                import os
-                use_adaptive_boundaries = os.environ.get('USE_ADAPTIVE_BOUNDARIES', 'false').lower() == 'true'
-                use_dynamic_boundaries = os.environ.get('USE_DYNAMIC_BOUNDARIES', 'false').lower() == 'true'
-                use_adaptive_simple = os.environ.get('USE_ADAPTIVE_SIMPLE', 'false').lower() == 'true'
-                use_approx_with_correction = os.environ.get('USE_APPROX_LAMBDA_CORRECTION', 'false').lower() == 'true'
-                use_smart_boundaries = os.environ.get('USE_SMART_BOUNDARIES', 'false').lower() == 'true'
-                use_single_shot = os.environ.get('USE_SINGLE_SHOT', 'false').lower() == 'true'
-                print("got to here")
-                if use_adaptive_boundaries or use_dynamic_boundaries or use_adaptive_simple or use_approx_with_correction or use_single_shot:
-                    # All three modes use same script, differentiated by window_size value
-                    remote_pipe_bin = "python3 aws/s3-approx-boundaries-lambda-correction.py"
-                elif use_smart_boundaries and not skip_first_line:
-                    # Smart boundaries: pre-aligned, no inter-lambda communication
-                    remote_pipe_bin = "python3 aws/s3-get-object-smart-and-streaming.py"
+                if s3_reader_strategy is None:
+                    strategy, correction_mode = _determine_s3_reader_strategy_from_env(skip_first_line)
                 else:
-                    # Approximate boundaries: requires inter-lambda tail byte communication
-                    print("Using approximate boundaries for S3 lambda reads")
-                    remote_pipe_bin = "python3 aws/s3-shard-reader-streaming.py"
+                    strategy = s3_reader_strategy
+                    correction_mode = (strategy == S3_READER_STRATEGY_APPROX_CORRECTION)
+
+                if strategy not in S3_READER_SCRIPT_BY_STRATEGY:
+                    raise ValueError(f"Unknown S3 reader strategy: {strategy}")
+
+                remote_pipe_bin = f"python3 {S3_READER_SCRIPT_BY_STRATEGY[strategy]}"
 
                 # Add operands
                 operand_list.append(Operand(Arg.string_to_arg(str(remote_key)))) # s3 key
@@ -71,13 +101,16 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                 operand_list.append(Operand(Arg.string_to_arg(f"job_uid={job_uid}"))) # job uid
                 operand_list.append(Operand(Arg.string_to_arg(f"debug=True")))
 
-                # Add window_size operand for correction-based modes
-                if use_adaptive_boundaries or use_dynamic_boundaries or use_adaptive_simple or use_approx_with_correction or use_single_shot:
+                if strategy == S3_READER_STRATEGY_APPROX_TAIL_COORDINATION:
+                    operand_list.append(
+                        Operand(Arg.string_to_arg(f"skip_first_line={'true' if skip_first_line else 'false'}"))
+                    )
+
+                # Add window parameters for correction-based strategy
+                if correction_mode:
                     if window_size == "adaptive":
-                        # Signal adaptive mode to lambda
                         operand_list.append(Operand(Arg.string_to_arg(f"window_size=adaptive")))
 
-                        # Pass adaptive configuration
                         target_lines = int(os.environ.get('PASH_ADAPTIVE_TARGET_LINES', '500'))
                         retry_risk = float(os.environ.get('PASH_ADAPTIVE_RETRY_RISK', '0.001'))
                         sample_kb = int(os.environ.get('PASH_ADAPTIVE_SAMPLE_KB', '256'))
@@ -97,15 +130,14 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                     if window_after_vec is not None:
                         operand_list.append(Operand(Arg.string_to_arg(f"window_after_vec={window_after_vec}")))
 
-                # Add chunks_per_lambda operand for correction-based modes
-                if (use_adaptive_boundaries or use_dynamic_boundaries or use_adaptive_simple or use_approx_with_correction or use_single_shot) and chunks_per_lambda is not None:
+                # Add chunks_per_lambda operand for correction strategy
+                if correction_mode and chunks_per_lambda is not None:
                     operand_list.append(Operand(Arg.string_to_arg(f"chunks_per_lambda={chunks_per_lambda}")))
 
-                # Add write_headers operand (only if explicitly False)
-                if write_headers is False:
-                    operand_list.append(Operand(Arg.string_to_arg("write_headers=false")))
+                operand_list.append(
+                    Operand(Arg.string_to_arg(f"write_headers={'true' if write_headers else 'false'}"))
+                )
 
-                # CRITICAL: Set output edge for all s3_lambda modes                                            │
                 implicit_use_of_streaming_output = local_fifo_id
             else:
                 remote_pipe_bin = "python3.9 aws/s3-get-object.py"
