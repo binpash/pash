@@ -3,26 +3,36 @@
 cd "$(dirname "$0")" || exit 1
 
 # Usage:
-#   --noopt          : Run baseline mode without S3 optimization
-#   --s3opt          : Run with S3 direct streaming and smart boundaries (2m-2m30)
-#   --s3optnonsmart  : Run with S3 direct streaming and approximate boundaries
-#   --dynamic        : Run with dynamic boundaries (no sampling)
-#   --adaptive       : Run with adaptive gap-window boundaries (EC2 precompute)
-#   --adaptive_simple: Run with adaptive simple boundaries (N samples → fixed window)
-#   --single_shot    : Run with single-shot boundaries (1 sample at midpoint)
-#   --skip-logs      : Skip CloudWatch log fetching and reduce sleep time
-#   --debug          : Enable PASH debug output
+#   --noopt                  : Baseline (EC2 split + Lambda compute)
+#   --smart-prealigned       : Smart prealigned chunks (EC2 scans boundaries)
+#   --approx-tail            : Approx chunks + Lambda tail coordination (legacy)
+#   --approx-correction      : Approx chunks + in-lambda correction
+#   --approx-dynamic         : Approx chunks + dynamic correction window
+#   --approx-adaptive-gap    : Approx chunks + adaptive gap-window (EC2-side)
+#   --approx-adaptive-simple : Approx chunks + fixed window from simple sampling
+#   --approx-single-shot     : Approx chunks + single midpoint sample window
+#   --skip-logs              : Skip CloudWatch log fetching and reduce sleep time
+#   --debug                  : Enable PASH debug output
 #   --small/medium/large or nothing : Input size selection
-#   --repeats N      : Run each non-baseline mode N times (default: 1)
+#   --repeats N              : Run each non-baseline mode N times (default: 1)
+#
+# Legacy aliases (still accepted):
+#   --s3opt -> --approx-correction
+#   --s3optnonsmart -> --approx-tail
+#   --dynamic -> --approx-dynamic
+#   --adaptive -> --approx-adaptive-gap
+#   --adaptive_simple -> --approx-adaptive-simple
+#   --single_shot -> --approx-single-shot
 
 # Parse mode flags
 RUN_NOOPT=false
-RUN_S3OPT=false
-RUN_S3OPTNONSMART=false
-RUN_S3OPTDYNAMIC=false
-RUN_ADAPTIVE=false
-RUN_ADAPTIVE_SIMPLE=false
-RUN_SINGLE_SHOT=false
+RUN_SMART_PREALIGNED=false
+RUN_APPROX_TAIL=false
+RUN_APPROX_CORRECTION=false
+RUN_APPROX_DYNAMIC=false
+RUN_APPROX_ADAPTIVE_GAP=false
+RUN_APPROX_ADAPTIVE_SIMPLE=false
+RUN_APPROX_SINGLE_SHOT=false
 PASH_DEBUG=false
 SKIP_LOGS=false
 
@@ -30,26 +40,30 @@ if [[ "$*" == *"--noopt"* ]]; then
     RUN_NOOPT=true
 fi
 
-if [[ "$*" == *"--s3opt"* ]]; then
-    RUN_S3OPT=true
+if [[ "$*" == *"--smart-prealigned"* ]] || [[ "$*" == *"--s3smart"* ]]; then
+    RUN_SMART_PREALIGNED=true
 fi
 
-if [[ "$*" == *"--s3optnonsmart"* ]]; then
-    RUN_S3OPTNONSMART=true
+if [[ "$*" == *"--approx-tail"* ]] || [[ "$*" == *"--s3optnonsmart"* ]]; then
+    RUN_APPROX_TAIL=true
 fi
 
-if [[ "$*" == *"--dynamic"* ]]; then
-    RUN_S3OPTDYNAMIC=true
+if [[ "$*" == *"--approx-correction"* ]] || [[ "$*" == *"--s3opt"* ]]; then
+    RUN_APPROX_CORRECTION=true
 fi
 
-if [[ "$*" == *"--adaptive_simple"* ]]; then
-    RUN_ADAPTIVE_SIMPLE=true
-elif [[ "$*" == *"--adaptive"* ]]; then
-    RUN_ADAPTIVE=true
+if [[ "$*" == *"--approx-dynamic"* ]] || [[ "$*" == *"--dynamic"* ]]; then
+    RUN_APPROX_DYNAMIC=true
 fi
 
-if [[ "$*" == *"--single_shot"* ]]; then
-    RUN_SINGLE_SHOT=true
+if [[ "$*" == *"--approx-adaptive-simple"* ]] || [[ "$*" == *"--adaptive_simple"* ]]; then
+    RUN_APPROX_ADAPTIVE_SIMPLE=true
+elif [[ "$*" == *"--approx-adaptive-gap"* ]] || [[ "$*" == *"--adaptive"* ]]; then
+    RUN_APPROX_ADAPTIVE_GAP=true
+fi
+
+if [[ "$*" == *"--approx-single-shot"* ]] || [[ "$*" == *"--single_shot"* ]]; then
+    RUN_APPROX_SINGLE_SHOT=true
 fi
 
 if [[ "$*" == *"--debug"* ]]; then
@@ -66,68 +80,96 @@ if [[ "$*" =~ --repeats[[:space:]]+([0-9]+) ]]; then
 fi
 
 # If no mode flags specified, run all modes (backward compatibility)
-if [ "$RUN_NOOPT" = false ] && [ "$RUN_S3OPT" = false ] && [ "$RUN_S3OPTNONSMART" = false ] && [ "$RUN_S3OPTDYNAMIC" = false ] && [ "$RUN_ADAPTIVE" = false ] && [ "$RUN_ADAPTIVE_SIMPLE" = false ] && [ "$RUN_SINGLE_SHOT" = false ]; then
+if [ "$RUN_NOOPT" = false ] && \
+   [ "$RUN_SMART_PREALIGNED" = false ] && \
+   [ "$RUN_APPROX_TAIL" = false ] && \
+   [ "$RUN_APPROX_CORRECTION" = false ] && \
+   [ "$RUN_APPROX_DYNAMIC" = false ] && \
+   [ "$RUN_APPROX_ADAPTIVE_GAP" = false ] && \
+   [ "$RUN_APPROX_ADAPTIVE_SIMPLE" = false ] && \
+   [ "$RUN_APPROX_SINGLE_SHOT" = false ]; then
     RUN_NOOPT=true
-    RUN_S3OPT=true
-    RUN_S3OPTNONSMART=true
-    RUN_S3OPTDYNAMIC=true
-    RUN_ADAPTIVE=true
-    RUN_ADAPTIVE_SIMPLE=true
-    RUN_SINGLE_SHOT=true
+    RUN_SMART_PREALIGNED=true
+    RUN_APPROX_TAIL=true
+    RUN_APPROX_CORRECTION=true
+    RUN_APPROX_DYNAMIC=true
+    RUN_APPROX_ADAPTIVE_GAP=true
+    RUN_APPROX_ADAPTIVE_SIMPLE=true
+    RUN_APPROX_SINGLE_SHOT=true
 fi
 
-MODES=(noopt s3opt s3optnonsmart s3optdynamic adaptive adaptive_simple single_shot)
+MODES=(
+    noopt
+    s3_smart_prealigned
+    s3_approx_tail_coord
+    s3_approx_correction
+    s3_approx_dynamic
+    s3_approx_adaptive_gap
+    s3_approx_adaptive_simple
+    s3_approx_single_shot
+)
+
+# Reader strategy mapping:
+#   s3_smart_prealigned   -> aws/s3-chunk-reader-smart-prealigned.py
+#   s3_approx_tail_coord  -> aws/s3-chunk-reader-approx-tail-coordination.py
+#   s3_approx_* (others)  -> aws/s3-chunk-reader-approx-correction.py
 declare -A MODE_DESC MODE_ENV MODE_SUFFIX MODE_ENABLE_S3 MODE_ENABLED MODE_FLAG MODE_IS_BASELINE
 declare -A MODE_TIMES MODE_BILLED_MS MODE_COST MODE_MATCH MODE_SPEEDUP MODE_COST_DIFF MODE_DIFF_EXCERPT MODE_LOCAL_FILE MODE_REP1_TIME
 declare -A MODE_BILLED_MS_LIST MODE_COST_LIST
 
 MODE_DESC[noopt]="WITHOUT S3 direct streaming optimization"
-MODE_DESC[s3opt]="WITH S3 direct streaming optimization (--enable_s3_direct) and smart boundaries"
-MODE_DESC[s3optnonsmart]="WITH S3 direct streaming optimization (--enable_s3_direct) and approximate non smart boundaries"
-MODE_DESC[s3optdynamic]="WITH S3 direct streaming - DYNAMIC boundaries (no sampling)"
-MODE_DESC[adaptive]="WITH S3 direct streaming - ADAPTIVE GAP windows (EC2-side)"
-MODE_DESC[adaptive_simple]="WITH S3 direct streaming - ADAPTIVE SIMPLE (fixed window from sampling)"
-MODE_DESC[single_shot]="WITH S3 direct streaming - SINGLE SHOT (1 sample at midpoint)"
+MODE_DESC[s3_smart_prealigned]="WITH S3 direct streaming - SMART prealigned chunks (EC2 boundary scan)"
+MODE_DESC[s3_approx_tail_coord]="WITH S3 direct streaming - APPROX chunks + tail coordination (legacy)"
+MODE_DESC[s3_approx_correction]="WITH S3 direct streaming - APPROX chunks + in-lambda correction"
+MODE_DESC[s3_approx_dynamic]="WITH S3 direct streaming - APPROX chunks + dynamic correction windows"
+MODE_DESC[s3_approx_adaptive_gap]="WITH S3 direct streaming - APPROX chunks + adaptive gap-window (EC2-side)"
+MODE_DESC[s3_approx_adaptive_simple]="WITH S3 direct streaming - APPROX chunks + adaptive simple (fixed sampled window)"
+MODE_DESC[s3_approx_single_shot]="WITH S3 direct streaming - APPROX chunks + single-shot sampled window"
 
 MODE_FLAG[noopt]="--noopt"
-MODE_FLAG[s3opt]="--s3opt"
-MODE_FLAG[s3optnonsmart]="--s3optnonsmart"
-MODE_FLAG[s3optdynamic]="--dynamic"
-MODE_FLAG[adaptive]="--adaptive"
-MODE_FLAG[adaptive_simple]="--adaptive_simple"
-MODE_FLAG[single_shot]="--single_shot"
+MODE_FLAG[s3_smart_prealigned]="--smart-prealigned"
+MODE_FLAG[s3_approx_tail_coord]="--approx-tail"
+MODE_FLAG[s3_approx_correction]="--approx-correction (alias: --s3opt)"
+MODE_FLAG[s3_approx_dynamic]="--approx-dynamic (alias: --dynamic)"
+MODE_FLAG[s3_approx_adaptive_gap]="--approx-adaptive-gap (alias: --adaptive)"
+MODE_FLAG[s3_approx_adaptive_simple]="--approx-adaptive-simple (alias: --adaptive_simple)"
+MODE_FLAG[s3_approx_single_shot]="--approx-single-shot (alias: --single_shot)"
 
 MODE_ENV[noopt]=""
-MODE_ENV[s3opt]="PASH_S3_CHUNKS_PER_LAMBDA=16 USE_APPROX_LAMBDA_CORRECTION=true USE_SMART_BOUNDARIES=false"
-MODE_ENV[s3optnonsmart]="USE_SMART_BOUNDARIES=false"
-MODE_ENV[s3optdynamic]="PASH_S3_CHUNKS_PER_LAMBDA=16 USE_DYNAMIC_BOUNDARIES=true"
-MODE_ENV[adaptive]="USE_ADAPTIVE_BOUNDARIES=true PASH_GAP_SAMPLE_KB=256 PASH_GAP_DELTA=0.001 PASH_GAP_K_SAMPLES=4096 PASH_GAP_SAFETY_FACTOR=1.2 PASH_GAP_MAX_WINDOW_KB=1024 PASH_S3_CHUNKS_PER_LAMBDA=16"
-MODE_ENV[adaptive_simple]="USE_ADAPTIVE_SIMPLE=true PASH_ADAPTIVE_SIMPLE_NUM_SAMPLES=5 PASH_ADAPTIVE_SIMPLE_SAMPLE_KB=256 PASH_ADAPTIVE_SIMPLE_SAFETY_FACTOR=1.5 PASH_S3_CHUNKS_PER_LAMBDA=16"
-MODE_ENV[single_shot]="USE_SINGLE_SHOT=true PASH_SINGLE_SHOT_SAMPLE_KB=256 PASH_SINGLE_SHOT_SAFETY_FACTOR=2.0 PASH_S3_CHUNKS_PER_LAMBDA=16"
+MODE_ENV[s3_smart_prealigned]="USE_SMART_BOUNDARIES=true PASH_S3_CHUNKS_PER_LAMBDA=16"
+MODE_ENV[s3_approx_tail_coord]="USE_SMART_BOUNDARIES=false"
+MODE_ENV[s3_approx_correction]="PASH_S3_CHUNKS_PER_LAMBDA=16 USE_APPROX_LAMBDA_CORRECTION=true USE_SMART_BOUNDARIES=false"
+MODE_ENV[s3_approx_dynamic]="PASH_S3_CHUNKS_PER_LAMBDA=16 USE_DYNAMIC_BOUNDARIES=true"
+MODE_ENV[s3_approx_adaptive_gap]="USE_ADAPTIVE_BOUNDARIES=true PASH_GAP_SAMPLE_KB=256 PASH_GAP_DELTA=0.001 PASH_GAP_K_SAMPLES=4096 PASH_GAP_SAFETY_FACTOR=1.2 PASH_GAP_MAX_WINDOW_KB=1024 PASH_S3_CHUNKS_PER_LAMBDA=16"
+MODE_ENV[s3_approx_adaptive_simple]="USE_ADAPTIVE_SIMPLE=true PASH_ADAPTIVE_SIMPLE_NUM_SAMPLES=5 PASH_ADAPTIVE_SIMPLE_SAMPLE_KB=256 PASH_ADAPTIVE_SIMPLE_SAFETY_FACTOR=1.5 PASH_S3_CHUNKS_PER_LAMBDA=16"
+MODE_ENV[s3_approx_single_shot]="USE_SINGLE_SHOT=true PASH_SINGLE_SHOT_SAMPLE_KB=256 PASH_SINGLE_SHOT_SAFETY_FACTOR=2.0 PASH_S3_CHUNKS_PER_LAMBDA=16"
 
 MODE_SUFFIX[noopt]="noopt"
-MODE_SUFFIX[s3opt]="s3opt"
-MODE_SUFFIX[s3optnonsmart]="s3optnonsmart"
-MODE_SUFFIX[s3optdynamic]="s3optdynamic"
-MODE_SUFFIX[adaptive]="adaptive"
-MODE_SUFFIX[adaptive_simple]="adaptive_simple"
-MODE_SUFFIX[single_shot]="single_shot"
+MODE_SUFFIX[s3_smart_prealigned]="s3smartprealigned"
+MODE_SUFFIX[s3_approx_tail_coord]="s3approxtailcoord"
+MODE_SUFFIX[s3_approx_correction]="s3approxcorrection"
+MODE_SUFFIX[s3_approx_dynamic]="s3approxdynamic"
+MODE_SUFFIX[s3_approx_adaptive_gap]="s3approxadaptivegap"
+MODE_SUFFIX[s3_approx_adaptive_simple]="s3approxadaptivesimple"
+MODE_SUFFIX[s3_approx_single_shot]="s3approxsingleshot"
 
 MODE_ENABLE_S3[noopt]="false"
-MODE_ENABLE_S3[s3opt]="true"
-MODE_ENABLE_S3[s3optnonsmart]="true"
-MODE_ENABLE_S3[s3optdynamic]="true"
-MODE_ENABLE_S3[adaptive]="true"
-MODE_ENABLE_S3[adaptive_simple]="true"
-MODE_ENABLE_S3[single_shot]="true"
+MODE_ENABLE_S3[s3_smart_prealigned]="true"
+MODE_ENABLE_S3[s3_approx_tail_coord]="true"
+MODE_ENABLE_S3[s3_approx_correction]="true"
+MODE_ENABLE_S3[s3_approx_dynamic]="true"
+MODE_ENABLE_S3[s3_approx_adaptive_gap]="true"
+MODE_ENABLE_S3[s3_approx_adaptive_simple]="true"
+MODE_ENABLE_S3[s3_approx_single_shot]="true"
 
 MODE_ENABLED[noopt]="$RUN_NOOPT"
-MODE_ENABLED[s3opt]="$RUN_S3OPT"
-MODE_ENABLED[s3optnonsmart]="$RUN_S3OPTNONSMART"
-MODE_ENABLED[s3optdynamic]="$RUN_S3OPTDYNAMIC"
-MODE_ENABLED[adaptive]="$RUN_ADAPTIVE"
-MODE_ENABLED[adaptive_simple]="$RUN_ADAPTIVE_SIMPLE"
-MODE_ENABLED[single_shot]="$RUN_SINGLE_SHOT"
+MODE_ENABLED[s3_smart_prealigned]="$RUN_SMART_PREALIGNED"
+MODE_ENABLED[s3_approx_tail_coord]="$RUN_APPROX_TAIL"
+MODE_ENABLED[s3_approx_correction]="$RUN_APPROX_CORRECTION"
+MODE_ENABLED[s3_approx_dynamic]="$RUN_APPROX_DYNAMIC"
+MODE_ENABLED[s3_approx_adaptive_gap]="$RUN_APPROX_ADAPTIVE_GAP"
+MODE_ENABLED[s3_approx_adaptive_simple]="$RUN_APPROX_ADAPTIVE_SIMPLE"
+MODE_ENABLED[s3_approx_single_shot]="$RUN_APPROX_SINGLE_SHOT"
 
 MODE_IS_BASELINE[noopt]="true"
 
@@ -762,8 +804,8 @@ echo "ALL BENCHMARKS COMPLETED"
 echo "========================================================================"
 echo "Results:"
 echo "  - Baseline (no opt): $BENCHMARK_DIR/outputs/*:noopt and logs/*:noopt"
-echo "  - Optimized:         $BENCHMARK_DIR/outputs/*:s3opt and logs/*:s3opt"
-echo "  - Graphviz graphs:   pash_graphviz_noopt_* and pash_graphviz_s3opt_*"
+echo "  - Optimized modes:   $BENCHMARK_DIR/outputs/*:s3* and logs/*:s3*"
+echo "  - Graphviz graphs:   pash_graphviz_noopt_* and pash_graphviz_s3_*"
 echo "========================================================================"
 echo ""
 echo "╔════════════════════════════════════════════════════════════════════════╗"
@@ -809,5 +851,5 @@ head -n 5 "$RESULTS_CSV"
 # Clean up temporary comparison files
 echo ""
 echo "Cleaning up temporary files..."
-rm -f /tmp/compare_noopt_*.txt /tmp/compare_s3opt_*.txt /tmp/compare_s3optnonsmart_*.txt /tmp/compare_s3optdynamic_*.txt /tmp/compare_adaptive_*.txt /tmp/compare_adaptive_simple_*.txt /tmp/compare_single_shot_*.txt
+rm -f /tmp/compare_*.txt
 echo "Done!"

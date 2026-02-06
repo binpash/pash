@@ -36,7 +36,7 @@ So I tried two approaches to fix this:
 
 The idea: each Lambda downloads its approximate byte range, then talks to its neighbors to figure out where lines actually start/end.
 
-Code is in `aws/s3-shard-reader-streaming.py`
+Code is in `aws/s3-chunk-reader-approx-tail-coordination.py`
 
 ```
 Lambda 0: downloads bytes 0-1.25GB, processes, tells Lambda 1 "my last line ended at byte X"
@@ -205,8 +205,8 @@ So basically: slow downstream consumer -> FIFO fills -> S3 times out -> job fail
 - `compiler/serverless/ir_helper.py`
    - l. 815: def find_line_boundaries_smart() - smart boundary calculation
    - l. 968:  main optimization entry point calls def optimize_s3_lambda_direct_streaming() which does the s3 optimization
-- `aws/s3-shard-reader-streaming.py` - lambda-to-lambda approx. boundaries approach
-- `aws/s3-get-object-smart-and-streaming.py` - smart boundaries approach
+- `aws/s3-chunk-reader-approx-tail-coordination.py` - lambda-to-lambda approx. boundaries approach
+- `aws/s3-chunk-reader-smart-prealigned.py` - smart boundaries approach
 - `compiler/definitions/ir/nodes/serverless_remote_pipe.py:44-76` - chooses whether to do 'no opt', 's3 opt with smart boundaries', 's3 opt with non-smart (approx.) boundaries'
 
 Here is the git branch I'm working on (just committed): 
