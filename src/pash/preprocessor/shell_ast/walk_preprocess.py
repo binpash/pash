@@ -303,12 +303,17 @@ class WalkPreprocess:
     def _walk_if(self, node: IfNode, ctx: PreprocessContext) -> NodeResult:
         """Walk an if node."""
         new_cond, cond_replaced = self.walk_close(node.cond, ctx)
+
+        ctx.trans_options.enter_if()
         new_then, then_replaced = self.walk_close(node.then_b, ctx)
 
         if node.else_b is not None:
+            ctx.trans_options.enter_else()
             new_else, else_replaced = self.walk_close(node.else_b, ctx)
         else:
             new_else, else_replaced = None, False
+
+        ctx.trans_options.exit_if()
 
         node.cond = new_cond
         node.then_b = new_then

@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-from shasta.ast_node import ForNode, make_typed_semi_sequence
+from shasta.ast_node import ForNode, make_typed_semi_sequence, string_of_arg
 from shasta.json_to_ast import to_ast_node
 from shell_ast.ast_util import (
     make_export_var_constant_string,
@@ -47,8 +47,9 @@ def for_node_with_loop_tracking(
     # Import here to avoid circular dependency
     from shell_ast.walk_preprocess import NodeResult
 
-    # Enter loop context
-    loop_id = ctx.trans_options.enter_loop()
+    # Enter loop context (pass iteration variable name for CFG tracking)
+    it_name = string_of_arg(node.variable)
+    loop_id = ctx.trans_options.enter_loop(it_name=it_name)
 
     # Preprocess the body using close-node semantics
     preprocessed_body, something_replaced = walker.walk_close(node.body, ctx)

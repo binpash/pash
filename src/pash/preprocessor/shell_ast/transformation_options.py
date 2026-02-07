@@ -3,7 +3,7 @@ Transformation options and state classes for AST preprocessing.
 """
 
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, auto
 import os
 import pickle
 
@@ -27,6 +27,111 @@ class TransformationType(Enum):
     PASH = "pash"
     SPECULATIVE = "spec"
     AIRFLOW = "airflow"
+
+
+# === CFG classes for basic block tracking (ported from spec_future fae47999) ===
+
+
+class EdgeReason(Enum):
+    """CFG edge types — names must match CFGEdgeType in parallel-orch/node.py"""
+    IF_TAKEN = auto()
+    ELSE_TAKEN = auto()
+    LOOP_TAKEN = auto()
+    LOOP_SKIP = auto()
+    LOOP_BACK = auto()
+    LOOP_BEGIN = auto()
+    LOOP_END = auto()
+    OTHER = auto()
+
+
+class ShellBB:
+    def __init__(self, num: int):
+        self.num = num
+
+
+class ShellLoopContext:
+    def __init__(self, test_block, next_block):
+        self.test_block = test_block
+        self.next_block = next_block
+
+
+class ShellIfContext:
+    def __init__(self, test_block, next_block, has_else=False):
+        self.test_block = test_block
+        self.next_block = next_block
+        self.has_else = has_else
+
+
+class ShellProg:
+    """Control flow graph for shell programs.
+
+    Tracks basic blocks and edges during AST preprocessing,
+    used by the speculative scheduler to understand program structure.
+    """
+
+    def __init__(self):
+        self.bbs = [ShellBB(0)]
+        self.current_bb = 0
+        self.edges = {}  # {from_bb: {to_bb: (EdgeReason, aux_info)}}
+        self.contexts = []
+
+    def add_bb(self) -> int:
+        next_bb = len(self.bbs)
+        self.bbs.append(ShellBB(next_bb))
+        return next_bb
+
+    def add_edge(self, from_bb, to_bb, label, aux_info=""):
+        if from_bb not in self.edges:
+            self.edges[from_bb] = {}
+        self.edges[from_bb][to_bb] = (label, aux_info)
+
+    def enter_for(self, it_name=""):
+        test_bb = self.add_bb()
+        self.add_edge(self.current_bb, test_bb, EdgeReason.LOOP_BEGIN)
+        next_bb = self.add_bb()
+        self.add_edge(test_bb, next_bb, EdgeReason.LOOP_SKIP)
+        body_bb = self.add_bb()
+        self.add_edge(test_bb, body_bb, EdgeReason.LOOP_TAKEN, aux_info=it_name)
+        self.contexts.append(ShellLoopContext(test_bb, next_bb))
+        self.current_bb = body_bb
+
+    def leave_for(self):
+        ctx = self.contexts.pop()
+        assert isinstance(ctx, ShellLoopContext)
+        self.add_edge(self.current_bb, ctx.test_block, EdgeReason.LOOP_BACK)
+        self.current_bb = ctx.next_block
+
+    def enter_if(self):
+        test_bb = self.current_bb
+        next_bb = self.add_bb()
+        body_bb = self.add_bb()
+        self.add_edge(test_bb, body_bb, EdgeReason.IF_TAKEN)
+        self.contexts.append(ShellIfContext(test_bb, next_bb))
+        self.current_bb = body_bb
+
+    def enter_else(self):
+        ctx = self.contexts.pop()
+        assert isinstance(ctx, ShellIfContext)
+        self.add_edge(self.current_bb, ctx.next_block, EdgeReason.OTHER)
+        else_bb = self.add_bb()
+        self.add_edge(ctx.test_block, else_bb, EdgeReason.ELSE_TAKEN)
+        self.contexts.append(ShellIfContext(ctx.test_block, ctx.next_block, has_else=True))
+        self.current_bb = else_bb
+
+    def leave_if(self):
+        ctx = self.contexts.pop()
+        assert isinstance(ctx, ShellIfContext)
+        if not ctx.has_else:
+            self.add_edge(ctx.test_block, ctx.next_block, EdgeReason.ELSE_TAKEN)
+        self.add_edge(self.current_bb, ctx.next_block, EdgeReason.OTHER)
+        self.current_bb = ctx.next_block
+
+    def add_break(self):
+        for ctx in reversed(self.contexts):
+            if isinstance(ctx, ShellLoopContext):
+                self.add_edge(self.current_bb, ctx.next_block, EdgeReason.LOOP_END)
+                return
+        assert False, "break outside loop"
 
 
 class AbstractTransformationState(ABC):
@@ -68,13 +173,22 @@ class AbstractTransformationState(ABC):
         else:
             return self._loop_contexts[0]
 
-    def enter_loop(self):
+    def enter_loop(self, it_name=None):
         new_loop_id = self.get_next_loop_id()
         self._loop_contexts.insert(0, new_loop_id)
         return new_loop_id
 
     def exit_loop(self):
         self._loop_contexts.pop(0)
+
+    def enter_if(self):
+        pass
+
+    def enter_else(self):
+        pass
+
+    def exit_if(self):
+        pass
 
     @abstractmethod
     def replace_df_region(
@@ -143,6 +257,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
         self.partial_order_file = po_file
         self.partial_order_edges = []
         self.partial_order_node_loop_contexts = {}
+        self.prog = ShellProg()
 
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
@@ -181,6 +296,25 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
     def get_all_loop_contexts(self):
         return self.partial_order_node_loop_contexts
+
+    # CFG tracking overrides
+    def enter_loop(self, it_name=None):
+        loop_id = super().enter_loop(it_name)
+        self.prog.enter_for(it_name or "")
+        return loop_id
+
+    def exit_loop(self):
+        self.prog.leave_for()
+        super().exit_loop()
+
+    def enter_if(self):
+        self.prog.enter_if()
+
+    def enter_else(self):
+        self.prog.enter_else()
+
+    def exit_if(self):
+        self.prog.leave_if()
 
     @staticmethod
     def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:

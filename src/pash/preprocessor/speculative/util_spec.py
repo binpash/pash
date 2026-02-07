@@ -43,11 +43,8 @@ def save_df_region(
     text_to_output: str, trans_options, df_region_id: int, predecessor_ids: int
 ) -> None:
     """Save a dataflow region to a file."""
-    # Compute basic block ID from loop context
-    # (spec_future used trans_options.current_bb() from CFG; we approximate
-    #  using the first loop context entry, defaulting to bb 0)
-    current_loop_context = trans_options.get_current_loop_context()
-    bb_id = current_loop_context[0] if current_loop_context else 0
+    # Compute basic block ID from CFG (matches spec_future's trans_options.current_bb())
+    bb_id = trans_options.prog.current_bb if hasattr(trans_options, 'prog') else 0
     log("Df region:", df_region_id, "bb:", bb_id)
 
     # Store bb_id (int) in the partial_order state
@@ -175,11 +172,12 @@ def serialize_partial_order(trans_options):
         po_file.write("Basic blocks:\n")
         po_file.write("Basic block edges:\n")
 
-        # Write basic block edges if available
-        if hasattr(trans_options, 'prog') and hasattr(trans_options.prog, 'edges'):
+        # Write basic block edges from CFG
+        # Format: from -> to:EDGE_TYPE:aux_info (parsed by parallel-orch/util.py)
+        if hasattr(trans_options, 'prog'):
             for from_bb_id, to_bb_ids in trans_options.prog.edges.items():
-                for to_bb_id, edge_type in to_bb_ids.items():
-                    po_file.write(f"{from_bb_id} -> {to_bb_id}: {str(edge_type)}\n")
+                for to_bb_id, (edge_reason, aux_info) in to_bb_ids.items():
+                    po_file.write(f"{from_bb_id} -> {to_bb_id}:{edge_reason.name}:{aux_info}\n")
 
         po_file.write("Loop context:\n")
 
