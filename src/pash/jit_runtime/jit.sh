@@ -80,6 +80,7 @@ if [ "$pash_speculative_flag" -eq 1 ]; then
     export pash_speculative_command_id=$pash_spec_command_id
 
     source "$RUNTIME_DIR/speculative/speculative_runtime.sh"
+    (exit "$pash_runtime_final_status")
 
     ## TODO:
     ## 2. Check the flag in pash.py and if it is set, do the speculative transformation.
