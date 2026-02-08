@@ -228,7 +228,8 @@ def make_loop_list_assignment(loop_list_args):
     Returns:
         AST node for HS_LOOP_LIST=<list> assignment
     """
-    from shasta.ast_node import CArgChar, QArgChar, to_ast_node
+    from shasta.ast_node import CArgChar, QArgChar
+    from shasta.json_to_ast import to_ast_node
     import copy
 
     # Create initial assignment node with placeholder value '0'
