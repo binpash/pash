@@ -54,6 +54,10 @@ def for_node_with_loop_tracking(
     # Create HS_LOOP_LIST assignment from for-loop arguments (before preprocessing)
     loop_list_node = make_loop_list_assignment(node.argument)
 
+    # Process the HS_LOOP_LIST assignment through the walker to save it as a df_region
+    # This ensures the scheduler can recognize it via pattern matching
+    processed_loop_list_node, _ = walker.walk_close(loop_list_node, ctx)
+
     # Replace for-loop argument with $HS_LOOP_LIST (matching fae47999 implementation)
     from shasta.ast_node import VArgChar
     node.argument = [[VArgChar("Normal", False, "HS_LOOP_LIST", [])]]
@@ -94,13 +98,17 @@ def for_node_with_loop_tracking(
     out_of_loop_ids = ctx.trans_options.get_current_loop_context()
     reset_loop_iters_node = export_pash_loop_iters_for_current_context(out_of_loop_ids)
 
+    # Create and process the unset command so it's also saved as a df_region
+    unset_node = to_ast_node(make_unset_var("HS_LOOP_LIST"))
+    processed_unset_node, _ = walker.walk_close(unset_node, ctx)
+
     # Wrap the entire for loop with HS_LOOP_LIST setup and loop tracking
     new_node = make_typed_semi_sequence([
-        loop_list_node,                         # HS_LOOP_LIST=<list> (already an AST node)
+        processed_loop_list_node,               # HS_LOOP_LIST=<list> (df_region runtime call)
         to_ast_node(export_node),               # PASH_LOOP_*_ITER=0
         node,                                    # the for loop itself
         to_ast_node(reset_loop_iters_node),    # export pash_loop_iters
-        to_ast_node(make_unset_var("HS_LOOP_LIST"))  # unset HS_LOOP_LIST
+        processed_unset_node                    # unset HS_LOOP_LIST (df_region runtime call)
     ])
 
     return NodeResult(ast=new_node, something_replaced=something_replaced)
