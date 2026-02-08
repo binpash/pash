@@ -264,6 +264,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
         self.partial_order_edges = []
         self.partial_order_node_loop_contexts = {}
         self.prog = ShellProg()
+        self.var_assignment_nodes = set()  # Track which nodes are variable assignments
 
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
@@ -275,6 +276,12 @@ class SpeculativeTransformationState(AbstractTransformationState):
         # Get the current loop id and save it so that the runtime knows
         # which loop it is in.
         loop_id = self.get_current_loop_id()
+
+        # Detect variable assignments (IFS modifications) for scheduler marking
+        # These should be executed via UNSAFE path, not speculatively
+        text_stripped = text_to_output.strip()
+        if text_stripped.startswith('IFS=') or text_stripped.startswith('unset IFS'):
+            self.mark_node_as_var_assignment(df_region_id)
 
         # Determine its predecessors
         if df_region_id == 0:
@@ -321,6 +328,18 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
     def exit_if(self):
         self.prog.leave_if()
+
+    def mark_node_as_var_assignment(self, node_id: int):
+        """Mark a node as a variable assignment (for scheduler)."""
+        self.var_assignment_nodes.add(node_id)
+
+    def get_var_nodes(self):
+        """Return the set of nodes that are variable assignments."""
+        return self.var_assignment_nodes
+
+    def get_number_of_var_assignments(self):
+        """Return the number of variable assignment nodes."""
+        return len(self.var_assignment_nodes)
 
     @staticmethod
     def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
