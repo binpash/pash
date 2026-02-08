@@ -15,6 +15,8 @@ from shell_ast.ast_util import (
     make_export_var_constant_string,
     make_increment_var,
     export_pash_loop_iters_for_current_context,
+    make_loop_list_assignment,
+    make_unset_var,
 )
 from env_var_names import loop_iter_var
 
@@ -29,12 +31,14 @@ def for_node_with_loop_tracking(
     Handler for ForNode that injects loop tracking code.
 
     This handler:
-    1. Enters a new loop context
-    2. Preprocesses the loop body
-    3. Injects loop iteration counter initialization
-    4. Injects loop iteration counter increment in the body
-    5. Exports loop iteration context for the runtime
-    6. Exits the loop context
+    1. Creates HS_LOOP_LIST assignment with for-loop arguments
+    2. Enters a new loop context
+    3. Preprocesses the loop body
+    4. Injects loop iteration counter initialization
+    5. Injects loop iteration counter increment in the body
+    6. Exports loop iteration context for the runtime
+    7. Exits the loop context
+    8. Unsets HS_LOOP_LIST after the loop
 
     Args:
         node: The ForNode to process
@@ -58,6 +62,9 @@ def for_node_with_loop_tracking(
     var_name = loop_iter_var(loop_id)
     export_node = make_export_var_constant_string(var_name, "0")
     increment_node = make_increment_var(var_name)
+
+    # Create HS_LOOP_LIST assignment from for-loop arguments
+    loop_list_node = make_loop_list_assignment(node.argument)
 
     # Get all loop IDs for context export
     all_loop_ids = ctx.trans_options.get_current_loop_context()
@@ -83,9 +90,13 @@ def for_node_with_loop_tracking(
     out_of_loop_ids = ctx.trans_options.get_current_loop_context()
     reset_loop_iters_node = export_pash_loop_iters_for_current_context(out_of_loop_ids)
 
-    # Wrap the entire for loop with initialization and reset
-    new_node = make_typed_semi_sequence(
-        [to_ast_node(export_node), node, to_ast_node(reset_loop_iters_node)]
-    )
+    # Wrap the entire for loop with HS_LOOP_LIST setup and loop tracking
+    new_node = make_typed_semi_sequence([
+        to_ast_node(loop_list_node),            # HS_LOOP_LIST=<list>
+        to_ast_node(export_node),               # PASH_LOOP_*_ITER=0
+        node,                                    # the for loop itself
+        to_ast_node(reset_loop_iters_node),    # export pash_loop_iters
+        to_ast_node(make_unset_var("HS_LOOP_LIST"))  # unset HS_LOOP_LIST
+    ])
 
     return NodeResult(ast=new_node, something_replaced=something_replaced)

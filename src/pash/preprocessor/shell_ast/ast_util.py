@@ -217,6 +217,28 @@ def make_unset_var(var_name: str):
     return node
 
 
+def make_loop_list_assignment(loop_list_args):
+    """Create HS_LOOP_LIST=<list> assignment from for-loop arguments.
+
+    Args:
+        loop_list_args: list[list[ArgChar]] - the for-loop's argument field
+
+    Returns:
+        AST node for HS_LOOP_LIST=<list> assignment
+    """
+    # Concatenate all arguments with spaces (ForNode.argument is list of arg lists)
+    if len(loop_list_args) == 0:
+        value_chars = []
+    else:
+        value_chars = loop_list_args[0][:]
+        for arg in loop_list_args[1:]:
+            value_chars.append(char_to_arg_char(' '))
+            value_chars.extend(arg)
+
+    node = make_assignment("HS_LOOP_LIST", value_chars)
+    return node
+
+
 def make_increment_var(var_name: str):
     arg = string_to_argument(f"{var_name}+1")
     arith_expr = make_arith(arg)
