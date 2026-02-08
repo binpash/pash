@@ -96,7 +96,7 @@ def for_node_with_loop_tracking(
 
     # Wrap the entire for loop with HS_LOOP_LIST setup and loop tracking
     new_node = make_typed_semi_sequence([
-        to_ast_node(loop_list_node),            # HS_LOOP_LIST=<list>
+        loop_list_node,                         # HS_LOOP_LIST=<list> (already an AST node)
         to_ast_node(export_node),               # PASH_LOOP_*_ITER=0
         node,                                    # the for loop itself
         to_ast_node(reset_loop_iters_node),    # export pash_loop_iters
