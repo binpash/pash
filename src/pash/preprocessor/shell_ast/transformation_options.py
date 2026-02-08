@@ -16,9 +16,15 @@ from speculative import util_spec
 from util import ptempfile
 
 
-# Runtime executable path - constructed from PASH_TOP environment variable
+# Runtime executable paths
 PASH_TOP = os.environ.get("PASH_TOP", "")
+PASH_SPEC_TOP = os.environ.get("PASH_SPEC_TOP", PASH_TOP)
+
+# Normal PaSh runtime (inside deps/pash/src/pash)
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "jit_runtime/jit.sh")
+
+# Speculative runtime (outside deps/pash in hs/jit_runtime)
+RUNTIME_EXECUTABLE_SPEC = os.path.join(PASH_SPEC_TOP, "jit_runtime/jit.sh")
 
 
 class TransformationType(Enum):
@@ -327,10 +333,10 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
         assignments.append(["pash_spec_loop_id", string_to_argument(loop_id_str)])
 
-        # Call the runtime
+        # Call the speculative runtime
         arguments = [
             string_to_argument("source"),
-            string_to_argument(RUNTIME_EXECUTABLE),
+            string_to_argument(RUNTIME_EXECUTABLE_SPEC),
         ]
         runtime_node = make_command(arguments, assignments=assignments)
 
