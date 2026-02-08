@@ -220,23 +220,30 @@ def make_unset_var(var_name: str):
 def make_loop_list_assignment(loop_list_args):
     """Create HS_LOOP_LIST=<list> assignment from for-loop arguments.
 
+    Matches the implementation from fae47999 commit of spec_future branch.
+
     Args:
         loop_list_args: list[list[ArgChar]] - the for-loop's argument field
 
     Returns:
         AST node for HS_LOOP_LIST=<list> assignment
     """
-    # Concatenate all arguments with spaces (ForNode.argument is list of arg lists)
-    if len(loop_list_args) == 0:
-        value_chars = []
-    else:
-        value_chars = loop_list_args[0][:]
-        for arg in loop_list_args[1:]:
-            value_chars.append(char_to_arg_char(' '))
-            value_chars.extend(arg)
+    from shasta.ast_node import CArgChar, QArgChar, to_ast_node
+    import copy
 
-    node = make_assignment("HS_LOOP_LIST", value_chars)
-    return node
+    # Create initial assignment node with placeholder value '0'
+    list_eval_node = to_ast_node(make_assignment('HS_LOOP_LIST', string_to_argument('0')))
+
+    # Concatenate all for-loop arguments with spaces (matching fae47999 implementation)
+    list_arguments = copy.deepcopy(loop_list_args[0])
+    for a in loop_list_args[1:]:
+        list_arguments.append(CArgChar(ord(' ')))
+        list_arguments.extend(copy.deepcopy(a))
+
+    # Set the assignment value to the quoted list (QArgChar wrapper)
+    list_eval_node.assignments[0].val = [QArgChar(list_arguments)]
+
+    return list_eval_node
 
 
 def make_increment_var(var_name: str):

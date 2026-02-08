@@ -51,6 +51,13 @@ def for_node_with_loop_tracking(
     # Import here to avoid circular dependency
     from shell_ast.walk_preprocess import NodeResult
 
+    # Create HS_LOOP_LIST assignment from for-loop arguments (before preprocessing)
+    loop_list_node = make_loop_list_assignment(node.argument)
+
+    # Replace for-loop argument with $HS_LOOP_LIST (matching fae47999 implementation)
+    from shasta.ast_node import VArgChar
+    node.argument = [[VArgChar("Normal", False, "HS_LOOP_LIST", [])]]
+
     # Enter loop context (pass iteration variable name for CFG tracking)
     it_name = string_of_arg(node.variable)
     loop_id = ctx.trans_options.enter_loop(it_name=it_name)
@@ -62,9 +69,6 @@ def for_node_with_loop_tracking(
     var_name = loop_iter_var(loop_id)
     export_node = make_export_var_constant_string(var_name, "0")
     increment_node = make_increment_var(var_name)
-
-    # Create HS_LOOP_LIST assignment from for-loop arguments
-    loop_list_node = make_loop_list_assignment(node.argument)
 
     # Get all loop IDs for context export
     all_loop_ids = ctx.trans_options.get_current_loop_context()
