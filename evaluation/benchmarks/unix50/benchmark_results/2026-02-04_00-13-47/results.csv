@@ -1,7 +1,0 @@
-run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt
-2026-02-04_00-13-47,10.sh,4_20G.txt,32,noopt,1,224.240,13142671,0.379165,baseline,baseline
-2026-02-04_00-13-47,10.sh,4_20G.txt,32,s3optdynamic,1,67.422,2851080,0.082253,true,
-2026-02-04_00-13-47,10.sh,4_20G.txt,32,single_shot,1,64.707,2680400,0.077329,true,
-2026-02-04_00-13-47,19.sh,8_20G.txt,32,noopt,1,184.688,11359445,0.327719,baseline,baseline
-2026-02-04_00-13-47,19.sh,8_20G.txt,32,s3optdynamic,1,38.979,1709322,0.049314,true,
-2026-02-04_00-13-47,19.sh,8_20G.txt,32,single_shot,1,35.417,1457801,0.042057,true,

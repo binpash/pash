@@ -24,6 +24,11 @@ MODE_STYLE = {
         "marker": "D",
         "label": "s3approxsingleshot",
     },
+    "s3approxadaptivesingleshot": {
+        "color": "#e67e22",
+        "marker": "D",
+        "label": "s3approxadaptivesingleshot",
+    },
 }
 
 
