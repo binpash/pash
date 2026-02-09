@@ -10,7 +10,7 @@ import pickle
 from shasta.ast_node import AstNode
 from shasta.json_to_ast import to_ast_node
 
-from shell_ast.ast_util import string_to_argument, make_command
+from ast_util import string_to_argument, make_command
 from parse import from_ast_objects_to_shell
 from util import ptempfile
 

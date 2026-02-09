@@ -6,14 +6,12 @@ The PaSh preprocessor transforms shell scripts by identifying candidate dataflow
 
 ```
 preprocessor/
-├── pash_preprocessor.py      # Entry point with all preprocessing logic
-├── parse.py                  # Shell script parsing/unparsing
-├── util.py                   # Utility functions
-├── shell_ast/
-│   ├── ast_to_ast.py              # AST region replacement + preprocess_node
-│   ├── walk_preprocess.py         # Preprocessing walker (extends shasta's CommandVisitor)
-│   ├── transformation_options.py  # Transformation state classes
-│   └── ast_util.py                # AST utility functions
+├── pash_preprocessor.py          # Entry point + region replacement logic
+├── parse.py                      # Shell script parsing/unparsing
+├── util.py                       # Utility functions
+├── ast_util.py                   # AST construction helpers
+├── transformation_options.py     # Transformation state classes
+├── walk_preprocess.py            # Preprocessing walker (extends shasta's CommandVisitor)
 ```
 
 ## Running the Preprocessor
@@ -42,7 +40,7 @@ python3 preprocessor/pash_preprocessor.py --output /tmp/out.sh script.sh
 1. **Entry Point** (`pash_preprocessor.py`): Parses arguments, orchestrates parsing, preprocessing, and unparsing
 2. **Parsing** (`parse.py`): Converts shell script to AST using libdash/libbash
 3. **AST Walking** (`walk_preprocess.py`): Preprocessing visitor built on `shasta.ast_walker.CommandVisitor`
-4. **Region Replacement** (`ast_to_ast.py`): Identifies dataflow regions and replaces with runtime calls
+4. **Region Replacement** (`pash_preprocessor.py`): Identifies dataflow regions and replaces with runtime calls
 5. **Unparsing** (`parse.py`): Converts transformed AST back to shell script
 
 ### Key Classes

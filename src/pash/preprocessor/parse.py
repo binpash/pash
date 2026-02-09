@@ -4,7 +4,7 @@ Shell script parsing and unparsing utilities.
 
 import sys
 
-from shell_ast.ast_util import UnparsedScript
+from ast_util import UnparsedScript
 from shasta.json_to_ast import to_ast_node
 from shasta.bash_to_shasta_ast import to_ast_node as bash_to_shasta_ast
 

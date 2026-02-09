@@ -22,9 +22,9 @@ from shasta.ast_node import (
 from shasta.ast_walker import CommandVisitor, command_child_attrs
 
 if TYPE_CHECKING:
-    from shell_ast.transformation_options import AbstractTransformationState
+    from transformation_options import AbstractTransformationState
 
-from shell_ast.ast_util import PreprocessedAST
+from ast_util import PreprocessedAST
 
 
 @dataclass
