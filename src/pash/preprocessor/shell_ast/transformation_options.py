@@ -266,6 +266,9 @@ class SpeculativeTransformationState(AbstractTransformationState):
         self.prog = ShellProg()
         self.var_assignment_nodes = set()  # Track which nodes are variable assignments
 
+    def get_mode(self):
+        return TransformationType.SPECULATIVE
+
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
     ) -> AstNode:
