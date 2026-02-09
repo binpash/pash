@@ -12,8 +12,6 @@
 #define PRINTDBG(fmt, ...)
 #endif
 
-// splits the whole file in N chunks 
-
 void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles) {
   PRINTDBG("%s: will split input\n", __func__);
 
