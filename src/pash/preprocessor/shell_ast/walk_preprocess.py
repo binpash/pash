@@ -38,6 +38,21 @@ if TYPE_CHECKING:
     from shell_ast.transformation_options import AbstractTransformationState
 
 from shell_ast.ast_util import PreprocessedAST
+from shell_ast.transformation_options import TransformationType
+
+
+def is_ifs_assignment(node: CommandNode) -> bool:
+    """Check if a CommandNode is an IFS variable assignment or unset."""
+    if len(node.arguments) > 0:
+        return False  # Not a pure assignment
+    if not node.assignments:
+        return False
+    # Check if any assignment is for IFS
+    for assignment in node.assignments:
+        var_name = assignment[0]
+        if var_name == "IFS":
+            return True
+    return False
 
 
 @dataclass
@@ -158,7 +173,13 @@ class WalkPreprocess:
 
             case CommandNode():
                 if len(node.arguments) == 0:
-                    # Just an assignment, not a candidate
+                    # Just an assignment
+                    # GL: In spec mode, we treat assignment nodes as commands
+                    if ctx.trans_options.get_mode() == TransformationType.SPECULATIVE:
+                        return NodeResult(
+                            ast=node, replace_whole=True, something_replaced=True
+                        )
+                    # In PASH mode, assignments are not candidates
                     return NodeResult(ast=node, something_replaced=False)
                 return NodeResult(
                     ast=node, replace_whole=True, something_replaced=True
