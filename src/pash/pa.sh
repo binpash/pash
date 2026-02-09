@@ -52,7 +52,6 @@ export pash_avoid_pash_runtime_completion_flag=0
 export pash_profile_driven_flag=1
 export pash_no_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
-export pash_speculative_flag=0
 export distributed_exec=0
 export PASH_DEBUG_LEVEL=1
 export PASH_REDIR="&2"
@@ -78,7 +77,6 @@ pash_init_arg_defaults() {
     # Shared arguments (preprocessor + server)
     arg_debug=""
     arg_log_file=""
-    arg_speculative=""
     arg_config_path=""
     arg_local_annotations_dir=""
 
@@ -134,7 +132,6 @@ Shell Options:
 Shared Options (Preprocessor + Compiler):
   -d, --debug LEVEL        Debug level (default: 1)
   --log_file FILE          Log file path (default: stderr)
-  --speculative            (experimental) Use speculative execution
   --config_path PATH       Path to configuration file
 
 Preprocessor Options:
@@ -229,10 +226,6 @@ pash_parse_args() {
                 arg_log_file="$next_arg"
                 export PASH_REDIR="$next_arg"
                 i=$next_i
-                ;;
-            --speculative)
-                arg_speculative="--speculative"
-                export pash_speculative_flag=1
                 ;;
             --config_path)
                 arg_config_path="$next_arg"
@@ -380,7 +373,6 @@ pash_build_preprocessor_args() {
     [ -n "$arg_debug" ] && preprocessor_args+=("-d" "$arg_debug")
     [ -n "$arg_log_file" ] && preprocessor_args+=("--log_file" "$arg_log_file")
     [ -n "$arg_bash" ] && preprocessor_args+=("$arg_bash")
-    [ -n "$arg_speculative" ] && preprocessor_args+=("$arg_speculative")
     preprocessor_args+=("$input_script")
 }
 
@@ -391,7 +383,6 @@ pash_build_server_args() {
     # Shared arguments
     [ -n "$arg_debug" ] && server_args+=("-d" "$arg_debug")
     [ -n "$arg_log_file" ] && server_args+=("--log_file" "$arg_log_file")
-    [ -n "$arg_speculative" ] && server_args+=("$arg_speculative")
     [ -n "$arg_config_path" ] && server_args+=("--config_path" "$arg_config_path")
 
     # Server-specific arguments
@@ -583,36 +574,30 @@ get_pash_python() {
 export PASH_PYTHON=$(get_pash_python)
 
 pash_setup_server_functions() {
-    if [ "${pash_speculative_flag}" -eq 1 ]; then
-        ## Speculative mode - source the speculative setup
-        source "$PASH_TOP/jit_runtime/speculative/pash_spec_init_setup.sh"
-    else
-        ## Normal PaSh mode
-        start_server() {
-            "$PASH_PYTHON" "$PASH_TOP/compiler/compilation_server.py" "$@" &
-            export daemon_pid=$!
-            pash_wait_until_daemon_listening
-        }
+    start_server() {
+        "$PASH_PYTHON" "$PASH_TOP/compiler/compilation_server.py" "$@" &
+        export daemon_pid=$!
+        pash_wait_until_daemon_listening
+    }
 
-        cleanup_server() {
-            local daemon_pid=$1
-            if ps -p "$daemon_pid" > /dev/null 2>&1; then
-                msg="Done"
-                daemon_response=$(pash_communicate_daemon "$msg")
-                if [ "$distributed_exec" -eq 1 ]; then
-                    manager_response=$(pash_communicate_worker_manager "$msg")
-                fi
-                ## Check if assertion failed
-                if [[ "$daemon_response" == *"ASSERT_FAILED"* ]]; then
-                    pash_assert_failed=1
-                fi
-                wait 2> /dev/null 1>&2
+    cleanup_server() {
+        local daemon_pid=$1
+        if ps -p "$daemon_pid" > /dev/null 2>&1; then
+            msg="Done"
+            daemon_response=$(pash_communicate_daemon "$msg")
+            if [ "$distributed_exec" -eq 1 ]; then
+                manager_response=$(pash_communicate_worker_manager "$msg")
             fi
-        }
+            ## Check if assertion failed
+            if [[ "$daemon_response" == *"ASSERT_FAILED"* ]]; then
+                pash_assert_failed=1
+            fi
+            wait 2> /dev/null 1>&2
+        fi
+    }
 
-        export -f start_server
-        export -f cleanup_server
-    fi
+    export -f start_server
+    export -f cleanup_server
 }
 
 ###############################################################################

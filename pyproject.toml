@@ -31,7 +31,7 @@ dependencies = [
     "graphviz",
     "libdash",
     "pash-annotations~=0.2.4",
-    "shasta~=0.4",
+    "shasta~=0.5",
     "libbash~=0.1.14",
     "sh-expand~=0.2.0",
 ]
@@ -64,4 +64,4 @@ where = ["src"]
 [tool.setuptools.package-data]
 "pash.compiler" = ["config.json"]
 "pash.runtime" = ["*.c", "*.h", "*.sh", "Makefile"]
-"pash.jit_runtime" = ["*.sh", "speculative/*.sh"]
+"pash.jit_runtime" = ["*.sh"]

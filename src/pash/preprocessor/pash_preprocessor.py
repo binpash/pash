@@ -1,5 +1,5 @@
 """
-PaSh Preprocessor Entry Point
+PaSh Preprocessor
 
 This module handles preprocessing of shell scripts by:
 1. Parsing the shell script to ASTs
@@ -11,12 +11,14 @@ import sys
 import os
 import argparse
 import logging
-import socket
 from datetime import datetime
 
-from shell_ast import transformation_options, ast_to_ast
+from shasta.ast_node import AstNode
+
+from ast_util import PreprocessedAST, UnparsedScript, unzip
+from transformation_options import TransformationState
+from walk_preprocess import WalkPreprocess, PreprocessContext
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
-from speculative import util_spec
 from util import log, logging_prefix, print_time_delta
 
 
@@ -25,6 +27,11 @@ LOGGING_PREFIX = "PaSh Preprocessor: "
 ## Increase the recursion limit (it seems that the parser/unparser needs it for bigger scripts)
 sys.setrecursionlimit(10000)
 ## Note: The preprocessor is very slow for very large recursive scripts
+
+
+# Module-level walker instance
+_pash_walker = WalkPreprocess()
+
 
 def config_from_args(pash_args):
     """Configure logging based on command-line arguments."""
@@ -78,14 +85,6 @@ class Parser(argparse.ArgumentParser):
             help="(experimental) interpret the input as a bash script file",
             action="store_true",
         )
-        self.add_argument(
-            "--speculative",
-            help="(experimental) use the speculative execution preprocessing and runtime",
-            action="store_true",
-            default=False,
-        )
-
-        self.set_defaults(preprocess_mode="pash")
 
 
 @logging_prefix(LOGGING_PREFIX)
@@ -159,7 +158,7 @@ def preprocess(input_script_path, args):
 
 def preprocess_asts(ast_objects, args):
     """
-    Preprocess AST objects based on the transformation mode.
+    Preprocess AST objects by replacing candidate dataflow regions.
 
     Args:
         ast_objects: List of parsed AST objects
@@ -168,46 +167,142 @@ def preprocess_asts(ast_objects, args):
     Returns:
         List of preprocessed AST objects
     """
-    trans_mode = transformation_options.TransformationType(args.preprocess_mode)
+    trans_options = TransformationState()
+    return replace_ast_regions(ast_objects, trans_options)
 
-    if trans_mode is transformation_options.TransformationType.SPECULATIVE:
-        trans_options = transformation_options.SpeculativeTransformationState(
-            po_file=args.partial_order_file
+
+# === AST region replacement ===
+
+
+def preprocess_node(
+    ast_node: AstNode,
+    trans_options: TransformationState,
+    last_object: bool,
+) -> PreprocessedAST:
+    """
+    Preprocesses an AstNode. Given an AstNode of any type, it will appropriately
+    dispatch a preprocessor for the specific node type.
+
+    Parameters:
+        ast_node (AstNode): The AstNode to parse
+        trans_options (TransformationState):
+            A concrete transformation state instance corresponding to the output target
+        last_object (bool): Flag for whether this is the last AstNode
+
+    Returns:
+        PreprocessedAst: the preprocessed version of the original AstNode
+    """
+    ctx = PreprocessContext(trans_options=trans_options, last_object=last_object)
+    return _pash_walker.walk(ast_node, ctx)
+
+
+def replace_ast_regions(ast_objects, trans_options: TransformationState):
+    """
+    Replace candidate dataflow AST regions with calls to PaSh's runtime.
+    """
+    preprocessed_asts = []
+    candidate_dataflow_region = []
+    last_object = False
+    for i, ast_object in enumerate(ast_objects):
+        # If we are working on the last object we need to keep that in mind when replacing.
+        # The last df-region should not be executed in parallel no matter what (to not lose its exit code.)
+        if i == len(ast_objects) - 1:
+            last_object = True
+
+        ast, original_text, _linno_before, _linno_after = ast_object
+        assert isinstance(ast, AstNode)
+
+        # Preprocess ast by replacing subtrees with calls to runtime.
+        # - If the whole AST needs to be replaced (e.g. if it is a pipeline)
+        #   then the second output is true.
+        # - If the next AST needs to be replaced too (e.g. if the current one is a background)
+        #   then the third output is true
+        preprocessed_ast_object = preprocess_node(
+            ast, trans_options, last_object=last_object
         )
-        util_spec.initialize(trans_options)
-    elif trans_mode is transformation_options.TransformationType.AIRFLOW:
-        trans_options = transformation_options.AirflowTransformationState()
-    else:
-        trans_options = transformation_options.TransformationState()
-
-    # Preprocess ASTs by replacing regions with calls to PaSh runtime
-    preprocessed_asts = ast_to_ast.replace_ast_regions(ast_objects, trans_options)
-
-    # For speculative mode, finalize the partial order file
-    if trans_mode is transformation_options.TransformationType.SPECULATIVE:
-        util_spec.serialize_partial_order(trans_options)
-
-        # Inform the scheduler that the partial order file is ready
-        unix_socket_file = os.getenv("PASH_SPEC_SCHEDULER_SOCKET")
-        msg = util_spec.scheduler_server_init_po_msg(
-            trans_options.get_partial_order_file()
+        # If the dataflow region is not maximal then it implies that the whole
+        # AST should be replaced.
+        assert (
+            not preprocessed_ast_object.is_non_maximal()
+            or preprocessed_ast_object.should_replace_whole_ast()
         )
-        _unix_socket_send_and_forget(unix_socket_file, msg)
+
+        # If the whole AST needs to be replaced then it implies that
+        # something will be replaced
+        assert (
+            not preprocessed_ast_object.should_replace_whole_ast()
+            or preprocessed_ast_object.will_anything_be_replaced()
+        )
+
+        # If it isn't maximal then we just add it to the candidate
+        if preprocessed_ast_object.is_non_maximal():
+            candidate_dataflow_region.append(
+                (preprocessed_ast_object.ast, original_text)
+            )
+        else:
+            # If the current candidate dataflow region is non-empty
+            # it means that the previous AST was in the background so
+            # the current one has to be included in the process no matter what
+            if len(candidate_dataflow_region) > 0:
+                candidate_dataflow_region.append(
+                    (preprocessed_ast_object.ast, original_text)
+                )
+                # Since the current one is maximal (or not wholy replaced)
+                # we close the candidate.
+                dataflow_region_asts, dataflow_region_lines = unzip(
+                    candidate_dataflow_region
+                )
+                dataflow_region_text = join_original_text_lines(dataflow_region_lines)
+                replaced_ast = trans_options.replace_df_region(
+                    dataflow_region_asts,
+                    ast_text=dataflow_region_text,
+                    disable_parallel_pipelines=last_object,
+                )
+                candidate_dataflow_region = []
+                preprocessed_asts.append(replaced_ast)
+            else:
+                if preprocessed_ast_object.should_replace_whole_ast():
+                    replaced_ast = trans_options.replace_df_region(
+                        [preprocessed_ast_object.ast],
+                        ast_text=original_text,
+                        disable_parallel_pipelines=last_object,
+                    )
+                    preprocessed_asts.append(replaced_ast)
+                else:
+                    # In this case, it is possible that no replacement happened,
+                    # meaning that we can simply return the original parsed text as it was.
+                    if (
+                        preprocessed_ast_object.will_anything_be_replaced()
+                        or original_text is None
+                    ):
+                        preprocessed_asts.append(preprocessed_ast_object.ast)
+                    else:
+                        preprocessed_asts.append(UnparsedScript(original_text))
+
+    # Close the final dataflow region
+    if len(candidate_dataflow_region) > 0:
+        dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
+        dataflow_region_text = join_original_text_lines(dataflow_region_lines)
+        replaced_ast = trans_options.replace_df_region(
+            dataflow_region_asts,
+            ast_text=dataflow_region_text,
+            disable_parallel_pipelines=True,
+        )
+        candidate_dataflow_region = []
+        preprocessed_asts.append(replaced_ast)
 
     return preprocessed_asts
 
 
-def _unix_socket_send_and_forget(socket_file, msg):
-    """Send a message to a Unix socket without waiting for a response."""
-    if socket_file is None:
-        return
-    try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(socket_file)
-        sock.sendall(msg.encode())
-        sock.close()
-    except Exception as e:
-        log(f"Warning: Failed to send message to scheduler socket: {e}")
+def join_original_text_lines(shell_source_lines_or_none):
+    """
+    Join original unparsed shell source in a safe way,
+    handling the case where some of the text is None (e.g., in case of stdin parsing).
+    """
+    if any([text_or_none is None for text_or_none in shell_source_lines_or_none]):
+        return None
+    else:
+        return "\n".join(shell_source_lines_or_none)
 
 
 def parse_args():
@@ -218,13 +313,6 @@ def parse_args():
     parser = Parser(prog_name)
     args = parser.parse_args()
     config_from_args(args)
-
-    # Configure speculative mode if enabled
-    if args.speculative:
-        log("PaSh is running in speculative mode...")
-        args.__dict__["preprocess_mode"] = "spec"
-        args.__dict__["partial_order_file"] = util_spec.partial_order_file_path()
-        log(" -- Its partial order file will be stored in:", args.partial_order_file)
 
     # Log all arguments
     log("Arguments:")
