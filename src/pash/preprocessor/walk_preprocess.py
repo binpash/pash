@@ -8,7 +8,7 @@ dataflow-region detection and replacement logic.
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from shasta.ast_node import (
     AstNode,
@@ -21,9 +21,6 @@ from shasta.ast_node import (
 )
 from shasta.ast_walker import CommandVisitor, command_child_attrs
 
-if TYPE_CHECKING:
-    from transformation_options import AbstractTransformationState
-
 from ast_util import PreprocessedAST
 
 
@@ -31,7 +28,7 @@ from ast_util import PreprocessedAST
 class PreprocessContext:
     """Context threaded through preprocessing traversal."""
 
-    trans_options: Any  # AbstractTransformationState
+    trans_options: Any  # TransformationState
     last_object: bool = False
 
 

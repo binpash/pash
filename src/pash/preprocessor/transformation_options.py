@@ -1,9 +1,7 @@
 """
-Transformation options and state classes for AST preprocessing.
+Transformation state for AST preprocessing.
 """
 
-from abc import ABC, abstractmethod
-from enum import Enum
 import os
 import pickle
 
@@ -20,15 +18,13 @@ PASH_TOP = os.environ.get("PASH_TOP", "")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "jit_runtime/jit.sh")
 
 
-class TransformationType(Enum):
-    """Types of AST-to-AST transformations."""
+class TransformationState:
+    """
+    Transformation state for PaSh preprocessing.
 
-    PASH = "pash"
-    AIRFLOW = "airflow"
-
-
-class AbstractTransformationState(ABC):
-    """Base class for transformation state."""
+    Manages node IDs and generates replacement AST nodes that call the
+    PaSh runtime for dataflow region compilation.
+    """
 
     def __init__(self):
         self._node_counter = 0
@@ -44,16 +40,6 @@ class AbstractTransformationState(ABC):
 
     def get_number_of_ids(self):
         return self._node_counter
-
-    @abstractmethod
-    def replace_df_region(
-        self, asts, disable_parallel_pipelines=False, ast_text=None
-    ) -> AstNode:
-        pass
-
-
-class TransformationState(AbstractTransformationState):
-    """Standard PaSh transformation state."""
 
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
@@ -102,12 +88,6 @@ class TransformationState(AbstractTransformationState):
         ]
         runtime_node = make_command(arguments, assignments=assignments)
         return runtime_node
-
-
-class AirflowTransformationState(TransformationState):
-    """Airflow transformation state (same as standard PaSh for now)."""
-
-    pass
 
 
 def get_shell_from_ast(asts, ast_text=None) -> str:

@@ -16,12 +16,7 @@ from datetime import datetime
 from shasta.ast_node import AstNode
 
 from ast_util import PreprocessedAST, UnparsedScript, unzip
-from transformation_options import (
-    TransformationType,
-    TransformationState,
-    AirflowTransformationState,
-    AbstractTransformationState,
-)
+from transformation_options import TransformationState
 from walk_preprocess import WalkPreprocess, PreprocessContext
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import log, logging_prefix, print_time_delta
@@ -90,7 +85,6 @@ class Parser(argparse.ArgumentParser):
             help="(experimental) interpret the input as a bash script file",
             action="store_true",
         )
-        self.set_defaults(preprocess_mode="pash")
 
 
 @logging_prefix(LOGGING_PREFIX)
@@ -164,7 +158,7 @@ def preprocess(input_script_path, args):
 
 def preprocess_asts(ast_objects, args):
     """
-    Preprocess AST objects based on the transformation mode.
+    Preprocess AST objects by replacing candidate dataflow regions.
 
     Args:
         ast_objects: List of parsed AST objects
@@ -173,13 +167,7 @@ def preprocess_asts(ast_objects, args):
     Returns:
         List of preprocessed AST objects
     """
-    trans_mode = TransformationType(args.preprocess_mode)
-
-    if trans_mode is TransformationType.AIRFLOW:
-        trans_options = AirflowTransformationState()
-    else:
-        trans_options = TransformationState()
-
+    trans_options = TransformationState()
     return replace_ast_regions(ast_objects, trans_options)
 
 
@@ -188,7 +176,7 @@ def preprocess_asts(ast_objects, args):
 
 def preprocess_node(
     ast_node: AstNode,
-    trans_options: AbstractTransformationState,
+    trans_options: TransformationState,
     last_object: bool,
 ) -> PreprocessedAST:
     """
@@ -197,7 +185,7 @@ def preprocess_node(
 
     Parameters:
         ast_node (AstNode): The AstNode to parse
-        trans_options (AbstractTransformationState):
+        trans_options (TransformationState):
             A concrete transformation state instance corresponding to the output target
         last_object (bool): Flag for whether this is the last AstNode
 
@@ -208,7 +196,7 @@ def preprocess_node(
     return _pash_walker.walk(ast_node, ctx)
 
 
-def replace_ast_regions(ast_objects, trans_options: AbstractTransformationState):
+def replace_ast_regions(ast_objects, trans_options: TransformationState):
     """
     Replace candidate dataflow AST regions with calls to PaSh's runtime.
     """
