@@ -1,5 +1,7 @@
 # Leash - PaSh Serverless Execution System
 
+Canonical LEASH reference. Architecture and execution details that were previously spread across multiple serverless docs are consolidated here.
+
 > **📝 IMPORTANT**: This document describes how Leash works. Whenever you learn something new about Leash, you MUST update this file by appending new information or modifying existing sections to keep it accurate and up-to-date.
 
 ---
@@ -577,6 +579,41 @@ For many small tasks:
 
 ---
 
+## Code-Level Call Chain
+
+Primary execution chain for serverless runs:
+
+1. `compiler/serverless/serverless_executor.py` (`ServerlessManager.handler`) receives request metadata and loads IR.
+2. `compiler/serverless/ir_helper.py` (`prepare_scripts_for_serverless_exec`) splits IR, augments subgraphs with remote nodes, and generates scripts.
+3. `compiler/serverless/ir_helper.py` (`add_nodes_to_subgraphs`) decides transport nodes and S3 reader strategy per lambda.
+4. Generated scripts are uploaded to `s3://{bucket}/sls-scripts/{folder_id}/{script_id}.sh`.
+5. `ServerlessManager` dispatches each script to EC2 (`run_local`) or Lambda (`invoke_lambda`) based on `ec2_set`.
+
+S3 reader strategy mapping used by serverless remote pipes is defined in:
+
+- `compiler/definitions/ir/nodes/serverless_remote_pipe.py`
+
+---
+
+## Holepunch Rendezvous Internals
+
+When LEASH uses direct network transport (`/opt/pashlib`), each send/recv pair coordinates with STUN + DynamoDB rendezvous:
+
+1. Each side discovers local/external address via STUN.
+2. Each side registers its endpoint info in DynamoDB (`rdv` table) under a shared connection key (UUID).
+3. Each side polls for peer endpoint info.
+4. Both sides attempt connection from bound local ports (simultaneous open).
+5. Data streams FIFO -> TCP -> FIFO through matching send/recv UUID pairs.
+
+Operational components:
+
+- Transport binary: `/opt/pashlib`
+- Lambda entrypoint: `runtime/serverless/lambda-function.py`
+- EC2 handler: `scripts/serverless/ec2-handler.py`
+- Invocation wrapper: `aws/invoke-lambda.py`
+
+---
+
 ## Future Enhancements
 
 **Potential Improvements**:
@@ -590,7 +627,7 @@ For many small tasks:
 
 ## Version History
 
-- **Last Updated**: 2025-11-07
+- **Last Updated**: 2026-02-09
 - **PaSh Version**: Commit eadfb21e (Nov 2024)
 - **Leash Status**: Experimental, active development
 
@@ -598,9 +635,9 @@ For many small tasks:
 
 ## Related Documentation
 
-- `LEASH_ANALYSIS.md`: Detailed analysis of sort execution with width=2 & 4
-- `manual_orchestrate_width2.sh`: Manual orchestration script example
-- PaSh main docs: `/home/ubuntu/pash/docs/`
+- `S3_DIRECT_STREAMING_METHODS.md`: S3 reader strategy and orchestration reference
+- `LEASH_ANALYSIS.md`: Centralized comparison guide
+- `README.md`: Documentation index and topic map
 
 ---
 
