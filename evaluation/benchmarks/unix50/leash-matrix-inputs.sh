@@ -76,10 +76,10 @@ set_leash_benchmark_inputs() {
             # "2.sh:1_20G.txt" # 4096 Mem usage
             # "4.sh:1_20G.txt" # 4096 Mem usage
             # "5.sh:2_20G.txt"
-            # "6.sh:3_20G.txt"
+            "6.sh:3_20G.txt"
             # "7.sh:4_20G.txt"
             # "8.sh:4_20G.txt"
-            # "9.sh:4_20G.txt"
+            "9.sh:4_20G.txt"
             "10.sh:4_20G.txt"
             # "11.sh:4_20G.txt" # sort
             # 12.sh:4_20G.txt:16
