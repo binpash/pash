@@ -4,10 +4,6 @@
 ## pash_sequential_script_file: the sequential script. Just running it should work for all tests.
 ## pash_input_ir_file: the file that contains the IR to be compiled 
 
-## When called by spec, assumes this variable is set:
-## pash_spec_command_id: the node id for the specific command
-
-
 ##
 ## High level design. 
 ##
@@ -71,88 +67,69 @@ pash_redir_output echo "$$: (1) Pre-ec, pre-set, jit-set: ($pash_previous_exit_s
 ## (2)
 ##
 
-if [ "$pash_speculative_flag" -eq 1 ]; then
-    ## For speculation, we don't want to invoke the compiler (for now) in (2),
-    ## we just want to ask the scheduler in (3) to let us know when the df_region
-    ## has finished executing and what is its exit code.
+## Invoke the compiler and make any necessary preparations
+source "$RUNTIME_DIR/pash_prepare_call_compiler.sh"
 
-    ## TODO: We probably need to make this a local variable so that POSIX tests pass
-    export pash_speculative_command_id=$pash_spec_command_id
+## Check if there are traps set, and if so do not execute in parallel
+## TODO: This might be an overkill but is conservative
+traps_set=$(trap)
+pash_redir_output echo "$$: (2) Traps set: $traps_set"
+# Don't fork if compilation failed. The script might have effects on the shell state.
+if [ "$pash_runtime_return_code" -ne 0 ] ||
+    ## If parallel pipelines is disabled using a flag we shouldn't fork
+    [ "$pash_no_parallel_pipelines" -eq 1 ] ||
+    ## If parallel pipelines is explicitly disabled (e.g., due to context), no forking
+    [ "$pash_disable_parallel_pipelines" -eq 1 ] ||
+    ## If traps are set, no forking
+    [ ! -z "$traps_set" ]; then
+    # Early clean up in case the script effects shell like "break" or "exec"
+    # This is safe because the script is run sequentially and the shell
+    # won't be able to move forward until this is finished
 
-    source "$RUNTIME_DIR/speculative/speculative_runtime.sh"
+    ## Inform the daemon (this happens before because otherwise when set -e is set we don't send the inform exit)
+    ## However, this doesn't allow the compiler to get the proper execution time for a command
+    ## TODO: Properly set and restore traps and then move inform afterwards
+    ##       First make a test that has set traps and set -e to exit (check set-e.sh)
+    ##
+    ## TODO: Also inform the daemon that the timing does not work now so that it
+    ##       doesn't measure time for profile driven optimizations.
+    inform_daemon_exit
+    # echo $traps_set
 
-    ## TODO:
-    ## 2. Check the flag in pash.py and if it is set, do the speculative transformation.
-    
+    ## Run the script
+    export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
+    source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
+    ## Save the state after execution
+    export pash_previous_exit_status="$?"
+    export pash_previous_set_status=$-
+    source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "${DEFAULT_SET_STATE:-huB}"
+    ## We don't need to save the arguments because they are already set
+    pash_runtime_final_status="$pash_previous_exit_status"
 
-    ## TODO: (Future) We also want to let the scheduler know of any variable changes
-    ## TODO: (Future) Check how we could support the steps (5), (6) with speculative and how to refactor this code the best way possible.
-    ## TODO: (Future) We might not need all the set state and other config done in (1) and (3) for speculative
+    pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
 else
-    ## Invoke the compiler and make any necessary preparations
-    source "$RUNTIME_DIR/pash_prepare_call_compiler.sh"
-
-    ## Check if there are traps set, and if so do not execute in parallel
-    ## TODO: This might be an overkill but is conservative
-    traps_set=$(trap)
-    pash_redir_output echo "$$: (2) Traps set: $traps_set"
-    # Don't fork if compilation failed. The script might have effects on the shell state.
-    if [ "$pash_runtime_return_code" -ne 0 ] ||
-        ## If parallel pipelines is disabled using a flag we shouldn't fork 
-        [ "$pash_no_parallel_pipelines" -eq 1 ] ||
-        ## If parallel pipelines is explicitly disabled (e.g., due to context), no forking
-        [ "$pash_disable_parallel_pipelines" -eq 1 ] ||
-        ## If traps are set, no forking
-        [ ! -z "$traps_set" ]; then
-        # Early clean up in case the script effects shell like "break" or "exec"
-        # This is safe because the script is run sequentially and the shell 
-        # won't be able to move forward until this is finished
-
-        ## Inform the daemon (this happens before because otherwise when set -e is set we don't send the inform exit)
-        ## However, this doesn't allow the compiler to get the proper execution time for a command
-        ## TODO: Properly set and restore traps and then move inform afterwards
-        ##       First make a test that has set traps and set -e to exit (check set-e.sh)
-        ##
-        ## TODO: Also inform the daemon that the timing does not work now so that it
-        ##       doesn't measure time for profile driven optimizations.
-        inform_daemon_exit 
-        # echo $traps_set
-
-        ## Run the script
+    function run_parallel() {
+        # ideally we'd call inform_daemon_exit with the EXIT handler,
+        # but it isn't called on Ubuntu 20.04 (for no clear reason)
+        trap inform_daemon_exit SIGTERM SIGINT
         export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
         source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
-        ## Save the state after execution
-        export pash_previous_exit_status="$?"
-        export pash_previous_set_status=$-
-        source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "${DEFAULT_SET_STATE:-huB}"
-        ## We don't need to save the arguments because they are already set
-        pash_runtime_final_status="$pash_previous_exit_status"
+        inform_daemon_exit
+    }
+    # Should we redirect errors aswell?
+    # TODO: capturing the return state here isn't completely correct.
+    run_parallel "$@" <&0 &
+    ## Setting this to 0 since we can't capture this exit value
+    pash_runtime_final_status=0
+    pash_redir_output echo "$$: (2) Running pipeline..."
 
-        pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
-    else 
-        function run_parallel() {
-            # ideally we'd call inform_daemon_exit with the EXIT handler,
-            # but it isn't called on Ubuntu 20.04 (for no clear reason)
-            trap inform_daemon_exit SIGTERM SIGINT
-            export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
-            source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
-            inform_daemon_exit
-        }
-        # Should we redirect errors aswell?
-        # TODO: capturing the return state here isn't completely correct. 
-        run_parallel "$@" <&0 &
-        ## Setting this to 0 since we can't capture this exit value
-        pash_runtime_final_status=0
-        pash_redir_output echo "$$: (2) Running pipeline..."
-
-        ## The only thing we can recover here is the set state:
-        ##  - arguments and variables are not modified since it is run in parallel and thus is pure
-        ##  - exit code cannot be returned
-    fi
-    ## Set the shell state before exiting
-    pash_redir_output echo "$$: (7) Current PaSh set state: $-"
-    source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_previous_set_status"
-    pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
-    ## Set the exit code
-    (exit "$pash_runtime_final_status")
+    ## The only thing we can recover here is the set state:
+    ##  - arguments and variables are not modified since it is run in parallel and thus is pure
+    ##  - exit code cannot be returned
 fi
+## Set the shell state before exiting
+pash_redir_output echo "$$: (7) Current PaSh set state: $-"
+source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_previous_set_status"
+pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
+## Set the exit code
+(exit "$pash_runtime_final_status")

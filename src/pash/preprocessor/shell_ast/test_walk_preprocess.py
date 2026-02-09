@@ -27,9 +27,7 @@ from pash_preprocessor import preprocess
 
 def preprocess_close_node(ast_node, trans_options, last_object=False):
     """Preprocess a node with close-node semantics (for backward compatibility with tests)."""
-    from shell_ast.handlers.loop_tracking import for_node_with_loop_tracking
-    handlers = {"for": for_node_with_loop_tracking}
-    walker = WalkPreprocess(handlers=handlers)
+    walker = WalkPreprocess()
     ctx = PreprocessContext(trans_options=trans_options, last_object=last_object)
     return walker.walk_close(ast_node, ctx)
 
@@ -277,17 +275,10 @@ class TestFullPreprocessing(unittest.TestCase):
         result = preprocess_script("echo hello | grep h")
         self.assertIn("jit", result)
 
-    def test_for_loop_injects_tracking(self):
-        """Test that for loop preprocessing injects loop tracking."""
+    def test_for_loop(self):
+        """Test that for loop body is preprocessed."""
         result = preprocess_script("for x in 1 2 3; do echo $x; done")
-        self.assertIn("pash_loop_0_iter", result)
-        self.assertIn("pash_loop_iters", result)
-
-    def test_nested_for_loops(self):
-        """Test that nested for loops have different loop IDs."""
-        result = preprocess_script("for x in 1 2; do for y in a b; do echo $x $y; done; done")
-        self.assertIn("pash_loop_0_iter", result)
-        self.assertIn("pash_loop_1_iter", result)
+        self.assertIn("jit", result)
 
     def test_assignment_preserved(self):
         """Test that assignment without command is preserved as-is."""
@@ -315,7 +306,6 @@ echo end
 """
         result = preprocess_script(script)
         self.assertIn("jit", result)
-        self.assertIn("pash_loop_0_iter", result)
 
 
 class TestPreprocessCloseNode(unittest.TestCase):

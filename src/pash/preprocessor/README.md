@@ -9,18 +9,13 @@ preprocessor/
 ├── pash_preprocessor.py      # Entry point with all preprocessing logic
 ├── parse.py                  # Shell script parsing/unparsing
 ├── util.py                   # Utility functions
-├── env_var_names.py          # Environment variable name constants
 ├── run_tests.sh              # Test runner script
 ├── shell_ast/
 │   ├── ast_to_ast.py              # AST region replacement + preprocess_node
-│   ├── walk_preprocess.py         # Generic AST walker with handlers
+│   ├── walk_preprocess.py         # Preprocessing walker (extends shasta's CommandVisitor)
 │   ├── transformation_options.py  # Transformation state classes
 │   ├── ast_util.py                # AST utility functions
-│   ├── handlers/
-│   │   └── loop_tracking.py       # ForNode loop tracking handler
 │   └── test_walk_preprocess.py    # Unit tests
-└── speculative/
-    └── util_spec.py               # Speculative execution support
 ```
 
 ## Running the Preprocessor
@@ -87,17 +82,18 @@ python3 -m unittest shell_ast.test_walk_preprocess -v
 
 1. **Entry Point** (`pash_preprocessor.py`): Parses arguments, orchestrates parsing, preprocessing, and unparsing
 2. **Parsing** (`parse.py`): Converts shell script to AST using libdash/libbash
-3. **AST Walking** (`walk_preprocess.py`): Generic pattern-matching walker with handler support
+3. **AST Walking** (`walk_preprocess.py`): Preprocessing visitor built on `shasta.ast_walker.CommandVisitor`
 4. **Region Replacement** (`ast_to_ast.py`): Identifies dataflow regions and replaces with runtime calls
 5. **Unparsing** (`parse.py`): Converts transformed AST back to shell script
 
 ### Key Classes
 
-- `WalkPreprocess`: Generic AST walker using Python pattern matching
+- `CommandVisitor` (from `shasta`): Generic command-level AST visitor base class
+- `WalkPreprocess`: Preprocessing visitor extending `CommandVisitor` with close-node semantics
 - `PreprocessContext`: Context threaded through traversal (trans_options, last_object)
 - `NodeResult`: Result from processing a node (ast, replace_whole, non_maximal, something_replaced)
 - `PreprocessedAST`: Result wrapper with flags for replacement decisions
-- `TransformationState`: Manages node IDs, loop contexts, and replacement generation
+- `TransformationState`: Manages node IDs and replacement generation
 
 ### Node Categories
 
@@ -106,23 +102,12 @@ python3 -m unittest shell_ast.test_walk_preprocess -v
 | Leaf Replacements | `PipeNode`, `CommandNode`, `BackgroundNode` | Marked for replacement |
 | Binary Operators | `SemiNode`, `AndNode`, `OrNode` | Close-recurse both children |
 | Single Child | `RedirNode`, `SubshellNode`, `NotNode`, `GroupNode`, etc. | Close-recurse single child |
-| Control Flow | `IfNode`, `WhileNode`, `ForNode`, `CaseNode` | Close-recurse with special handling |
+| Control Flow | `IfNode`, `WhileNode`, `ForNode`, `CaseNode` | Close-recurse all children |
 | No-Op | `DefunNode`, `ArithNode` | Return unchanged |
-
-### Custom Handlers
-
-The walker supports custom handlers for specific node types. For example, `ForNode` has a custom handler in `handlers/loop_tracking.py` that injects loop iteration tracking code for speculative execution support.
-
-```python
-from shell_ast.walk_preprocess import WalkPreprocess
-
-handlers = {"for": my_custom_for_handler}
-walker = WalkPreprocess(handlers=handlers)
-```
 
 ## Dependencies
 
-- `shasta`: AST node definitions
+- `shasta`: AST node definitions and generic `CommandVisitor`
 - `libdash`: POSIX shell parser
 - `libbash`: Bash parser (for `--bash` mode)
 

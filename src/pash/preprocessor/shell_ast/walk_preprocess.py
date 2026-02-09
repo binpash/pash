@@ -8,15 +8,13 @@ dataflow-region detection and replacement logic.
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable, Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from shasta.ast_node import (
     AstNode,
     PipeNode,
     CommandNode,
     BackgroundNode,
-    ForNode,
-    WhileNode,
     CaseNode,
     DefunNode,
     ArithNode,
@@ -57,26 +55,19 @@ class NodeResult:
         )
 
 
-# Type alias for custom handlers
-# Handler signature: (node, ctx, walker) -> NodeResult
-NodeHandler = Callable[[AstNode, PreprocessContext, "WalkPreprocess"], NodeResult]
-
-
 class WalkPreprocess(CommandVisitor):
     """
     Preprocessing visitor for shell ASTs.
 
     Extends :class:`CommandVisitor` with preprocessing-specific behaviour:
-    dataflow-region detection, close-node semantics, loop context
-    tracking, and custom handler support.
+    dataflow-region detection and close-node semantics.
 
     Most node types use the default :meth:`generic_visit` which walks
     all command children with close-node semantics.  Only nodes with
-    truly specific behaviour (leaves, loops, no-ops) override.
+    truly specific behaviour (leaves, no-ops) override.
     """
 
-    def __init__(self, handlers: dict[str, NodeHandler] | None = None):
-        self._handlers = handlers or {}
+    def __init__(self):
         self.ctx: PreprocessContext | None = None
 
     # === Public API ===
@@ -84,7 +75,7 @@ class WalkPreprocess(CommandVisitor):
     def walk(self, node: AstNode, ctx: PreprocessContext) -> PreprocessedAST:
         """Walk and preprocess an AST node."""
         self.ctx = ctx
-        result = self._dispatch(node)
+        result = self.visit(node)
         return result.to_preprocessed_ast(ctx.last_object)
 
     def walk_close(
@@ -105,21 +96,6 @@ class WalkPreprocess(CommandVisitor):
             return final_ast, True
         else:
             return preprocessed.ast, preprocessed.will_anything_be_replaced()
-
-    # === Dispatch ===
-
-    def _dispatch(self, node: AstNode) -> NodeResult:
-        """Dispatch to custom handler or visit method."""
-        node_name = type(node).NodeName.lower()
-
-        # Check for custom handler first
-        if node_name in self._handlers:
-            return self._handlers[node_name](node, self.ctx, self)
-
-        # Fall back to visit_* methods (or generic_visit)
-        method_name = f"visit_{node_name}"
-        method = getattr(self, method_name, self.generic_visit)
-        return method(node)
 
     # === Default: walk all children with close semantics ===
 
@@ -164,20 +140,6 @@ class WalkPreprocess(CommandVisitor):
             non_maximal=True,
             something_replaced=True,
         )
-
-    # === Loop nodes (need enter/exit loop context) ===
-
-    def visit_while(self, node: WhileNode) -> NodeResult:
-        self.ctx.trans_options.enter_loop()
-        result = self.generic_visit(node)
-        self.ctx.trans_options.exit_loop()
-        return result
-
-    def visit_for(self, node: ForNode) -> NodeResult:
-        self.ctx.trans_options.enter_loop()
-        result = self.generic_visit(node)
-        self.ctx.trans_options.exit_loop()
-        return result
 
     # === No-op nodes (skip children) ===
 

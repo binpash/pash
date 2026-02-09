@@ -169,12 +169,6 @@ class BaseParser(argparse.ArgumentParser):
             action="store_true",
         )
         self.add_argument(
-            "--speculative",
-            help="(experimental) use the speculative execution preprocessing and runtime (NOTE: this has nothing to do with --speculation, which is actually misnamed, and should be named concurrent compilation/execution and is now obsolete)",
-            action="store_true",
-            default=False,
-        )
-        self.add_argument(
             "--termination",
             help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
             choices=["clean_up_graph", "drain_stream"],

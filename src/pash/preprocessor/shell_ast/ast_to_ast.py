@@ -14,28 +14,11 @@ from shasta.ast_node import AstNode
 
 from shell_ast.ast_util import PreprocessedAST, UnparsedScript, unzip
 from shell_ast.walk_preprocess import WalkPreprocess, PreprocessContext
-from shell_ast.handlers.loop_tracking import for_node_with_loop_tracking
 from shell_ast.transformation_options import AbstractTransformationState
 
 
-# === Walker setup ===
-
-
-def create_pash_walker() -> WalkPreprocess:
-    """
-    Create a preprocessing walker configured for PaSh.
-
-    Returns:
-        WalkPreprocess instance with PaSh-specific handlers
-    """
-    handlers = {
-        "for": for_node_with_loop_tracking,
-    }
-    return WalkPreprocess(handlers=handlers)
-
-
 # Module-level walker instance
-_pash_walker = create_pash_walker()
+_pash_walker = WalkPreprocess()
 
 
 def preprocess_node(

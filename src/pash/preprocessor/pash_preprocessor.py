@@ -11,12 +11,10 @@ import sys
 import os
 import argparse
 import logging
-import socket
 from datetime import datetime
 
 from shell_ast import transformation_options, ast_to_ast
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
-from speculative import util_spec
 from util import log, logging_prefix, print_time_delta
 
 
@@ -78,13 +76,6 @@ class Parser(argparse.ArgumentParser):
             help="(experimental) interpret the input as a bash script file",
             action="store_true",
         )
-        self.add_argument(
-            "--speculative",
-            help="(experimental) use the speculative execution preprocessing and runtime",
-            action="store_true",
-            default=False,
-        )
-
         self.set_defaults(preprocess_mode="pash")
 
 
@@ -170,12 +161,7 @@ def preprocess_asts(ast_objects, args):
     """
     trans_mode = transformation_options.TransformationType(args.preprocess_mode)
 
-    if trans_mode is transformation_options.TransformationType.SPECULATIVE:
-        trans_options = transformation_options.SpeculativeTransformationState(
-            po_file=args.partial_order_file
-        )
-        util_spec.initialize(trans_options)
-    elif trans_mode is transformation_options.TransformationType.AIRFLOW:
+    if trans_mode is transformation_options.TransformationType.AIRFLOW:
         trans_options = transformation_options.AirflowTransformationState()
     else:
         trans_options = transformation_options.TransformationState()
@@ -183,31 +169,7 @@ def preprocess_asts(ast_objects, args):
     # Preprocess ASTs by replacing regions with calls to PaSh runtime
     preprocessed_asts = ast_to_ast.replace_ast_regions(ast_objects, trans_options)
 
-    # For speculative mode, finalize the partial order file
-    if trans_mode is transformation_options.TransformationType.SPECULATIVE:
-        util_spec.serialize_partial_order(trans_options)
-
-        # Inform the scheduler that the partial order file is ready
-        unix_socket_file = os.getenv("PASH_SPEC_SCHEDULER_SOCKET")
-        msg = util_spec.scheduler_server_init_po_msg(
-            trans_options.get_partial_order_file()
-        )
-        _unix_socket_send_and_forget(unix_socket_file, msg)
-
     return preprocessed_asts
-
-
-def _unix_socket_send_and_forget(socket_file, msg):
-    """Send a message to a Unix socket without waiting for a response."""
-    if socket_file is None:
-        return
-    try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(socket_file)
-        sock.sendall(msg.encode())
-        sock.close()
-    except Exception as e:
-        log(f"Warning: Failed to send message to scheduler socket: {e}")
 
 
 def parse_args():
@@ -218,13 +180,6 @@ def parse_args():
     parser = Parser(prog_name)
     args = parser.parse_args()
     config_from_args(args)
-
-    # Configure speculative mode if enabled
-    if args.speculative:
-        log("PaSh is running in speculative mode...")
-        args.__dict__["preprocess_mode"] = "spec"
-        args.__dict__["partial_order_file"] = util_spec.partial_order_file_path()
-        log(" -- Its partial order file will be stored in:", args.partial_order_file)
 
     # Log all arguments
     log("Arguments:")
