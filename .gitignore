@@ -69,3 +69,9 @@ out-covid-with-opt/
 out-covid-without-opt-baseline/
 out-covid-withoutopt-baseline/
 evaluation/benchmarks/**/pash_graphviz_*/
+
+# Local experimental testing artifacts
+test_pretty_print.py
+testing/
+testing2/
+sort_inout_splits/
