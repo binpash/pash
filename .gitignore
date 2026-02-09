@@ -63,3 +63,9 @@ benchmark_results/
 debug_lambda_logs/
 evaluation/benchmarks/**/benchmark_results/
 evaluation/benchmarks/**/logs/
+
+# Generated local benchmark debug artifacts
+out-covid-with-opt/
+out-covid-without-opt-baseline/
+out-covid-withoutopt-baseline/
+evaluation/benchmarks/**/pash_graphviz_*/
