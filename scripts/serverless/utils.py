@@ -9,6 +9,31 @@ from datetime import datetime
 logs_client = boto3.client('logs')
 s3_client = boto3.client('s3')
 
+def debug_print(enabled: bool, message: str):
+    if enabled:
+        print(message)
+
+def parse_cli_args(argv):
+    """
+    Parse CLI arguments while preserving backward-compatible positional args:
+      1) output dir prefix
+      2) start_time_ms
+      3) job_id
+    Additional optional flags:
+      --utils-logs / --util-logs / --debug-logs: enable verbose debug logs
+    """
+    debug_logs = False
+    positional_args = []
+    debug_flags = {"--utils-logs", "--util-logs", "--debug-logs"}
+
+    for arg in argv:
+        if arg in debug_flags:
+            debug_logs = True
+        else:
+            positional_args.append(arg)
+
+    return positional_args, debug_logs
+
 def delete_log_streams():
     """
     Deletes all log streams in the specified log group.
@@ -20,13 +45,10 @@ def delete_log_streams():
         for log_stream in response["logStreams"]:
             logs_client.delete_log_stream(logGroupName="/aws/lambda/lambda", logStreamName=log_stream["logStreamName"])
 
-def save_then_delete_log_streams(out_dir: str = "logs", start_time_ms: int = None, job_id: str = None):
+def save_then_delete_log_streams(out_dir: str = "logs", start_time_ms: int = None, job_id: str = None, debug_logs: bool = False):
     """
     Saves all log streams in the specified log group to files.
     """
-    # BUG FIX 3: Ensure this matches your actual Lambda function name
-    # Ideally, pass this as an argument or env var.
-    # If your function is named "pash", this should be "/aws/lambda/pash"
     log_group_name = "/aws/lambda/lambda"
 
     # Add verification output
@@ -61,12 +83,12 @@ def save_then_delete_log_streams(out_dir: str = "logs", start_time_ms: int = Non
             return
 
         if not response.get("logStreams"):
-            print(f"[DEBUG] No more log streams found (pagination complete)")
+            debug_print(debug_logs, "[DEBUG] No more log streams found (pagination complete)")
             break
 
         page_streams = response.get("logStreams", [])
         total_streams_found += len(page_streams)
-        print(f"[DEBUG] Found {len(page_streams)} log streams in this page")
+        debug_print(debug_logs, f"[DEBUG] Found {len(page_streams)} log streams in this page")
 
         for log_stream in page_streams:
             stream_name = log_stream["logStreamName"]
@@ -77,7 +99,7 @@ def save_then_delete_log_streams(out_dir: str = "logs", start_time_ms: int = Non
                 # streams_skipped_by_timestamp += 1
                 # continue
 
-            print(f"[DEBUG] Checking stream: {stream_name}")
+            debug_print(debug_logs, f"[DEBUG] Checking stream: {stream_name}")
             
             # INNER LOOP: Fetch Log Events (Paginated) -> BUG FIX 1
             # NO TIMESTAMP FILTERING - fetch all events from this stream
@@ -107,10 +129,10 @@ def save_then_delete_log_streams(out_dir: str = "logs", start_time_ms: int = Non
                     break
                 next_token_events = events_response['nextForwardToken']
 
-            print(f"[DEBUG]   Total events fetched: {len(all_events)}")
+            debug_print(debug_logs, f"[DEBUG]   Total events fetched: {len(all_events)}")
 
             if not all_events:
-                print(f"[DEBUG]   SKIPPED: No events in stream")
+                debug_print(debug_logs, "[DEBUG]   SKIPPED: No events in stream")
                 streams_with_no_events += 1
                 continue
 
@@ -134,40 +156,42 @@ def save_then_delete_log_streams(out_dir: str = "logs", start_time_ms: int = Non
                     except IndexError:
                         pass
 
-            # Write logs if they match the Job ID (or if no Job ID was provided)
+            # Save logs only if they match the Job ID (or if no Job ID was provided)
             if not job_id or has_matching_logs:
-                print(f"[DEBUG]   MATCH: Saving and deleting log stream")
+                debug_print(debug_logs, "[DEBUG]   MATCH: Saving log stream")
                 final_path = f"{out_dir}/{file_name}{file_suffix}.log"
                 with open(final_path, "w") as f:
                     for log in all_events:
                         timestamp = datetime.fromtimestamp(log['timestamp']/1000.0)
                         # BUG FIX 2: Added newline character \n
                         f.write(f"[{timestamp}] {log['message'].rstrip()}\n")
-
-                # Delete the log stream from CloudWatch
-                logs_client.delete_log_stream(
-                    logGroupName=log_group_name,
-                    logStreamName=stream_name
-                )
                 log_stream_count += 1
             else:
-                print(f"[DEBUG]   SKIPPED: Job ID pattern '{job_id}' not found in logs")
+                debug_print(debug_logs, f"[DEBUG]   SKIPPED SAVE: Job ID pattern '{job_id}' not found in logs")
                 streams_skipped_by_job_id += 1
+
+            # Always delete the log stream from CloudWatch once it has been processed
+            logs_client.delete_log_stream(
+                logGroupName=log_group_name,
+                logStreamName=stream_name
+            )
 
         # Handle pagination for describe_log_streams
         next_token_describe = response.get('nextToken')
         if not next_token_describe:
             break
 
-    print(f"\n[DEBUG SUMMARY]")
-    print(f"  Total streams found: {total_streams_found}")
-    # print(f"  Streams checked (after timestamp filter): {total_streams_found - streams_skipped_by_timestamp}")
-    # print(f"  Skipped by timestamp (before {datetime.fromtimestamp(start_time_ms/1000.0) if start_time_ms else 'N/A'}): {streams_skipped_by_timestamp}")
-    print(f"  Streams saved: {log_stream_count}")
-    print(f"  Skipped by job ID filter: {streams_skipped_by_job_id}")
-    print(f"  Skipped due to no events: {streams_with_no_events}")
+    if debug_logs:
+        print(f"\n[DEBUG SUMMARY]")
+        print(f"  Total streams found: {total_streams_found}")
+        # print(f"  Streams checked (after timestamp filter): {total_streams_found - streams_skipped_by_timestamp}")
+        # print(f"  Skipped by timestamp (before {datetime.fromtimestamp(start_time_ms/1000.0) if start_time_ms else 'N/A'}): {streams_skipped_by_timestamp}")
+        print(f"  Streams saved: {log_stream_count}")
+        print(f"  Skipped by job ID filter: {streams_skipped_by_job_id}")
+        print(f"  Skipped due to no events: {streams_with_no_events}")
     print(f"[Analysis] Total log streams saved: {log_stream_count}")
     
+
 def save_then_delete_log_streams_copy(out_dir: str = "logs", start_time_ms: int = None, job_id: str = None):
     """
     Saves all log streams in the specified log group to files.
@@ -244,7 +268,11 @@ def save_then_delete_log_streams_copy(out_dir: str = "logs", start_time_ms: int 
                     logStreamName=log_stream["logStreamName"]
                 )
                 log_stream_count += 1
-            # else: stream doesn't match job_id, skip it and don't delete it from CloudWatch
+            else: #stream doesn't match job_id, skip it and don't delete it from CloudWatch
+                logs_client.delete_log_stream(
+                    logGroupName=log_group_name,
+                    logStreamName=log_stream["logStreamName"]
+                )
 
         # Check if there are more pages
         next_token = response.get('nextToken')
@@ -363,25 +391,27 @@ def analyze_logs(logs_folder: str):
         print(f"    {logs_folder}/{err_log_file}")
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        debug_dir_prefix = sys.argv[1]
+    positional_args, debug_logs = parse_cli_args(sys.argv[1:])
+
+    if len(positional_args) > 0:
+        debug_dir_prefix = positional_args[0]
     else:
         debug_dir_prefix = "debug"
 
     # Read start time from command line
     start_time_ms = None
-    if len(sys.argv) > 2:
+    if len(positional_args) > 1:
         try:
-            start_time_ms = int(sys.argv[2])
+            start_time_ms = int(positional_args[1])
             print(f"[Analysis] Filtering logs from timestamp: {start_time_ms} ({datetime.fromtimestamp(start_time_ms/1000.0)})")
         except ValueError:
-            print(f"[Analysis] Warning: Could not parse start_time_ms from '{sys.argv[2]}', fetching all logs")
+            print(f"[Analysis] Warning: Could not parse start_time_ms from '{positional_args[1]}', fetching all logs")
             start_time_ms = None
 
     # Read job_id from command line
     job_id = None
-    if len(sys.argv) > 3:
-        job_id = sys.argv[3]
+    if len(positional_args) > 2:
+        job_id = positional_args[2]
         print(f"[Analysis] Filtering logs by job ID: {job_id}")
 
     # Create base directory
@@ -397,6 +427,6 @@ if __name__ == "__main__":
         shutil.rmtree(scripts_folder)
 
     # Now fetch fresh data with time and job_id filtering
-    save_then_delete_log_streams(logs_folder, start_time_ms, job_id)
+    save_then_delete_log_streams(logs_folder, start_time_ms, job_id, debug_logs=debug_logs)
     save_then_delete_scripts(scripts_folder)
     analyze_logs(logs_folder)

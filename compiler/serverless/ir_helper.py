@@ -105,6 +105,12 @@ def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
     return stdout
 
 
+# rsplit ->outputs
+
+# opt/pashlib rcv -> l1
+# fid : file1M.txt -> l1
+
+#s3 get node
 def adjust_lambda_incoming_edges(
     first_subgraph: IR,
     subgraphs: List[IR],
@@ -187,6 +193,8 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
     if len(source_nodes) != 1:
         return subgraphs, None, 0, False
 
+
+#cat -> rsplit
     for source in source_nodes:
         in_edges = first_subgraph.get_node_input_fids(source)
         if len(in_edges) != 1:
@@ -236,12 +244,6 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
                             in_edge
                         )
 
-                        # Apply byte-range optimizations ONLY in single-chunk mode
-                        chunks_per_lambda_opt = int(os.environ.get('PASH_S3_CHUNKS_PER_LAMBDA', '1'))
-                        if rsplit_has_r_flag:
-                            chunks_per_lambda_opt = 1
-
-             
 
                                 # if chunks_per_lambda_opt == 1:
                                 #     # Single-chunk mode: Apply optimizations (unwrap RWrap, replace r_merge with cat)
@@ -496,6 +498,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
                     
 
+                    # fid -> lambda1 
                     if in_edge == ec2_in_edge:  # TODO how to get bucket??
                         BUCKET=os.environ.get("AWS_BUCKET")
                         filesize = get_s3_size(BUCKET, str(filename).strip('"'))
