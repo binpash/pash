@@ -1290,7 +1290,7 @@ test_glob6.sub()
 test_arith-for.tests()
 {
     local shell=$1
-    $shell arith-for.tests
+    THIS_SH=$shell $shell arith-for.tests
 }
 
 test_quote1.sub()
@@ -2892,8 +2892,8 @@ test_select.sh()
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     cd "$PASH_TOP/evaluation/tests/interface_tests/bash_tests"
-    # run_test test_exec8.sub - any uncommented script here and forward has an alias (or declare -A) or unset in it
-    # run_test test_arith-for.tests - error script, looks good besides an extra error print, this is an important test
+    run_test test_exec8.sub
+    run_test test_arith-for.tests
     # run_test test_history2.sub - set -o history won't work here bc the history is gonna look different
     # run_test test_posixexp2.tests - setting posix mode won't work this affects parsing
     run_test test_new-exp12.sub 
@@ -2914,27 +2914,27 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_dollar-star3.sub
     run_test test_assoc1.sub
     # run_test test_alias4.sub
-    # run_test test_varenv6.sub
+    run_test test_varenv6.sub
     run_test test_builtins2.sub
     # run_test test_array25.sub
     run_test test_nquote1.sub
     # run_test test_array19.sub
     # run_test test_array18.sub
     run_test test_redir1.sub
-    # run_test test_array24.sub
+    run_test test_array24.sub
     # run_test test_array30.sub
     run_test test_builtins3.sub
     # run_test test_varenv7.sub
     # run_test test_alias5.sub
     run_test test_dollar-star2.sub
-    # run_test test_nameref1.sub
+    run_test test_nameref1.sub
     run_test test_errors8.sub
-    # run_test test_trap5.sub - I don't think this should neccesarly work since we could be catching other PaSh signals
+    run_test test_trap5.sub
     run_test test_dollar-at6.sub
     # run_test test_nameref16.sub
     run_test test_exec9.sub
     run_test test_heredoc1.sub
-    # run_test test_read1.sub
+    run_test test_read1.sub
     run_test test_comsub-eof.tests
     run_test test_jobs2.sub
     run_test test_read3.sub
@@ -2948,10 +2948,10 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_quotearray.tests
     run_test test_getopts8.sub
     # run_test test_assoc2.sub
-    # run_test test_builtins1.sub
-    # run_test test_dollar-at-star8.sub
-    # run_test test_varenv5.sub
-    # run_test test_type4.sub
+    run_test test_builtins1.sub
+    run_test test_dollar-at-star8.sub
+    run_test test_varenv5.sub
+    run_test test_type4.sub
     # run_test test_array26.sub
     run_test test_nquote2.sub
     run_test test_redir3.sub
@@ -2961,30 +2961,30 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_varenv4.sub
     # run_test test_dollar-at-star9.sub
     # run_test test_assoc3.sub
-    # run_test test_alias6.sub
+    run_test test_alias6.sub
     # run_test test_posix2syntax.sub
     run_test test_dollar-star1.sub
     run_test test_getopts9.sub
     run_test test_dstack2.tests
     # run_test test_trap6.sub
     run_test test_nameref2.sub
-    # run_test test_dollar-at5.sub
+    run_test test_dollar-at5.sub
     # run_test test_arith.tests
-    # run_test test_lastpipe3.sub
+    run_test test_lastpipe3.sub
     # run_test test_nameref15.sub
     run_test test_case3.sub
     # run_test test_procsub.tests
     run_test test_heredoc2.sub
     # run_test test_read2.sub
     run_test test_jobs3.sub
-    # run_test test_heredoc6.sub
+    run_test test_heredoc6.sub
     run_test test_jobs7.sub
     run_test test_read6.sub
     # run_test test_shopt.tests
     # run_test test_comsub.tests
     # run_test test_dollar-star10.sub
     run_test test_dollar-at1.sub
-    # run_test test_appendop1.sub - uses a typeset -A
+    run_test test_appendop1.sub
     # run_test test_nameref11.sub
     run_test test_strip.tests
     # run_test test_nameref6.sub
@@ -2992,23 +2992,23 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_alias2.sub
     run_test test_assoc7.sub
     run_test test_dollar-star5.sub
-    # run_test test_builtins4.sub
+    run_test test_builtins4.sub
     # run_test test_new-exp9.sub - local -A
     run_test test_redir6.sub
     # run_test test_array23.sub - error script
     run_test test_type1.sub
     # run_test test_array22.sub
-    # run_test test_redir7.sub
+    run_test test_redir7.sub
     run_test test_intl1.sub
     run_test test_varenv1.sub
     # run_test test_builtins5.sub
-    # run_test test_new-exp8.sub
+    run_test test_new-exp8.sub
     run_test test_dollar-star4.sub
-    # run_test test_assoc6.sub
-    # run_test test_alias3.sub
+    run_test test_assoc6.sub
+    run_test test_alias3.sub
     # run_test test_set-x1.sub
     # run_test test_trap3.sub - weird stuff with PS4, also fails without bash mode
-    # run_test test_nameref7.sub
+    run_test test_nameref7.sub
     # run_test test_history.tests
     # run_test test_nameref10.sub
     run_test test_parser1.sub
@@ -3020,11 +3020,11 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_heredoc5.sub
     run_test test_read5.sub
     # run_test test_jobs4.sub - also fails with dash pash, jobs get tricky
-    # run_test test_case4.sub
+    run_test test_case4.sub
     run_test test_dollar-at2.sub
     # run_test test_nameref.tests
     # run_test test_nameref12.sub
-    # run_test test_appendop2.sub
+    run_test test_appendop2.sub
     run_test test_trap1.sub
     # run_test test_nameref5.sub
     # run_test test_assoc4.sub - error script
@@ -3032,12 +3032,12 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_vredir.tests - this is passing, however this script assigns file descriptors which will be different
     # depending on what else is open, so output will look different with and without pash
     # run_test test_alias1.sub
-    # run_test test_mapfile.tests
+    run_test test_mapfile.tests
     run_test test_dollar-star6.sub
     run_test test_parser.tests
-    # run_test test_varenv3.sub
+    run_test test_varenv3.sub
     run_test test_builtins7.sub
-    # run_test test_intl3.sub - error script
+    run_test test_intl3.sub
     run_test test_redir5.sub
     # run_test test_errors.tests
     run_test test_type2.sub
@@ -3048,7 +3048,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_array21.sub
     # run_test test_redir4.sub
     # run_test test_intl2.sub
-    # run_test test_herestr1.sub
+    run_test test_herestr1.sub
     # run_test test_builtins6.sub
     run_test test_varenv2.sub
     # run_test test_dollar-star7.sub
@@ -3063,12 +3063,12 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_dbg-support3.sub - using BASH_ARGV won't work bc call stacks will be different
     run_test test_globstar2.sub
     run_test test_arith4.sub
-    # run_test test_vredir4.sub - see test_vredir.tests
+    run_test test_vredir4.sub
     run_test test_exp6.sub
     run_test test_comsub-eof3.sub
     # run_test test_varenv.tests
     run_test test_rhs-exp.tests
-    # run_test test_varenv12.sub
+    run_test test_varenv12.sub
     # run_test test_attr1.sub - alias stuff
     run_test test_glob1.sub
     # run_test test_glob.tests
@@ -3076,16 +3076,16 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_comsub-eof2.sub
     # run_test test_exp7.sub
     # run_test test_braces.tests
-    # run_test test_vredir5.sub - see test_vredir.tests
+    run_test test_vredir5.sub
     run_test test_globstar3.sub
     run_test test_arith5.sub
-    # run_test test_vredir7.sub - see test_vredir.tests
+    run_test test_vredir7.sub
     run_test test_arith7.sub
     run_test test_globstar1.sub
     run_test test_comsub-eof0.sub
     run_test test_exp5.sub
     # run_test test_varenv11.sub
-    # run_test test_glob3.sub
+    run_test test_glob3.sub
     run_test test_glob10.sub
     # run_test test_dbg-support2.tests - again stuff gets weird when using these BASH variables
     # run_test test_quote4.sub
@@ -3094,10 +3094,10 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_attr2.sub
     # run_test test_extglob1a.sub - calls shopt -s extglob which changes the behavior of the shell
     # run_test test_glob2.sub
-    # run_test test_varenv10.sub
+    run_test test_varenv10.sub
     run_test test_exp4.sub
     run_test test_comsub-eof1.sub
-    # run_test test_arith6.sub
+    run_test test_arith6.sub
     # run_test test_vredir6.sub
     # run_test test_assoc18.sub
     # run_test test_shopt1.sub - again weird shopt stuff here

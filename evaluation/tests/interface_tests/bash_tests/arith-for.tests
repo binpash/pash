@@ -86,19 +86,20 @@ done
 type fx
 fx
 
-# errors 
+# errors (normalize source prefix so bash/pash error lines match: strip "source: " before "line N:")
+# e.g. "bash: -c: line 1: ..." or "command_XXX.sh: line 1: ..." -> "line 1: ..."
 {
 ${THIS_SH} -c 'for (( i=0; "i < 3" ))
 do
 	echo $i
-done' ; echo $? ;  } 2>&1 | sed 's|^.*/||'
+done' ; echo $? ;  } 2>&1 | sed 's|^.*/||' | sed -E 's/^([^:]+: )+(line [0-9]+:)/\2/'
 #echo $?
 
 {
 ${THIS_SH} -c 'for (( i=0; i < 3; i++; 7 ))
 do
 	echo $i
-done' ; echo $?; } 2>&1 | sed 's|^.*/||'
+done' ; echo $?; } 2>&1 | sed 's|^.*/||' | sed -E 's/^([^:]+: )+(line [0-9]+:)/\2/'
 #echo $?
 
 # one-liners added in post-bash-2.04
