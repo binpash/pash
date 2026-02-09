@@ -1,2 +1,0 @@
-run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt
-2026-02-05_02-19-45,sort.sh,1G.txt,4,noopt,1,29.025,N/A,N/A,baseline,baseline
