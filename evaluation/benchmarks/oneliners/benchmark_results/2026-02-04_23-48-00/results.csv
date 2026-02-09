@@ -1,2 +1,0 @@
-run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt
-2026-02-04_23-48-00,sort.sh,1G.txt,4,s3optdynamic,1,29.393,N/A,N/A,N/A,N/A
