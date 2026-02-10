@@ -72,6 +72,10 @@ evaluation/benchmarks/**/pash_graphviz_*/
 
 # Local experimental testing artifacts
 test_pretty_print.py
-testing/
+testing/*
+!testing/s3_transfer_benchmarks/
+!testing/s3_transfer_benchmarks/**
+testing/legacy/
 testing2/
 sort_inout_splits/
+pipeline_io/
