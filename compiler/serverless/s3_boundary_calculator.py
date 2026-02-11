@@ -33,7 +33,7 @@ Usage:
 
 from typing import List, Tuple, Any, Optional
 
-from compiler.serverless.s3_config import BoundaryConfig
+from serverless.s3_config import BoundaryConfig
 
 
 __all__ = ['BoundaryCalculator']

@@ -19,7 +19,7 @@ import json
 import boto3
 from typing import Dict, List, Tuple, Any
 
-from compiler.serverless.s3_config import ChunkingConstants
+from serverless.s3_config import ChunkingConstants
 
 
 __all__ = ['get_s3_size', 'distribute_chunks_to_lambda', 'format_byte_range_parameter']
