@@ -4,7 +4,7 @@ import json
 import socket
 
 id_, folder_id, type_ = sys.argv[1:]
-EC2_IP = "34.228.68.128"
+EC2_IP = "localhost"
 EC2_PORT = 9999
 
 if type_ == "lambda":
@@ -22,7 +22,7 @@ elif type_ == "ec2":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((EC2_IP, EC2_PORT))
     try:
-        json_str = json.dumps({"id": id_, "folder_id": folder_id})
+        json_str = json.dumps({"ids": [id_], "folder_ids": [folder_id]})
         s.sendall(json_str.encode("utf-8"))
         # response = s.recv(1024)
         s.close()

@@ -5,7 +5,7 @@ mkdir -p inputs
 cd inputs
 
 inputs=(1 3 10 11 12 2 4 5 6 7 8 9.1 9.2 9.3 9.4 9.5 9.6 9.7 9.8 9.9 10 11)
-
+inputs=(3)
 # inputs=(9.9)
 
 S3_BUCKET_PREFIX="s3://$AWS_BUCKET"
@@ -29,6 +29,21 @@ do
             cat "${input}.txt" >> "${input}_1M.txt"
         done
     fi
+
+    if [ ! -f "${input}_5G.txt" ]; then
+        for (( i = 0; i < 5000; i++ )); do
+            cat "${input}_1M.txt" >> "${input}_5G.txt"
+        done
+    fi
+
+    echo "Uploading ${input}_5G.txt"
+    aws s3 cp "${input}_5G.txt" "${S3_BUCKET_PREFIX}/${S3_INPUTS_DIR}/${input}_5G.txt"
+
+    echo "Remove ${input}_5G.txt"
+    rm "${input}_5G.txt"
+
+    continue
+    
 
     if [ ! -f "${input}_20G.txt" ]; then
         for (( i = 0; i < 20000; i++ )); do

@@ -200,6 +200,10 @@ def add_common_arguments(parser):
     parser.add_argument("--sls_output",
                         help="(experimental) output the serverless execution result to a named file in s3",
                         default = "")
+    parser.add_argument("--enable_s3_direct",
+                        help="(experimental) enable S3 direct lambda streaming optimization for serverless execution",
+                        action="store_true",
+                        default=False)
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
