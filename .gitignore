@@ -1,3 +1,4 @@
+*.txt
 *.swp
 *.html
 *.swo
@@ -56,3 +57,25 @@ runtime/dgsh-tee
 .vscode/*
 .idea/*
 .vs/*
+
+# Generated benchmark outputs and execution logs
+benchmark_results/
+debug_lambda_logs/
+evaluation/benchmarks/**/benchmark_results/
+evaluation/benchmarks/**/logs/
+
+# Generated local benchmark debug artifacts
+out-covid-with-opt/
+out-covid-without-opt-baseline/
+out-covid-withoutopt-baseline/
+evaluation/benchmarks/**/pash_graphviz_*/
+
+# Local experimental testing artifacts
+test_pretty_print.py
+testing/*
+!testing/s3_transfer_benchmarks/
+!testing/s3_transfer_benchmarks/**
+testing/legacy/
+testing2/
+sort_inout_splits/
+pipeline_io/

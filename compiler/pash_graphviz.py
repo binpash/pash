@@ -1,5 +1,6 @@
 
 import os
+import sys
 
 from ir import *
 from util import *
@@ -17,11 +18,11 @@ def init_graphviz_dir(args):
     graphviz_dir_path = os.path.join(args.graphviz_dir, DIR_NAME)
 
     try:
-        os.mkdir(graphviz_dir_path)
-    except:
-        print(f'Error: Graphviz dir:{graphviz_dir_path} could not be created!')
-        exit(1)
-    
+        os.makedirs(graphviz_dir_path, exist_ok=True)
+    except Exception as e:
+        print(f'Error: Graphviz dir:{graphviz_dir_path} could not be created! {e}')
+        sys.exit(1)
+
     log("Created graphviz dir:", graphviz_dir_path)
 
 def maybe_generate_graphviz(ir: IR, args, name='dfg'):

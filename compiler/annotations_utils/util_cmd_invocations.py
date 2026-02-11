@@ -77,7 +77,12 @@ def translate_io_var_if_applicable(pot_io_var, edges):
         raise Exception("Unhandled type for operand in to_ast!")
 
 def to_ast_arg_string_type(arg_string_type):
-    return arg_string_type.get_name().arg_char_list # is of type Arg
+    arg_char_list = arg_string_type.get_name().arg_char_list
+    # Empty strings need to be quoted to prevent shell argument consumption
+    if len(arg_char_list) == 0:
+        from util import make_kv
+        return [make_kv('Q', string_to_argument(""))]
+    return arg_char_list
 
 # assumes io_var is an edge id
 def dereference_io_var(io_var, edges):

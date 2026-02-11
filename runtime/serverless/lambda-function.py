@@ -5,15 +5,17 @@ import boto3
 BUCKET=os.environ.get("AWS_BUCKET")
 
 def lambda_handler(event, context):
+    job_id = event.get('job_id', 'UNKNOWN')
+
     for i, folder_id in enumerate(event['folder_ids']):
         id_ = event['ids'][i]
         # load the data from s3
         s3 = boto3.client("s3")
         key = f"sls-scripts/{folder_id}/{id_}.sh"
-        print(f"Try to pull script from {key}")
+        print(f"[JOB:{job_id}] Try to pull script from {key}")
 
         response = s3.get_object(Bucket=BUCKET, Key=key)
-        print("[lambda-function.py] Executing script ID", id_, flush=True)
+        print(f"[JOB:{job_id}] [lambda-function.py] Executing script ID {id_}", flush=True)
         with open(f"/tmp/script-{folder_id}-{id_}.sh", "wb") as f:
             while True:
                 x = response["Body"].read(10000)
@@ -26,5 +28,5 @@ def lambda_handler(event, context):
         process = subprocess.run(
             ["/bin/bash", f"/tmp/script-{folder_id}-{id_}.sh", folder_id]
         )
-        print(f"[lambda-function.py] script {folder_id}/{id_} execution return code: {process.returncode}")
-    print(f"[lambda-function.py] Finished all execution")
+        print(f"[JOB:{job_id}] [lambda-function.py] script {folder_id}/{id_} execution return code: {process.returncode}")
+    print(f"[JOB:{job_id}] [lambda-function.py] Finished all execution")

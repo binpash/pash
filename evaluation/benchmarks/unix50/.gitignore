@@ -2,3 +2,5 @@ inputs/
 outputs/
 times/
 debug/
+benchmark_results/*/
+logs/
