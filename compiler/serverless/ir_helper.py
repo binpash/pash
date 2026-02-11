@@ -15,7 +15,7 @@ import time
 from contextlib import contextmanager
 
 sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
-from compiler.serverless.graph_print_helper import pretty_print_subgraphs
+from serverless.graph_print_helper import pretty_print_subgraphs
 import definitions.ir.nodes.serverless_remote_pipe as serverless_remote_pipe
 import definitions.ir.nodes.serverless_lambda_invoke as serverless_lambda_invoke
 from definitions.ir.nodes.r_wrap import RWrap
@@ -34,9 +34,9 @@ from definitions.ir.dfg_node import DFGNode
 from definitions.ir.arg import Arg
 
 # S3 boundary and chunking imports (organized by mode)
-from compiler.serverless.s3_config import BoundaryConfig, S3BoundaryConstants, ChunkingConstants
-from compiler.serverless.s3_chunking import distribute_chunks_to_lambda, format_byte_range_parameter, get_s3_size
-from compiler.serverless.s3_boundary_calculator import BoundaryCalculator
+from serverless.s3_config import BoundaryConfig, S3BoundaryConstants, ChunkingConstants
+from serverless.s3_chunking import distribute_chunks_to_lambda, format_byte_range_parameter, get_s3_size
+from serverless.s3_boundary_calculator import BoundaryCalculator
 
 # Note: Mode-specific modules (s3_smart_prealigned, s3_approx_correction, etc.) are imported
 # internally by BoundaryCalculator - no need to import them directly in ir_helper
