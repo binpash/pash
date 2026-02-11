@@ -46,6 +46,38 @@ Environment fallback behavior:
 - If correction flags are off and `USE_SMART_BOUNDARIES=true`, select `s3_smart_prealigned`.
 - Otherwise fallback to `s3_approx_tail_coord`.
 
+## Approximate Mode Differences
+
+The terms `single shot`, `adaptive dynamic`, and `adaptive gap` refer to **boundary-calculation modes** on EC2.
+
+Important distinction:
+
+- All modern approx modes below route to strategy `s3_approx_correction` and run `aws/s3-chunk-reader-approx-correction.py`.
+- Only `--approx-tail` uses `s3_approx_tail_coord` (`aws/s3-chunk-reader-approx-tail-coord.py`).
+
+### Mode Matrix
+
+| Mode | Benchmark flag | Main env flag(s) | EC2 boundary setup | Lambda overlap behavior |
+| --- | --- | --- | --- | --- |
+| Adaptive dynamic | `--approx-dynamic` | `USE_DYNAMIC_BOUNDARIES=true` | Arithmetic chunk boundaries only (no S3 sampling) | Starts with 64KB overlap and doubles on demand until newline/limit |
+| Adaptive gap | `--approx-adaptive-gap` | `USE_ADAPTIVE_BOUNDARIES=true` + `PASH_GAP_*` | Arithmetic boundaries + per-shard gap-window estimation (typically 1-2 S3 samples per shard) | Uses shard-specific initial overlap (`window_after_vec`), then can still expand if needed |
+| Adaptive simple | `--approx-adaptive-simple` | `USE_ADAPTIVE_SIMPLE=true` + `PASH_ADAPTIVE_SIMPLE_*` | N equidistant S3 samples (default config: 4; benchmark script currently sets 5) | Uses one fixed sampled window size (int), then can expand if needed |
+| Adaptive single shot | `--approx-adaptive-single-shot` | `USE_SINGLE_SHOT=true` + `PASH_SINGLE_SHOT_*` | Exactly 1 S3 sample at file midpoint | Uses one fixed sampled window size (int), then can expand if needed |
+| Approx + correction | (manual mode) | `USE_APPROX_LAMBDA_CORRECTION=true` | 4 global samples by default (`estimate_avg_line_length`) | Uses one fixed sampled window size (int), then can expand if needed |
+| Tail coordination (legacy) | `--approx-tail` | (no correction flag) | No EC2 correction setup | Uses predecessor-chain coordination across Lambdas |
+
+Notes:
+
+- If multiple mode flags are enabled at once, `BoundaryConfig` priority is: adaptive gap -> dynamic -> adaptive simple -> single shot -> approx+correction -> smart -> legacy.
+- In benchmark automation (`run-leash-benchmark-matrix.sh`), `--approx-adaptive-simple` and `--approx-adaptive-gap` are mutually exclusive in one run invocation.
+
+### Quick Commands
+
+- Adaptive dynamic: `evaluation/benchmarks/run-leash-benchmark-matrix.sh --benchmark <name> --approx-dynamic`
+- Adaptive gap: `evaluation/benchmarks/run-leash-benchmark-matrix.sh --benchmark <name> --approx-adaptive-gap`
+- Single shot: `evaluation/benchmarks/run-leash-benchmark-matrix.sh --benchmark <name> --approx-adaptive-single-shot`
+- Adaptive simple: `evaluation/benchmarks/run-leash-benchmark-matrix.sh --benchmark <name> --approx-adaptive-simple`
+
 ## Method Evolution (Historical)
 
 ### Method 1: Basic S3 direct reads
