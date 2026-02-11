@@ -85,7 +85,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
         access_map[output_edge.get_ident()] = make_stream_output()
     if is_remote_read:
         if is_tcp:
-            remote_pipe_bin = "/opt/pashlib"
+            remote_pipe_bin = "runtime/pashlib"
             operand_list.append(Operand(Arg.string_to_arg("recv "+str(remote_key)+" 1 0")))
             implicit_use_of_streaming_output = local_fifo_id
         else: #TODO modify to python3.10 as python3.9 is deprecated in april 2026
@@ -149,7 +149,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
 
                 implicit_use_of_streaming_output = local_fifo_id
             else:
-                remote_pipe_bin = "python3.9 aws/s3-get-object.py"
+                remote_pipe_bin = "python3 aws/s3-get-object.py"
                 operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
                 if output_edge and (output_edge.get_resource() is not None):
                     # we need to redirect the output to some file or stdout
@@ -160,11 +160,11 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
     else:
         implicit_use_of_streaming_output = output_edge.get_ident() # avoid node not found err
         if is_tcp:
-            remote_pipe_bin = "/opt/pashlib"
+            remote_pipe_bin = "runtime/pashlib"
             operand_list.append(Operand(Arg.string_to_arg("send "+str(remote_key)+" 0 1")))
             implicit_use_of_streaming_input = local_fifo_id
         else:
-            remote_pipe_bin = "python3.9 aws/s3-put-object.py"
+            remote_pipe_bin = "python3 aws/s3-put-object.py"
             operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
             operand_list.append(local_fifo_id)
             operand_list.append(Arg.string_to_arg("$1"))
@@ -188,7 +188,7 @@ def make_serverless_remote_pipe_one_proc(list_of_arg):
         operand_list.append(Operand(Arg.string_to_arg(arg)))
 
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
-        cmd_name="/opt/pashlib",
+        cmd_name="runtime/pashlib",
         flag_option_list=[],
         operand_list=operand_list,
         access_map={},
