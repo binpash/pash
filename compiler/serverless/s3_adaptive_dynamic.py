@@ -92,8 +92,9 @@ def calculate_adaptive_dynamic_boundaries(
                 print("[Adaptive Mode] Missing inputs for gap windows; using legacy sentinel")
             return shard_ranges, window_size
 
-        from compiler.serverless.s3_gap_quantile_windows import compute_windows_per_shard
-        import boto3
+        import boto3, sys, os
+        sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
+        from serverless.s3_gap_quantile_windows import compute_windows_per_shard
 
         # Build coarse shard ranges (one per chunk_index / shard_id)
         shard_count = max(1, int(chunks_per_lambda))
