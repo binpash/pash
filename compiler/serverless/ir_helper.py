@@ -118,7 +118,7 @@ def adjust_lambda_incoming_edges(
     s3_file_path: str,
     rsplit_output_ids: List[int],
     ec2_file_in_edge: FileId
-) -> None:
+) -> Tuple[int, Dict[IR, int]]:
     """
     Adjust incoming edges for lambda subgraphs after removing an initial ServerlessRemotePipe
     used in the S3 -> cat -> split direct streaming optimization.
@@ -148,9 +148,13 @@ def adjust_lambda_incoming_edges(
 
     
     """
-    # Convert to set as we only need to do this once per unique edge/lambda
-    rsplit_output_id_set = set(rsplit_output_ids)
+    # Stable shard assignment based on original r_split output order.
+    # We intentionally key by r_split output edge id because r_merge is positional:
+    # input i must correspond to shard i. Subgraph iteration order is not a safe source
+    # of shard identity once traversal order changes (e.g., shuffle/reordering refactors).
+    edge_to_shard = {edge_id: shard_idx for shard_idx, edge_id in enumerate(rsplit_output_ids)}
     total_lambdas = 0
+    subgraph_to_shard: Dict[IR, int] = {}
 
     # Iterate through all downstream subgraphs
     for subgraph in subgraphs:
@@ -164,11 +168,20 @@ def adjust_lambda_incoming_edges(
                 in_edge_id = in_edge.get_ident()
 
                 # Is this edge one of the rsplit outputs?
-                if in_edge_id in rsplit_output_id_set:
+                if in_edge_id in edge_to_shard:
+                    shard_idx = edge_to_shard[in_edge_id]
                     # YES - Replace with in edge from ec2
                     subgraph.replace_edge(in_edge_id, ec2_file_in_edge)
-                    total_lambdas += 1
-    return total_lambdas
+
+                    existing_shard = subgraph_to_shard.get(subgraph)
+                    if existing_shard is not None and existing_shard != shard_idx:
+                        raise ValueError(
+                            "Subgraph mapped to multiple rsplit outputs; cannot assign stable shard index"
+                        )
+                    if existing_shard is None:
+                        total_lambdas += 1
+                    subgraph_to_shard[subgraph] = shard_idx
+    return total_lambdas, subgraph_to_shard
 
 
 
@@ -178,7 +191,7 @@ def adjust_lambda_incoming_edges(
 
 def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict[int, Tuple] = None):
     if len(subgraphs) == 1: #no point in optimizing here
-        return subgraphs, None, 0, False
+        return subgraphs, None, 0, False, {}
     
     first_subgraph = subgraphs[0]
     file_id_gen = first_subgraph.get_file_id_gen()
@@ -191,14 +204,14 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
 
     source_nodes = first_subgraph.source_nodes()    # list of ints
     if len(source_nodes) != 1:
-        return subgraphs, None, 0, False
+        return subgraphs, None, 0, False, {}
 
 
 #cat -> rsplit
     for source in source_nodes:
         in_edges = first_subgraph.get_node_input_fids(source)
         if len(in_edges) != 1:
-            return subgraphs, None, 0, False
+            return subgraphs, None, 0, False, {}
         
         for in_edge in in_edges:
             # (isinstance(self.resource, FileResource))
@@ -214,7 +227,7 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
                     #           ir obj has no attribute get edge consumers
 
                     if len(next_nodes_ids) != 1:
-                        return subgraphs, None, 0, False
+                        return subgraphs, None, 0, False, {}
                     next_node_id = next_nodes_ids[0]
                     next_node = first_subgraph.get_node(next_node_id)
 
@@ -232,10 +245,13 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
                         #can do in a more straightforward way with a helper method in ir
                         rsplit_output_fids = first_subgraph.get_node_output_fids(next_node_id)
                         rsplit_output_ids = [fid.get_ident() for fid in rsplit_output_fids]
+                        # rsplit_output_ids defines canonical shard numbering. We carry this
+                        # mapping forward so shard identity stays stable even if `subgraphs`
+                        # iteration order changes later.
 
                         # Call adjust function with extracted info
                         # TODO. dont need first subgraph anymore
-                        total_lambdas = adjust_lambda_incoming_edges(
+                        total_lambdas, subgraph_to_shard = adjust_lambda_incoming_edges(
                             first_subgraph,
                             subgraphs[1:],
                             file_id_gen,
@@ -256,9 +272,9 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
                                 #         print(f"[IR Helper] Skipping byte-range optimizations (chunks_per_lambda={chunks_per_lambda_opt})")
                                 #         print("[IR Helper] Keeping RWrap nodes and r_merge for multi-chunk block ordering")
 
-                        return subgraphs[1:], in_edge, total_lambdas, rsplit_has_r_flag
+                        return subgraphs[1:], in_edge, total_lambdas, rsplit_has_r_flag, subgraph_to_shard
 
-    return subgraphs, None, 0, False
+    return subgraphs, None, 0, False, {}
 
 
 # ============================================================================
@@ -331,9 +347,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     ec2_in_edge = None
     total_lambdas = 0
     rsplit_has_r_flag = False
+    subgraph_to_shard = {}
     if args.enable_s3_direct:
         print("[IR Helper] S3 direct streaming optimization ENABLED")
-        subgraphs, ec2_in_edge, total_lambdas, rsplit_has_r_flag = optimize_s3_lambda_direct_streaming(subgraphs, input_fifo_map)
+        subgraphs, ec2_in_edge, total_lambdas, rsplit_has_r_flag, subgraph_to_shard = optimize_s3_lambda_direct_streaming(subgraphs, input_fifo_map)
     else:
         print("[IR Helper] S3 direct streaming optimization DISABLED (use --enable_s3_direct to enable)")
         # Keep original subgraphs unchanged - matching the "no optimization" return pattern
@@ -474,12 +491,12 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
 
         print("="*80)
 
-    lambda_counter = 0
     job_uid = uuid4()
 
     shard_ranges = None  # Will be populated on first S3 lambda
     shard_ranges_computed = False
     # Replace non ephemeral input edges with remote read/write
+
     for subgraph in subgraphs:
         if subgraph not in subgraph_script_id_pairs:
             main_subgraph_script_id = uuid4()
@@ -500,6 +517,15 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
 
                     # fid -> lambda1 
                     if in_edge == ec2_in_edge:  # TODO how to get bucket??
+                        # Fail fast instead of silently assigning by iteration order.
+                        # If this mapping is missing, output ordering can diverge from
+                        # the no-opt path because r_merge expects positional shard order.
+                        if subgraph not in subgraph_to_shard:
+                            raise ValueError(
+                                "Missing stable shard mapping for subgraph in S3 direct mode"
+                            )
+                        lambda_shard_idx = subgraph_to_shard[subgraph]
+
                         BUCKET=os.environ.get("AWS_BUCKET")
                         filesize = get_s3_size(BUCKET, str(filename).strip('"'))
                         # but filename can be covid-mts/inputs/in.csv so we need a more robust way
@@ -569,9 +595,9 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                         if shard_ranges is not None:
                             # Modern modes: adaptive, dynamic, approx+correction, or smart
                             # Assign chunks to this lambda (round-robin distribution)
-                            with time_block(f"Chunk distribution (lambda {lambda_counter})"):
+                            with time_block(f"Chunk distribution (lambda {lambda_shard_idx})"):
                                 lambda_chunks = distribute_chunks_to_lambda(
-                                    lambda_counter=lambda_counter,
+                                    lambda_counter=lambda_shard_idx,
                                     total_lambdas=total_lambdas,
                                     chunks_per_lambda=chunks_per_lambda,
                                     shard_ranges=shard_ranges,
@@ -591,7 +617,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                             byte_range = format_byte_range_parameter(
                                 lambda_chunks=lambda_chunks,
                                 chunks_per_lambda=chunks_per_lambda,
-                                lambda_counter=lambda_counter,
+                                lambda_counter=lambda_shard_idx,
                                 debug=_debug_enabled,
                                 force_json=correction_mode
                             )
@@ -626,12 +652,12 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                             # Legacy approximate mode - calculate inline
                             skip_first_line = True
                             chunk_size = filesize // total_lambdas
-                            start_byte = lambda_counter * chunk_size
-                            end_byte = filesize - 1 if lambda_counter == total_lambdas - 1 else (lambda_counter + 1) * chunk_size - 1
+                            start_byte = lambda_shard_idx * chunk_size
+                            end_byte = filesize - 1 if lambda_shard_idx == total_lambdas - 1 else (lambda_shard_idx + 1) * chunk_size - 1
 
                             byte_range = f"bytes={start_byte}-{end_byte}"
                             if _debug_enabled:
-                                print(f"Lambda {lambda_counter}: {byte_range}")
+                                print(f"Lambda {lambda_shard_idx}: {byte_range}")
 
                             window_size_param = None
                             window_after_vec_param = None
@@ -644,7 +670,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
 
                         if _debug_enabled:
                             print(
-                                f"[IR Helper] Lambda {lambda_counter}: "
+                                f"[IR Helper] Lambda {lambda_shard_idx}: "
                                 f"reader_strategy={s3_reader_strategy}, write_headers={write_headers}"
                             )
 
@@ -654,7 +680,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 output_edge=None,
                                                                                 is_tcp=False,
                                                                                 is_s3_lambda=True,
-                                                                                lambda_counter=lambda_counter,
+                                                                                lambda_counter=lambda_shard_idx,
                                                                                 total_lambdas=total_lambdas,
                                                                                 byte_range=byte_range,
                                                                                 job_uid=job_uid,
@@ -664,9 +690,6 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 window_after_vec=window_after_vec_param,
                                                                                 write_headers=write_headers,
                                                                                 s3_reader_strategy=s3_reader_strategy)
-                        
-                        # s3getobj byterange=start-end -> sort   : lambda1
-                        lambda_counter += 1
                     else:
                         remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
                                                                                 is_remote_read=True,
