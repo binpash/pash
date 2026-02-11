@@ -15,11 +15,11 @@ Usage:
     avg_len = estimate_avg_line_length(s3, bucket, key, file_size)
 """
 
-import boto3
+import boto3, sys, os
 from typing import Tuple
 
-from compiler.serverless.s3_config import S3BoundaryConstants
-from compiler.serverless.ir_helper import time_block
+from serverless.s3_config import S3BoundaryConstants
+from serverless.ir_helper import time_block
 
 
 __all__ = ['expand_search_for_newline', 'estimate_avg_line_length']

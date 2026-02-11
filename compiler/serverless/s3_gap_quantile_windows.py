@@ -8,8 +8,10 @@ This module estimates per-shard window sizes for the gap to the next newline
 import bisect
 import random
 from typing import List, Tuple
+import sys, os
 
-from compiler.serverless.s3_config import S3BoundaryConstants
+sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
+from serverless.s3_config import S3BoundaryConstants
 
 
 __all__ = [

@@ -25,12 +25,13 @@ Usage:
     )
 """
 
-import boto3
+import boto3, sys, os
 from typing import List, Tuple
 
-from compiler.serverless.s3_config import S3BoundaryConstants, ChunkingConstants, BoundaryConfig
-from compiler.serverless.s3_sampling import estimate_avg_line_length
-from compiler.serverless.ir_helper import time_block
+sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
+from serverless.s3_config import S3BoundaryConstants, ChunkingConstants, BoundaryConfig
+from serverless.s3_sampling import estimate_avg_line_length
+from serverless.ir_helper import time_block
 
 
 __all__ = ['calculate_approx_correction_boundaries']

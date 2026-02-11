@@ -25,10 +25,11 @@ Usage:
     )  # window_size is an int (bytes)
 """
 
-import boto3
+import boto3, sys, os
 from typing import List, Tuple
 
-from compiler.serverless.s3_config import S3BoundaryConstants, ChunkingConstants, BoundaryConfig
+sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
+from serverless.s3_config import S3BoundaryConstants, ChunkingConstants, BoundaryConfig
 
 
 __all__ = ['calculate_single_shot_boundaries']

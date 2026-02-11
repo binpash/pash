@@ -35,6 +35,9 @@ from typing import List, Tuple, Any, Optional
 
 from serverless.s3_config import BoundaryConfig
 
+import sys, os
+sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
+
 
 __all__ = ['BoundaryCalculator']
 
@@ -86,7 +89,7 @@ class BoundaryCalculator:
         # Dispatch to appropriate mode (priority order matches BoundaryConfig)
         if self.config.use_adaptive_boundaries or self.config.use_dynamic_boundaries:
             # Adaptive or Dynamic mode: Pure arithmetic boundaries
-            from compiler.serverless.s3_adaptive_dynamic import calculate_adaptive_dynamic_boundaries
+            from serverless.s3_adaptive_dynamic import calculate_adaptive_dynamic_boundaries
 
             self.shard_ranges, self.cached_window_size = calculate_adaptive_dynamic_boundaries(
                 use_adaptive=self.config.use_adaptive_boundaries,
@@ -102,7 +105,7 @@ class BoundaryCalculator:
 
         elif self.config.use_adaptive_simple:
             # Adaptive-simple mode: N samples → single fixed window → lambda correction
-            from compiler.serverless.s3_adaptive_simple import calculate_adaptive_simple_boundaries
+            from serverless.s3_adaptive_simple import calculate_adaptive_simple_boundaries
 
             self.shard_ranges, self.cached_window_size = calculate_adaptive_simple_boundaries(
                 bucket=bucket,
@@ -115,7 +118,7 @@ class BoundaryCalculator:
 
         elif self.config.use_single_shot:
             # Single-shot mode: 1 sample at file midpoint → fixed window → lambda correction
-            from compiler.serverless.s3_single_shot import calculate_single_shot_boundaries
+            from serverless.s3_single_shot import calculate_single_shot_boundaries
 
             self.shard_ranges, self.cached_window_size = calculate_single_shot_boundaries(
                 bucket=bucket,
@@ -128,7 +131,7 @@ class BoundaryCalculator:
 
         elif self.config.use_approx_with_correction:
             # Approximate + Correction mode: Sample file, calculate window, return approx boundaries
-            from compiler.serverless.s3_approx_correction import calculate_approx_correction_boundaries
+            from serverless.s3_approx_correction import calculate_approx_correction_boundaries
 
             self.shard_ranges, self.cached_window_size = calculate_approx_correction_boundaries(
                 bucket=bucket,
@@ -141,7 +144,7 @@ class BoundaryCalculator:
 
         elif self.config.use_smart_boundaries:
             # Smart mode: EC2-side boundary scanning
-            from compiler.serverless.s3_smart_prealigned import calculate_smart_boundaries
+            from serverless.s3_smart_prealigned import calculate_smart_boundaries
 
             self.shard_ranges, self.cached_window_size = calculate_smart_boundaries(
                 bucket=bucket,

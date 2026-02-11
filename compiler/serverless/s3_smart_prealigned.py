@@ -23,13 +23,14 @@ Usage:
     )
 """
 
-import os
+import os, sys
 import boto3
 from typing import List, Tuple, Optional
 
-from compiler.serverless.s3_config import S3BoundaryConstants, ChunkingConstants
-from compiler.serverless.s3_sampling import estimate_avg_line_length, expand_search_for_newline
-from compiler.serverless.ir_helper import time_block
+sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
+from serverless.s3_config import S3BoundaryConstants, ChunkingConstants
+from serverless.s3_sampling import estimate_avg_line_length, expand_search_for_newline
+from serverless.ir_helper import time_block
 
 
 __all__ = ['find_line_boundaries_smart', 'calculate_smart_boundaries']
