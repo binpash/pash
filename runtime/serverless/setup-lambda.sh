@@ -22,6 +22,7 @@ ROLE_NAME="${ROLE_NAME:-leash-lambda-exec}"
 RUNTIME="python3.12"
 HANDLER="lambda-function.lambda_handler"
 MEMORY_SIZE="1769"
+EPHEMERAL_DISK_SIZE="10240"
 TIMEOUT="30"
 
 # Detect account ID if not provided
@@ -155,6 +156,7 @@ if aws lambda get-function --function-name "${FUNCTION_NAME}" --region "${REGION
     --handler "${HANDLER}" \
     --timeout "${TIMEOUT}" \
     --memory-size "${MEMORY_SIZE}" \
+    --ephemeral-storage "Size=${EPHEMERAL_DISK_SIZE}" \
     --environment "Variables={AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID},AWS_BUCKET=${AWS_BUCKET}}" \
     >/dev/null
 
@@ -169,6 +171,7 @@ else
     --handler "${HANDLER}" \
     --timeout "${TIMEOUT}" \
     --memory-size "${MEMORY_SIZE}" \
+    --ephemeral-storage "Size=${EPHEMERAL_DISK_SIZE}" \
     --environment "Variables={AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID},AWS_BUCKET=${AWS_BUCKET}}" \
     --zip-file "fileb://${ZIP_NAME}" \
     >/dev/null
