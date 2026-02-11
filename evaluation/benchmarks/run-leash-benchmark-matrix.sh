@@ -636,21 +636,22 @@ write_csv_row() {
     local wall_time_sec="$7"
     local billed_duration_ms="$8"
     local cost_usd="$9"
+    local benchmark="$BENCHMARK_NAME"
     # local speedup_vs_noopt="${10}"
     # local cost_diff_vs_noopt="${11}"
     local output_matches_noopt="${12}"
     local diff_excerpt="${13}"
 
-    # echo "${run_start_time},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${speedup_vs_noopt},${cost_diff_vs_noopt},${output_matches_noopt},${diff_excerpt}" >> "$RESULTS_CSV"
-    echo "${run_start_time},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${output_matches_noopt},${diff_excerpt}" >> "$RESULTS_CSV"
+    # echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${speedup_vs_noopt},${cost_diff_vs_noopt},${output_matches_noopt},${diff_excerpt}" >> "$RESULTS_CSV"
+    echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${output_matches_noopt},${diff_excerpt}" >> "$RESULTS_CSV"
 }
 
 RUN_START_TIME=$(date +%Y-%m-%d_%H-%M-%S)
 RESULTS_DIR="benchmark_results/$RUN_START_TIME"
 mkdir -p "$RESULTS_DIR"
 RESULTS_CSV="$RESULTS_DIR/results.csv"
-# echo "run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,speedup_vs_noopt,cost_diff_vs_noopt,output_matches_noopt,diff_excerpt" > "$RESULTS_CSV"
-echo "run_start_time,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt" > "$RESULTS_CSV"
+# echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,speedup_vs_noopt,cost_diff_vs_noopt,output_matches_noopt,diff_excerpt" > "$RESULTS_CSV"
+echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt" > "$RESULTS_CSV"
 echo "CSV results: $RESULTS_CSV"
 
 # Run benchmarks for all enabled modes
@@ -660,7 +661,7 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     SCRIPT=$(echo "$SCRIPT_INPUT" | cut -d: -f1)
     INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
     WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
-    WIDTH=${WIDTH:-32}
+    WIDTH=${WIDTH:-64}
 
     NOOPT_WALL_TIME="N/A"
     NOOPT_BILLED_MS="N/A"
