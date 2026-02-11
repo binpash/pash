@@ -32,7 +32,7 @@ def make_dgsh_tee_node(input_id, output_id, is_s3=False):
         flag_option_list = [OptionWithIO("-i", input_id),
                         OptionWithIO("-o", output_id),
                         Flag("-I"),
-                        OptionWithIO("-m", ArgStringType(Arg.string_to_arg("2G"))),
+                        OptionWithIO("-m", ArgStringType(Arg.string_to_arg("1G"))),
                         OptionWithIO("-b", ArgStringType(Arg.string_to_arg(str(config.config['runtime']['dgsh_buffer_size']))))]
     else: #ec2 
 
