@@ -23,7 +23,7 @@ INPUTS=(
   1G.txt
   # 3G.txt
   # 10G.txt
-  # 1M.txt
+  1M.txt
   # 10M.txt
   # 50M.txt
   # 100M.txt

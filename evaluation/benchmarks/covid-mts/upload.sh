@@ -20,7 +20,8 @@ S3_BENCHMARK_DIR="covid-mts"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS=(
-  in.csv
+ # in.csv
+ in_tiny.csv
   # in_small.csv
   # in_200M.csv
   # in_500M.csv
