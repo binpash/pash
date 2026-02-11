@@ -538,17 +538,6 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                         # Read configuration using BoundaryConfig
                         if not shard_ranges_computed:
                             boundary_config = BoundaryConfig()
-
-                            # -r flag: force single chunk per lambda, approx+correction mode
-                            if rsplit_has_r_flag:
-                                boundary_config.chunks_per_lambda = 1
-                                # boundary_config.use_adaptive_boundaries = False
-                                # boundary_config.use_dynamic_boundaries = False
-                                # boundary_config.use_adaptive_simple = False
-                                # boundary_config.use_single_shot = False
-                                # boundary_config.use_approx_with_correction = True
-                                # boundary_config.use_smart_boundaries = False
-
                             chunks_per_lambda = boundary_config.chunks_per_lambda
 
                             if _debug_enabled:
