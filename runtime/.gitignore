@@ -9,3 +9,6 @@ set-diff
 dspash/socket_pipe
 tests/perf*
 tests/*out
+in_gate*
+out_gate*
+pashlib
