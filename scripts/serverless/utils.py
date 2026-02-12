@@ -8,6 +8,7 @@ from datetime import datetime
 
 logs_client = boto3.client('logs')
 s3_client = boto3.client('s3')
+LAMBDA_FUNCTION_NAME = "lambda"
 
 def debug_print(enabled: bool, message: str):
     if enabled:
@@ -39,17 +40,17 @@ def delete_log_streams():
     Deletes all log streams in the specified log group.
     """
     while True:
-        response = (logs_client.describe_log_streams(logGroupName="/aws/lambda/lambda"))
+        response = (logs_client.describe_log_streams(logGroupName=f"/aws/lambda/{LAMBDA_FUNCTION_NAME}"))
         if not response["logStreams"] or len(response["logStreams"]) == 0:
             break
         for log_stream in response["logStreams"]:
-            logs_client.delete_log_stream(logGroupName="/aws/lambda/lambda", logStreamName=log_stream["logStreamName"])
+            logs_client.delete_log_stream(logGroupName=f"/aws/lambda/{LAMBDA_FUNCTION_NAME}", logStreamName=log_stream["logStreamName"])
 
 def save_then_delete_log_streams(out_dir: str = "logs", start_time_ms: int = None, job_id: str = None, debug_logs: bool = False):
     """
     Saves all log streams in the specified log group to files.
     """
-    log_group_name = "/aws/lambda/lambda"
+    log_group_name = f"/aws/lambda/{LAMBDA_FUNCTION_NAME}"
 
     # Add verification output
     print(f"[Analysis] Log group: {log_group_name}")
@@ -200,7 +201,7 @@ def save_then_delete_log_streams_copy(out_dir: str = "logs", start_time_ms: int 
         start_time_ms: Only fetch logs after this timestamp (milliseconds since epoch)
         job_id: Only fetch logs matching this job ID (logs with [JOB:{job_id}] prefix)
     """
-    log_group_name = "/aws/lambda/lambda"
+    log_group_name = f"/aws/lambda/{LAMBDA_FUNCTION_NAME}"
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     log_stream_count = 0
@@ -305,6 +306,14 @@ def save_then_delete_scripts(out_dir: str = "scripts"):
             s3_client.delete_object(Bucket=os.environ['AWS_BUCKET'], Key=key)
     print(f"[Analysis] Total shell scripts saved: {script_count}")
 
+def get_lambda_memory_gb():
+    client = boto3.client("lambda")
+    resp = client.get_function_configuration(
+        FunctionName=LAMBDA_FUNCTION_NAME
+    )
+    mem_mb = resp["MemorySize"]          # int, in MB
+    return mem_mb
+
 def analyze_logs(logs_folder: str):
     """
     Analyzes the logs in the specified folder and prints the summary.
@@ -382,9 +391,13 @@ def analyze_logs(logs_folder: str):
 
         if err_found:
             err_log_files.append(log_file)
+    
+    lambda_mem_mb = get_lambda_memory_gb()
+    unit_price = 0.0000166667 * lambda_mem_mb / 1024 / 1000 # $0.0000166667 for every GB-second
+    print(f"[Analysis] Lambda memory configuration: {lambda_mem_mb} MB")
     print(f"[Analysis] Total billed time: {sum(total_billed_time)} ms")
     print(f"[Analysis] Total number of billed time entries: {count_billed_time}")
-    print(f"[Analysis] Cost estimate: ${sum(total_billed_time) * 0.000000028849902:.6f}")
+    print(f"[Analysis] Cost estimate: ${sum(total_billed_time) * unit_price:.6f}")
     print(f"[Analysis] Errors may be found in the following log files:")
     for err_log_file in err_log_files:
         print(f"  {err_type[err_log_file]}:")
