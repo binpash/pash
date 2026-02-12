@@ -373,10 +373,10 @@ run_pash_with_timing() {
 
     start_ns=$(date +%s%N)
     if [ "$enable_s3" = "true" ]; then
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT"
     else
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
