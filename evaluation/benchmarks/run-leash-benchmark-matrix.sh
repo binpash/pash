@@ -339,6 +339,14 @@ if [ -z "${PASH_TOP:-}" ]; then
     exit 1
 fi
 
+# Get lambda config for CSV output
+read -r LAMBDA_MEM_MB LAMBDA_STORAGE_MB <<< "$(
+  aws lambda get-function-configuration \
+    --function-name lambda \
+    --query '[MemorySize, EphemeralStorage.Size]' \
+    --output text
+)"
+
 # Helper function to download S3 output
 download_s3_output() {
     local s3_key=$1
@@ -395,8 +403,6 @@ fetch_logs_and_cost() {
             # time rm -rf "$logs_dir"
             rm -rf "$logs_dir"
         fi
-
-
     
         local utils_output
         utils_output=$(python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" "$start_time_ms" "$job_id")
@@ -502,7 +508,7 @@ run_mode() {
                 NOOPT_BILLED_MS="${MODE_BILLED_MS[$mode]}"
                 NOOPT_COST="${MODE_COST[$mode]}"
                 noopt_local_file="${MODE_LOCAL_FILE[$mode]}"
-                write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "baseline" "baseline" "baseline" "baseline"
+                write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "baseline" "baseline" "baseline" "baseline" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
             else
                 MODE_SPEEDUP[$mode]="N/A"
                 # Speedup calculation disabled per request.
@@ -533,7 +539,7 @@ run_mode() {
             # if [[ "$rep_cost" =~ ^[0-9]+([.][0-9]+)?$ ]] && [[ "$NOOPT_COST" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
             #     rep_cost_diff=$(awk -v mode="$rep_cost" -v noopt="$NOOPT_COST" 'BEGIN{printf "%.6f", mode-noopt}')
             # fi
-            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "$REP" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "$rep_speedup" "$rep_cost_diff" "N/A" "N/A"
+            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "$REP" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "$rep_speedup" "$rep_cost_diff" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
         fi
     done
 }
@@ -641,9 +647,11 @@ write_csv_row() {
     # local cost_diff_vs_noopt="${11}"
     local output_matches_noopt="${12}"
     local diff_excerpt="${13}"
+    local lambda_mem_mb="${14}"
+    local lambda_storage_mb="${15}"
 
     # echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${speedup_vs_noopt},${cost_diff_vs_noopt},${output_matches_noopt},${diff_excerpt}" >> "$RESULTS_CSV"
-    echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${output_matches_noopt},${diff_excerpt}" >> "$RESULTS_CSV"
+    echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${output_matches_noopt},${diff_excerpt},${lambda_mem_mb},${lambda_storage_mb}" >> "$RESULTS_CSV"
 }
 
 RUN_START_TIME=$(date +%Y-%m-%d_%H-%M-%S)
@@ -651,7 +659,7 @@ RESULTS_DIR="benchmark_results/$RUN_START_TIME"
 mkdir -p "$RESULTS_DIR"
 RESULTS_CSV="$RESULTS_DIR/results.csv"
 # echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,speedup_vs_noopt,cost_diff_vs_noopt,output_matches_noopt,diff_excerpt" > "$RESULTS_CSV"
-echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt" > "$RESULTS_CSV"
+echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,output_matches_noopt,diff_excerpt,lambda_mem_mb,lambda_storage_mb" > "$RESULTS_CSV"
 echo "CSV results: $RESULTS_CSV"
 
 # Run benchmarks for all enabled modes
@@ -730,9 +738,9 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
                 echo "╚════════════════════════════════════════════════════════════════════════╝"
             fi
 
-            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST[$mode]}" "${MODE_SPEEDUP[$mode]}" "${MODE_COST_DIFF[$mode]}" "${MODE_MATCH[$mode]}" "${MODE_DIFF_EXCERPT[$mode]}"
+            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST[$mode]}" "${MODE_SPEEDUP[$mode]}" "${MODE_COST_DIFF[$mode]}" "${MODE_MATCH[$mode]}" "${MODE_DIFF_EXCERPT[$mode]}" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
         else
-            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST[$mode]}" "N/A" "N/A" "N/A" "N/A"
+            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
         fi
     done
 
