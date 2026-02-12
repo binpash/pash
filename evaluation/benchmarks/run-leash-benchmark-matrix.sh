@@ -497,13 +497,12 @@ run_mode() {
             MODE_BILLED_MS[$mode]="$rep_billed_ms"
             MODE_COST[$mode]="$rep_cost"
 
-            echo ""
-            echo "Downloading ${mode_suffix} output from S3..."
-            download_mode_output "$mode_suffix"
-            MODE_LOCAL_FILE[$mode]="$LAST_LOCAL_FILE"
-            echo ""
-
             if [ "$is_baseline" = "true" ]; then
+                echo ""
+                echo "Downloading ${mode_suffix} output from S3..."
+                download_mode_output "$mode_suffix"
+                MODE_LOCAL_FILE[$mode]="$LAST_LOCAL_FILE"
+                echo ""
                 NOOPT_WALL_TIME="$mode_wall_time"
                 NOOPT_BILLED_MS="${MODE_BILLED_MS[$mode]}"
                 NOOPT_COST="${MODE_COST[$mode]}"
@@ -569,7 +568,7 @@ compare_outputs() {
     echo "  - $label2: $file2 ($(wc -l < "$file2") lines)"
     echo ""
 
-    if diff -q "$file1" "$file2" > /dev/null 2>&1; then
+    if cmp -s "$file1" "$file2" > /dev/null 2>&1; then
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo "✓✓✓ OUTPUTS MATCH: Results are identical ✓✓✓"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -581,6 +580,8 @@ compare_outputs() {
     echo "✗✗✗ OUTPUTS DIFFER: Results are NOT identical ✗✗✗"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
+
+    return -1 # disable actual comparison for now since it will take long time for large files
 
     # If either file is empty, suppress unified diff headers/hunks
     local show_headers=1
@@ -714,6 +715,12 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
 
         mode_suffix="${MODE_SUFFIX[$mode]}"
 
+        echo ""
+        echo "Downloading ${mode_suffix} output from S3..."
+        download_mode_output "$mode_suffix"
+        MODE_LOCAL_FILE[$mode]="$LAST_LOCAL_FILE"
+        echo ""
+
         if [ "${MODE_ENABLED[noopt]}" = true ]; then
             echo ""
             echo "╔════════════════════════════════════════════════════════════════════════╗"
@@ -742,6 +749,9 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
         else
             write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
         fi
+
+        echo "Removing ${mode_suffix} local file: ${MODE_LOCAL_FILE[$mode]}..."
+        rm -f "${MODE_LOCAL_FILE[$mode]}"
     done
 
     if [ "$NUM_REPEATS" -gt 1 ]; then
