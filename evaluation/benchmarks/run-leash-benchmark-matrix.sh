@@ -451,6 +451,24 @@ fetch_logs_and_cost() {
 download_mode_output() {
     local mode_suffix="$1"
     local out_prefix="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
+
+    if [ "$BENCHMARK_NAME" == "max-temp" ]; then
+        local s3_key_1="${out_prefix}average.stdout.txt"
+        local local_file_1="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}_average.txt"
+        local s3_key_2="${out_prefix}min.stdout.txt"
+        local local_file_2="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}_min.txt"
+        local s3_key_3="${out_prefix}max.stdout.txt"
+        local local_file_3="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}_max.txt"
+        download_s3_output "$s3_key_1" "$local_file_1"
+        download_s3_output "$s3_key_2" "$local_file_2"
+        download_s3_output "$s3_key_3" "$local_file_3"
+        local local_file="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
+        cat "$local_file_1" "$local_file_2" "$local_file_3" > "$local_file"
+        rm "$local_file_1" "$local_file_2" "$local_file_3"
+        LAST_LOCAL_FILE="$local_file"
+        return 0
+    fi
+
     local s3_key="${out_prefix}stdout.txt"
     local local_file="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
 
