@@ -115,6 +115,8 @@ ALL_ALLOWED_FLAGS=(
     --skip-logs
     --debug
     --repeats
+    --parallel_pipelines
+    --parallel_pipelines_limit
 )
 
 is_allowed_runner_flag() {
