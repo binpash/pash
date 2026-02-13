@@ -6,6 +6,8 @@
 set_leash_benchmark_inputs() {
     SCRIPT_INPUT_WIDTH=(
         "max-temp-process.sh:temperatures.2015.txt:16"
+        "max-temp-process.sh:temperatures.2015.txt:32"
+        "max-temp-process.sh:temperatures.2015.txt:64"
         # "max-temp-process.sh:temperatures_1G.txt:16"
     )
 }
