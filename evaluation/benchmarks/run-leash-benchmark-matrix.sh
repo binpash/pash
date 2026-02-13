@@ -754,6 +754,9 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
         rm -f "${MODE_LOCAL_FILE[$mode]}"
     done
 
+    echo "Removing noopt local file: $noopt_local_file..."
+    rm -f "$noopt_local_file"
+
     if [ "$NUM_REPEATS" -gt 1 ]; then
         # Min/max/avg summary calculations disabled per request.
         # for mode in "${MODES[@]}"; do
