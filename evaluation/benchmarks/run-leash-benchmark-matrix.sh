@@ -185,6 +185,8 @@ RUN_APPROX_ADAPTIVE_SIMPLE=false
 RUN_APPROX_ADAPTIVE_SINGLE_SHOT=false
 PASH_DEBUG=false
 SKIP_LOGS=false
+PARALLEL_PIPELINES=false
+PARALLEL_PIPELINES_LIMITS=""
 
 if [[ "$*" == *"--noopt"* ]]; then
     RUN_NOOPT=true
@@ -210,6 +212,20 @@ fi
 
 if [[ "$*" == *"--approx-adaptive-single-shot"* ]]; then
     RUN_APPROX_ADAPTIVE_SINGLE_SHOT=true
+fi
+
+if [[ "$*" == *"--parallel_pipelines"* ]]; then
+    PARALLEL_PIPELINES=true
+fi
+
+if [[ "$*" == *"--parallel_pipelines_limits"* ]]; then
+    if [[ "$*" =~ --parallel_pipelines_limits[[:space:]]+([0-9]+) ]]; then
+        PARALLEL_PIPELINES_LIMITS="${BASH_REMATCH[1]}"
+        echo "Parallel pipelines enabled with limits: $PARALLEL_PIPELINES_LIMITS"
+    else
+        echo "Error: --parallel_pipelines_limits requires a numeric value" >&2
+        exit 2
+    fi
 fi
 
 
@@ -372,12 +388,19 @@ run_pash_with_timing() {
     local end_ns
 
     start_ns=$(date +%s%N)
+    parallel_config=""
+    if [ "$PARALLEL_PIPELINES" = "true" ]; then
+        parallel_config="--parallel_pipelines"
+        if [ -n "$PARALLEL_PIPELINES_LIMITS" ]; then
+            parallel_config+=" --parallel_pipelines_limits $PARALLEL_PIPELINES_LIMITS"
+        fi
+    fi
     if [ "$enable_s3" = "true" ]; then
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
-            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct -w"$WIDTH" scripts/"$SCRIPT"
+            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
-            $PASH_TOP/pa.sh --serverless_exec -w"$WIDTH" scripts/"$SCRIPT"
+            $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
 
