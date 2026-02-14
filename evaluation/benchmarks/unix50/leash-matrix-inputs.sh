@@ -71,38 +71,35 @@ set_leash_benchmark_inputs() {
         )
     elif [[ "$*" == *"--large"* ]]; then
         SCRIPT_INPUT_WIDTH=(
-            # "1.sh:1_20G.txt"
-            # "3.sh:1_20G.txt" # Error
-            # "2.sh:1_20G.txt" # 4096 Mem usage
-            # "4.sh:1_20G.txt" # 4096 Mem usage
-            # "5.sh:2_20G.txt"
+            "1.sh:1_20G.txt"
+            "2.sh:1_20G.txt" # 4096 Mem usage
+            "4.sh:1_20G.txt" # 4096 Mem usage
+            "5.sh:2_20G.txt"
             "6.sh:3_20G.txt"
-            # "7.sh:4_20G.txt"
-            # "8.sh:4_20G.txt"
+            "7.sh:4_20G.txt"
+            "8.sh:4_20G.txt"
             "9.sh:4_20G.txt"
             "10.sh:4_20G.txt"
-            # "11.sh:4_20G.txt" # sort
-            # 12.sh:4_20G.txt:16
-            # "13.sh:5_20G.txt"
-            # "14.sh:6_20G.txt" # sort
-            # "15.sh:7_20G.txt"
-            # "17.sh:7_20G.txt" # sort
-            # "18.sh:8_20G.txt"
+            "11.sh:4_20G.txt" # sort
+            "13.sh:5_20G.txt"
+            "14.sh:6_20G.txt" # sort
+            "15.sh:7_20G.txt"
+            "17.sh:7_20G.txt" # sort
+            "18.sh:8_20G.txt"
             "19.sh:8_20G.txt"
-            # # "20.sh:8_20G.txt"
-            # "21.sh:8_20G.txt"
-            # "23.sh:9.1_20G.txt:32"
-            # "24.sh:9.2_20G.txt"
-            # "25.sh:9.3_20G.txt"
-            # "26.sh:9.4_20G.txt"
-            # "28.sh:9.6_20G.txt:16"
-            # "29.sh:9.7_20G.txt"
-            # "30.sh:9.8_20G.txt"
-            # "31.sh:9.9_20G.txt"
-            # "32.sh:10_20G.txt"
-            # "33.sh:10_20G.txt"
-            # "35.sh:11_20G.txt"
-            # "34.sh:10_20G.txt"
+            "21.sh:8_20G.txt"
+            "23.sh:9.1_20G.txt"
+            "24.sh:9.2_20G.txt"
+            "25.sh:9.3_20G.txt"
+            "26.sh:9.4_20G.txt"
+            "28.sh:9.6_20G.txt"
+            "29.sh:9.7_20G.txt"
+            "30.sh:9.8_20G.txt"
+            "31.sh:9.9_20G.txt"
+            "32.sh:10_20G.txt"
+            "33.sh:10_20G.txt"
+            "35.sh:11_20G.txt"
+            "36.sh:10_20G.txt"
         )
     else
         SCRIPT_INPUT_WIDTH=(
