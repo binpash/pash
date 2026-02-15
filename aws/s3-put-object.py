@@ -39,6 +39,7 @@ try:
         with open(infile, "rb") as f:
             while f.read(1024 * 1024):
                 pass  # Just read through the file without doing anything
+            sys.exit(0)
 
     s3 = boto3.client('s3')
 
