@@ -9,11 +9,6 @@ BUCKET=os.environ.get("AWS_BUCKET")
 object_key, infile = sys.argv[1:][:2]
 DEBUG=True
 
-if object_key == "/dev/null":
-    if DEBUG:
-        print(f"[s3-put-object.py] Get /dev/null as key, ignore.")
-    exit(0)
-
 if DEBUG:
     print(f"[s3-put-object.py] Start putting {object_key}")
     print(f"[s3-put-object.py] Input file: {infile}")
@@ -37,6 +32,13 @@ try:
 
         def __exit__(self, *args):
             return self.fileobj.__exit__(*args)
+        
+    if object_key == "/dev/null":
+        if DEBUG:
+            print(f"[s3-put-object.py] Get /dev/null as key, stream data to /dev/null.")
+        with open(infile, "rb") as f:
+            while f.read(1024 * 1024):
+                pass  # Just read through the file without doing anything
 
     s3 = boto3.client('s3')
 
