@@ -263,14 +263,12 @@ class ServerlessManager:
             # preempt number of lambdas to be invoked
             self.counter.increment(len(script_id_to_script)-1)
 
-            conn.sendall(bytes_message)
-            conn.close()
-
             # Read job_id from environment
             job_id = os.environ.get('PASH_JOB_ID')
             if job_id:
                 log(f"[Serverless Manager] Using job ID: {job_id}")
 
+            invocation_threads = []
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
@@ -279,27 +277,16 @@ class ServerlessManager:
                     # print(">> Running script locally:", script_id)
                     invocation_thread = threading.Thread(target=self.run_local, args=(script_id,))
                     invocation_thread.start()
+                    invocation_threads.append(invocation_thread)
                 else:
                     invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id))
                     invocation_thread.start()
-
-            # # for oneliners local fifo
-            # invocation_threads = []
-            # for script_id, script in script_id_to_script.items():
-            #     if script_id == main_graph_script_id:
-            #         continue
-            #     if self.ec2_enabled and script_id in ec2_set:
-            #         invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
-            #         invocation_thread.start()
-            #         invocation_threads.append(invocation_thread)
-            #     else:
-            #         invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id]))
-            #         invocation_thread.start()
-            #         invocation_threads.append(invocation_thread)
-            # for invocation_thread in invocation_threads:
-            #     invocation_thread.join()
-            # conn.sendall(bytes_message)
-            # conn.close() 
+                    invocation_threads.append(invocation_thread)
+                
+            for invocation_thread in invocation_threads:
+                invocation_thread.join()
+            conn.sendall(bytes_message)
+            conn.close() 
 
         except Exception as e:
             log(f"[Serverless Manager] Failed to add job to a queue: {e}")
