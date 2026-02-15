@@ -9,7 +9,7 @@ set_leash_benchmark_inputs() {
         "sort-sort.sh:3G.txt:16"
         "wf.sh:3G.txt:16"
         "top-n.sh:3G.txt:16"
-        # "set-diff.sh:3G.txt:16"
+        "set-diff-leash.sh:3G.txt:16"
         "bi-grams.sh:1G.txt:16"
         "spell.sh:3G.txt:16"
         "nfa-regex.sh:3G.txt:128"
