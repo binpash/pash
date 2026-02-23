@@ -11,4 +11,4 @@ cd "$(dirname "$0")" || exit 1
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/1G.txt}
 
-cat "$IN" | tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed 100q > ${OUT}stdout.txt
+cat "$IN" | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | tr A-Z a-z | sort | uniq -c | sort -rn | sed 100q > ${OUT}stdout.txt

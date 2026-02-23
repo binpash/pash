@@ -4,4 +4,4 @@ OUT=oneliners/outputs/top-n.sh:3G:bash
 
 # python3 $PASH_TOP/runtime/serverless/aws/s3-get-object.py "$IN" /dev/stdout | tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed 100q | python3 $PASH_TOP/runtime/serverless/aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin
 
-python3 $PASH_TOP/runtime/serverless/aws/s3-get-object.py "$IN" /dev/stdout | tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed 100q | python3 $PASH_TOP/runtime/serverless/aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin
+python3 $PASH_TOP/runtime/serverless/aws/s3-get-object.py "$IN" /dev/stdout | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | tr A-Z a-z | sort | uniq -c | sort -rn | sed 100q | python3 $PASH_TOP/runtime/serverless/aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin
