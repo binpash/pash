@@ -33,8 +33,8 @@ Runner flags include:
 
 Chunking flags (mutually exclusive):
   --chunks-per-lambda N   Use a fixed N chunks per lambda (default: 16)
-  --chunk-size [N]        Compute chunks-per-lambda from file size. N is in KB (default: 1024 = 1MB)
-                          Formula: ceil(F / (w * N * 1024))
+  --chunk-size [N]        Compute chunks-per-lambda from file size. N is in MB (default: 1)
+                          Formula: ceil(F / (w * N * 1024 * 1024))
 
 Design:
   - This script is the only runner implementation.
@@ -291,7 +291,7 @@ fi
 
 CHUNKS_MODE="fixed"
 FIXED_CHUNKS_PER_LAMBDA=16
-CHUNK_SIZE_KB=1024  # only used in dynamic mode
+CHUNK_SIZE_MB=1  # only used in dynamic mode
 
 if [[ "$*" =~ --chunks-per-lambda[[:space:]]+([0-9]+) ]]; then
     FIXED_CHUNKS_PER_LAMBDA="${BASH_REMATCH[1]}"
@@ -301,7 +301,7 @@ fi
 if [[ "$*" == *"--chunk-size"* ]]; then
     CHUNKS_MODE="dynamic"
     if [[ "$*" =~ --chunk-size[[:space:]]+([0-9]+) ]]; then
-        CHUNK_SIZE_KB="${BASH_REMATCH[1]}"
+        CHUNK_SIZE_MB="${BASH_REMATCH[1]}"
     fi
 fi
 
@@ -643,7 +643,7 @@ run_mode() {
                 NOOPT_COST="${MODE_COST_LAMBDA[$mode]}"
                 NOOPT_TOTAL_COST="${MODE_COST_TOTAL[$mode]}"
                 noopt_local_file="${MODE_LOCAL_FILE[$mode]}"
-                write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "$total_cost" "baseline" "baseline" "baseline" "baseline" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
+                write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "$total_cost" "baseline" "baseline" "baseline" "baseline" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
             else
                 MODE_SPEEDUP[$mode]="N/A"
                 # Speedup calculation disabled per request.
@@ -674,7 +674,7 @@ run_mode() {
             # if [[ "$rep_cost" =~ ^[0-9]+([.][0-9]+)?$ ]] && [[ "$NOOPT_COST" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
             #     rep_cost_diff=$(awk -v mode="$rep_cost" -v noopt="$NOOPT_COST" 'BEGIN{printf "%.6f", mode-noopt}')
             # fi
-            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "$REP" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "$total_cost" "$rep_speedup" "$rep_cost_diff" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
+            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "$REP" "$mode_wall_time" "$rep_billed_ms" "$rep_cost" "$total_cost" "$rep_speedup" "$rep_cost_diff" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
         fi
     done
 }
@@ -787,9 +787,11 @@ write_csv_row() {
     local diff_excerpt="${14}"
     local lambda_mem_mb="${15}"
     local lambda_storage_mb="${16}"
+    local chunks_per_lambda="${17}"
+    local chunk_size_mb="${18}"
 
     # echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd},${speedup_vs_noopt},${cost_diff_vs_noopt},${output_matches_noopt},${diff_excerpt}" >> "$RESULTS_CSV"
-    echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd_lambda},${cost_usd_total},${output_matches_noopt},${diff_excerpt},${lambda_mem_mb},${lambda_storage_mb},${EC2_INSTANCE_TYPE}" >> "$RESULTS_CSV"
+    echo "${run_start_time},${benchmark},${script},${input},${width},${mode},${run_number},${wall_time_sec},${billed_duration_ms},${cost_usd_lambda},${cost_usd_total},${output_matches_noopt},${diff_excerpt},${lambda_mem_mb},${lambda_storage_mb},${EC2_INSTANCE_TYPE},${chunks_per_lambda},${chunk_size_mb}" >> "$RESULTS_CSV"
 }
 
 RUN_START_TIME=$(date +%Y-%m-%d_%H-%M-%S)
@@ -797,7 +799,7 @@ RESULTS_DIR="benchmark_results/$RUN_START_TIME"
 mkdir -p "$RESULTS_DIR"
 RESULTS_CSV="$RESULTS_DIR/results.csv"
 # echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd,speedup_vs_noopt,cost_diff_vs_noopt,output_matches_noopt,diff_excerpt" > "$RESULTS_CSV"
-echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd_lambda,cost_usd_total,output_matches_noopt,diff_excerpt,lambda_mem_mb,lambda_storage_mb,ec2_config" > "$RESULTS_CSV"
+echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,billed_duration_ms,cost_usd_lambda,cost_usd_total,output_matches_noopt,diff_excerpt,lambda_mem_mb,lambda_storage_mb,ec2_config,chunks_per_lambda,chunk_size_mb" > "$RESULTS_CSV"
 echo "CSV results: $RESULTS_CSV"
 
 # Run benchmarks for all enabled modes
@@ -811,6 +813,7 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
 
     if [ "$CHUNKS_MODE" = "fixed" ]; then
         CURRENT_CHUNKS_PER_LAMBDA="$FIXED_CHUNKS_PER_LAMBDA"
+        echo "[chunks-per-lambda] INPUT=$INPUT WIDTH=$WIDTH chunks_per_lambda=${CURRENT_CHUNKS_PER_LAMBDA}"
     else
         _cs_file_size=$(aws s3api head-object \
             --bucket "$AWS_BUCKET" \
@@ -818,11 +821,11 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
             --query ContentLength --output text 2>/dev/null) || true
 
         if [[ "$_cs_file_size" =~ ^[0-9]+$ ]]; then
-            _cs_chunk_bytes=$(( CHUNK_SIZE_KB * 1024 ))
+            _cs_chunk_bytes=$(( CHUNK_SIZE_MB * 1024 * 1024 ))
             _cs_denom=$(( WIDTH * _cs_chunk_bytes ))
             CURRENT_CHUNKS_PER_LAMBDA=$(( (_cs_file_size + _cs_denom - 1) / _cs_denom ))
             [ "$CURRENT_CHUNKS_PER_LAMBDA" -lt 1 ] && CURRENT_CHUNKS_PER_LAMBDA=1
-            echo "[chunk-size] INPUT=$INPUT WIDTH=$WIDTH file=${_cs_file_size}B chunk=${CHUNK_SIZE_KB}KB => chunks_per_lambda=${CURRENT_CHUNKS_PER_LAMBDA}"
+            echo "[chunk-size] INPUT=$INPUT WIDTH=$WIDTH file=${_cs_file_size}B chunk=${CHUNK_SIZE_MB}MB => chunks_per_lambda=${CURRENT_CHUNKS_PER_LAMBDA}"
         else
             echo "Warning: could not determine file size for '$INPUT'; defaulting chunks_per_lambda=16" >&2
             CURRENT_CHUNKS_PER_LAMBDA=16
@@ -904,9 +907,9 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
                 echo "╚════════════════════════════════════════════════════════════════════════╝"
             fi
 
-            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "${MODE_SPEEDUP[$mode]}" "${MODE_COST_DIFF[$mode]}" "${MODE_MATCH[$mode]}" "${MODE_DIFF_EXCERPT[$mode]}" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
+            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "${MODE_SPEEDUP[$mode]}" "${MODE_COST_DIFF[$mode]}" "${MODE_MATCH[$mode]}" "${MODE_DIFF_EXCERPT[$mode]}" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
         else
-            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB"
+            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
         fi
 
         echo "Removing ${mode_suffix} local file: ${MODE_LOCAL_FILE[$mode]}..."
