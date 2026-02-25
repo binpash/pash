@@ -31,6 +31,11 @@ Runner flags include:
   --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
 
+Chunking flags (mutually exclusive):
+  --chunks-per-lambda N   Use a fixed N chunks per lambda (default: 16)
+  --chunk-size [N]        Compute chunks-per-lambda from file size. N is in KB (default: 1024 = 1MB)
+                          Formula: ceil(F / (w * N * 1024))
+
 Design:
   - This script is the only runner implementation.
   - Each benchmark folder only defines SCRIPT_INPUT_WIDTH selection in:
@@ -117,6 +122,8 @@ ALL_ALLOWED_FLAGS=(
     --repeats
     --parallel_pipelines
     --parallel_pipelines_limit
+    --chunks-per-lambda
+    --chunk-size
 )
 
 is_allowed_runner_flag() {
@@ -133,6 +140,8 @@ validate_runner_flags() {
     local i=0
     local arg
     local repeats_value
+    local saw_chunks_per_lambda=false
+    local saw_chunk_size=false
 
     while [ "$i" -lt "${#RUNNER_ARGS[@]}" ]; do
         arg="${RUNNER_ARGS[$i]}"
@@ -151,6 +160,35 @@ validate_runner_flags() {
             continue
         fi
 
+        if [[ "$arg" == "--chunks-per-lambda" ]]; then
+            saw_chunks_per_lambda=true
+            if [ $((i + 1)) -ge "${#RUNNER_ARGS[@]}" ]; then
+                echo "Error: --chunks-per-lambda requires a positive integer value" >&2
+                exit 2
+            fi
+            local cpl_value="${RUNNER_ARGS[$((i + 1))]}"
+            if ! [[ "$cpl_value" =~ ^[0-9]+$ ]] || [ "$cpl_value" -lt 1 ]; then
+                echo "Error: --chunks-per-lambda requires a positive integer value, got: $cpl_value" >&2
+                exit 2
+            fi
+            i=$((i + 2))
+            continue
+        fi
+
+        if [[ "$arg" == "--chunk-size" ]]; then
+            saw_chunk_size=true
+            # optional numeric argument
+            if [ $((i + 1)) -lt "${#RUNNER_ARGS[@]}" ]; then
+                local cs_next="${RUNNER_ARGS[$((i + 1))]}"
+                if [[ "$cs_next" =~ ^[0-9]+$ ]] && [ "$cs_next" -ge 1 ]; then
+                    i=$((i + 2))
+                    continue
+                fi
+            fi
+            i=$((i + 1))
+            continue
+        fi
+
         if [[ "$arg" == --* ]] && ! is_allowed_runner_flag "$arg"; then
             echo "Error: mode not supported: $arg" >&2
             echo "Supported mode flags: ${MODE_FLAGS[*]}" >&2
@@ -159,6 +197,11 @@ validate_runner_flags() {
 
         i=$((i + 1))
     done
+
+    if [ "$saw_chunks_per_lambda" = true ] && [ "$saw_chunk_size" = true ]; then
+        echo "Error: --chunks-per-lambda and --chunk-size are mutually exclusive" >&2
+        exit 2
+    fi
 }
 
 validate_runner_flags
@@ -246,6 +289,22 @@ if [[ "$*" =~ --repeats[[:space:]]+([0-9]+) ]]; then
     NUM_REPEATS="${BASH_REMATCH[1]}"
 fi
 
+CHUNKS_MODE="fixed"
+FIXED_CHUNKS_PER_LAMBDA=16
+CHUNK_SIZE_KB=1024  # only used in dynamic mode
+
+if [[ "$*" =~ --chunks-per-lambda[[:space:]]+([0-9]+) ]]; then
+    FIXED_CHUNKS_PER_LAMBDA="${BASH_REMATCH[1]}"
+    CHUNKS_MODE="fixed"
+fi
+
+if [[ "$*" == *"--chunk-size"* ]]; then
+    CHUNKS_MODE="dynamic"
+    if [[ "$*" =~ --chunk-size[[:space:]]+([0-9]+) ]]; then
+        CHUNK_SIZE_KB="${BASH_REMATCH[1]}"
+    fi
+fi
+
 # If no mode flags specified, run all modes (default behavior)
 if [ "$RUN_NOOPT" = false ] && \
    [ "$RUN_SMART_PREALIGNED" = false ] && \
@@ -277,7 +336,7 @@ MODES=(
 #   s3_smart_prealigned   -> aws/s3-chunk-reader-smart-prealigned.py
 #   s3_approx_tail_coord  -> aws/s3-chunk-reader-approx-tail-coordination.py
 #   s3_approx_* (others)  -> aws/s3-chunk-reader-approx-correction.py
-declare -A MODE_DESC MODE_ENV MODE_SUFFIX MODE_ENABLE_S3 MODE_ENABLED MODE_FLAG MODE_IS_BASELINE
+declare -A MODE_DESC MODE_ENV MODE_SUFFIX MODE_ENABLE_S3 MODE_ENABLED MODE_FLAG MODE_IS_BASELINE MODE_USES_CHUNKS_PER_LAMBDA
 declare -A MODE_TIMES MODE_BILLED_MS MODE_COST_LAMBDA MODE_COST_TOTAL MODE_MATCH MODE_SPEEDUP MODE_COST_DIFF MODE_DIFF_EXCERPT MODE_LOCAL_FILE MODE_REP1_TIME
 declare -A MODE_BILLED_MS_LIST MODE_COST_LIST
 declare -A EC2_PRICE
@@ -299,12 +358,20 @@ MODE_FLAG[s3_approx_adaptive_simple]="--approx-adaptive-simple"
 MODE_FLAG[s3_approx_adaptive_single_shot]="--approx-adaptive-single-shot"
 
 MODE_ENV[noopt]=""
-MODE_ENV[s3_smart_prealigned]="USE_SMART_BOUNDARIES=true PASH_S3_CHUNKS_PER_LAMBDA=16"
+MODE_ENV[s3_smart_prealigned]="USE_SMART_BOUNDARIES=true"
 MODE_ENV[s3_approx_tail_coord]="USE_SMART_BOUNDARIES=false"
-MODE_ENV[s3_approx_dynamic]="PASH_S3_CHUNKS_PER_LAMBDA=16 USE_DYNAMIC_BOUNDARIES=true"
-MODE_ENV[s3_approx_adaptive_gap]="USE_ADAPTIVE_BOUNDARIES=true PASH_GAP_SAMPLE_KB=256 PASH_GAP_DELTA=0.001 PASH_GAP_K_SAMPLES=4096 PASH_GAP_SAFETY_FACTOR=1.2 PASH_GAP_MAX_WINDOW_KB=1024 PASH_S3_CHUNKS_PER_LAMBDA=16"
-MODE_ENV[s3_approx_adaptive_simple]="USE_ADAPTIVE_SIMPLE=true PASH_ADAPTIVE_SIMPLE_NUM_SAMPLES=5 PASH_ADAPTIVE_SIMPLE_SAMPLE_KB=256 PASH_ADAPTIVE_SIMPLE_SAFETY_FACTOR=1.5 PASH_S3_CHUNKS_PER_LAMBDA=16"
-MODE_ENV[s3_approx_adaptive_single_shot]="USE_SINGLE_SHOT=true PASH_SINGLE_SHOT_SAMPLE_KB=256 PASH_SINGLE_SHOT_SAFETY_FACTOR=2.0 PASH_S3_CHUNKS_PER_LAMBDA=16"
+MODE_ENV[s3_approx_dynamic]="USE_DYNAMIC_BOUNDARIES=true"
+MODE_ENV[s3_approx_adaptive_gap]="USE_ADAPTIVE_BOUNDARIES=true PASH_GAP_SAMPLE_KB=256 PASH_GAP_DELTA=0.001 PASH_GAP_K_SAMPLES=4096 PASH_GAP_SAFETY_FACTOR=1.2 PASH_GAP_MAX_WINDOW_KB=1024"
+MODE_ENV[s3_approx_adaptive_simple]="USE_ADAPTIVE_SIMPLE=true PASH_ADAPTIVE_SIMPLE_NUM_SAMPLES=5 PASH_ADAPTIVE_SIMPLE_SAMPLE_KB=256 PASH_ADAPTIVE_SIMPLE_SAFETY_FACTOR=1.5"
+MODE_ENV[s3_approx_adaptive_single_shot]="USE_SINGLE_SHOT=true PASH_SINGLE_SHOT_SAMPLE_KB=256 PASH_SINGLE_SHOT_SAFETY_FACTOR=2.0"
+
+MODE_USES_CHUNKS_PER_LAMBDA[noopt]="false"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_smart_prealigned]="true"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_tail_coord]="false"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic]="true"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_gap]="true"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_simple]="true"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_single_shot]="true"
 
 MODE_SUFFIX[noopt]="noopt"
 MODE_SUFFIX[s3_smart_prealigned]="s3smartprealigned"
@@ -495,6 +562,9 @@ run_mode() {
     local mode_suffix="${MODE_SUFFIX[$mode]}"
     local mode_desc="${MODE_DESC[$mode]}"
     local mode_env="${MODE_ENV[$mode]}"
+    if [ "${MODE_USES_CHUNKS_PER_LAMBDA[$mode]}" = "true" ]; then
+        mode_env="${mode_env:+$mode_env }PASH_S3_CHUNKS_PER_LAMBDA=${CURRENT_CHUNKS_PER_LAMBDA}"
+    fi
     local enable_s3="${MODE_ENABLE_S3[$mode]}"
     local repeats="$NUM_REPEATS"
     local is_baseline="${MODE_IS_BASELINE[$mode]:-false}"
@@ -738,6 +808,26 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
     WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
     WIDTH=${WIDTH:-64}
+
+    if [ "$CHUNKS_MODE" = "fixed" ]; then
+        CURRENT_CHUNKS_PER_LAMBDA="$FIXED_CHUNKS_PER_LAMBDA"
+    else
+        _cs_file_size=$(aws s3api head-object \
+            --bucket "$AWS_BUCKET" \
+            --key "$BENCHMARK_DIR/inputs/$INPUT" \
+            --query ContentLength --output text 2>/dev/null) || true
+
+        if [[ "$_cs_file_size" =~ ^[0-9]+$ ]]; then
+            _cs_chunk_bytes=$(( CHUNK_SIZE_KB * 1024 ))
+            _cs_denom=$(( WIDTH * _cs_chunk_bytes ))
+            CURRENT_CHUNKS_PER_LAMBDA=$(( (_cs_file_size + _cs_denom - 1) / _cs_denom ))
+            [ "$CURRENT_CHUNKS_PER_LAMBDA" -lt 1 ] && CURRENT_CHUNKS_PER_LAMBDA=1
+            echo "[chunk-size] INPUT=$INPUT WIDTH=$WIDTH file=${_cs_file_size}B chunk=${CHUNK_SIZE_KB}KB => chunks_per_lambda=${CURRENT_CHUNKS_PER_LAMBDA}"
+        else
+            echo "Warning: could not determine file size for '$INPUT'; defaulting chunks_per_lambda=16" >&2
+            CURRENT_CHUNKS_PER_LAMBDA=16
+        fi
+    fi
 
     NOOPT_WALL_TIME="N/A"
     NOOPT_BILLED_MS="N/A"
