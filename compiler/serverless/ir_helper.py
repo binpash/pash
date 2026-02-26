@@ -706,7 +706,8 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
                                                                                 remote_key=filename,
                                                                                 output_edge=None,
                                                                                 is_tcp=False)
-                        pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen, is_s3=True)
+                        # If using unlimited_lambda, we add eager with is_s3=True, otherwise this node will run on ec2
+                        pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen, is_s3=args.unlimited_lambda)
                     if in_edge == ec2_in_edge and not args.no_eager:
                         # Add dgsh-tee for eager S3 data prefetching when using S3 direct streaming
                         # This ensures data is pulled from S3 as fast as possible and buffered for downstream
