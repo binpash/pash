@@ -609,7 +609,7 @@ run_mode() {
         no_resplitting=""
         if [[ "$mode" == "s3_approx_dynamic_no_resplitting" ]]; then
             no_resplitting="--no_resplitting --ec2_width $(nproc)"
-            if [[ " nlp file-enc " == *" $BENCHMARK_NAME "* ]]; then
+            if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
                 no_resplitting="--no_resplitting --ec2_width 1 --unlimited_lambda"
             fi
             echo "Running APPROX DYNAMIC NO RESPLITTING mode $no_resplitting"
@@ -656,7 +656,7 @@ run_mode() {
             MODE_COST_TOTAL[$mode]="$total_cost"
 
             if [ "$is_baseline" = "true" ]; then
-                if [[ " nlp file-enc " == *" $BENCHMARK_NAME "* ]]; then
+                if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
                     echo ""
                     echo "Downloading ${mode_suffix} output from S3..."
                     download_mode_output "$mode_suffix"
@@ -893,7 +893,7 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
 
     mode_suffix="${MODE_SUFFIX[$mode]}"
 
-    if [[ " nlp file-enc " == *" $BENCHMARK_NAME "* ]]; then
+    if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
         echo "Skipping output comparison for $BENCHMARK_NAME benchmark"
         write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
         continue
