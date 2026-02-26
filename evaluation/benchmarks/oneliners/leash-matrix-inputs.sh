@@ -5,13 +5,13 @@
 # Size flags are currently ignored for this benchmark.
 set_leash_benchmark_inputs() {
     SCRIPT_INPUT_WIDTH=(
-        "sort.sh:3G.txt:16"
-        "sort-sort.sh:3G.txt:16"
-        "wf.sh:3G.txt:16"
-        "top-n.sh:3G.txt:16"
-        "set-diff-leash.sh:3G.txt:16"
-        "bi-grams.sh:1G.txt:16"
-        "spell.sh:3G.txt:16"
-        "nfa-regex.sh:3G.txt:128"
+        "sort.sh:3G.txt:64"
+        "sort-sort.sh:3G.txt:64"
+        "wf.sh:3G.txt:64"
+        "top-n.sh:3G.txt:64"
+        "set-diff-leash.sh:3G.txt:64"
+        "bi-grams.sh:1G.txt:64"
+        "spell.sh:3G.txt:64"
+        "nfa-regex.sh:3G.txt:64"
     )
 }

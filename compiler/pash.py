@@ -115,6 +115,9 @@ def parse_args():
         args.__dict__["preprocess_mode"] = "spec"
         args.__dict__["partial_order_file"] = util_spec.partial_order_file_path()
         log(" -- Its partial order file will be stored in:", args.partial_order_file)
+    
+    if args.no_resplitting and not args.enable_s3_direct:
+        raise("Option --no_resplitting is only valid when --enable_s3_direct is also enabled")
 
     ## Initialize the log file
     config.init_log_file()

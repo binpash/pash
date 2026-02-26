@@ -1,4 +1,3 @@
-import argparse
 import sys
 import pickle
 import traceback
@@ -223,7 +222,7 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             # with cProfile.Profile() as pr:
             distributed_graph = choose_and_apply_parallelizing_transformations(ast_or_ir, compiler_config.width,
                                                                       runtime_config['batch_size'],
-                                                                      args.r_split_batch_size)
+                                                                      args.r_split_batch_size, args.no_resplitting, args.ec2_width)
             # pr.print_stats()
 
             # Eagers are added in remote notes when using distributed exec
@@ -256,10 +255,14 @@ def print_graph_statistics(graph):
     log("Eager nodes:", len(eager_nodes))
 
 
-def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, r_split_batch_size):
+def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, r_split_batch_size, serverless_no_resplitting=False, ec2_width=None):
+    print(f"Choosing parallelizing transformations with fan_out={fan_out}, serverless_no_resplitting={serverless_no_resplitting}, ec2_width={ec2_width}")
     parallelizer_map = choose_parallelizing_transformations(graph)
-    apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, 
-                                        r_split_batch_size)
+    if serverless_no_resplitting:
+        apply_parallelizing_transformation_leash(graph, parallelizer_map, fan_out, batch_size, 
+                                        r_split_batch_size, ec2_width)
+    else:
+        apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, r_split_batch_size)
     return graph
 
 
@@ -296,6 +299,105 @@ def choose_parallelizing_transformation(curr_id, graph): # shall return map entr
                                           curr.get_option_implemented_round_robin_with_unwrap_parallelizer(),
                                           curr.get_option_implemented_consecutive_chunks_parallelizer()]
     return next((item for item in list_all_parallelizers_in_priority if item is not None), None)
+
+def apply_parallelizing_transformation_leash(graph, parallelizer_map, fan_out, batch_size, r_split_batch_size, ec2_width):
+    """
+    Semantics:
+      - Identify the *first* contiguous linear series of parallelizable nodes (in the ORIGINAL graph),
+        starting from the first parallelizable node in sorted order.
+      - If (and only if) that first series starts right after a `cat`, use the original `fan_out`
+        for every node in that first series. Otherwise, use 16.
+      - Every later series uses 16.
+      - Does NOT rely on node-id adjacency (node_id+1) and does NOT consult the mutated graph topology
+        after parallelization (since parallelized nodes may disappear).
+    """
+
+    fileIdGen = graph.get_file_id_gen()
+
+    node_id_non_none_parallelizer_list = [
+        (node_id, parallelizer)
+        for (node_id, parallelizer) in parallelizer_map.items()
+        if parallelizer is not None
+    ]
+    node_id_non_none_parallelizer_list.sort(key=lambda x: x[0])
+
+    if not node_id_non_none_parallelizer_list:
+        return
+
+    ORIGINAL_FAN_OUT = fan_out
+    FORCED_FAN_OUT = ec2_width
+    # TODO: ad-hoc fix for bigrams_aux cuz this cannot be combined with previous parallelized commands.
+    BARRIER_CMDS = {"bigrams_aux"}  # extend if needed
+    LAST_BARRIER_CMDS = {"sort"}
+
+    # --- Snapshot original graph topology + cmd names BEFORE mutation ---
+    cand_ids = [nid for nid, _ in node_id_non_none_parallelizer_list]
+
+    prevs_map = {}
+    nexts_map = {}
+    cmd_map = {}
+
+    for nid in cand_ids:
+        node = graph.get_node(nid)
+        cmd_map[nid] = node.cmd_invocation_with_io_vars.cmd_name
+        prevs_map[nid] = graph.get_previous_nodes(nid)
+        nexts_map[nid] = graph.get_next_nodes(nid)
+
+    def is_first_command_after_cat(nid):
+        ps = prevs_map.get(nid, [])
+        if len(ps) != 1:
+            return False
+        prev_node = graph.get_node(ps[0])
+        return prev_node.cmd_invocation_with_io_vars.cmd_name == "cat"
+
+    def continues_linear_series(prev_id, cur_id):
+        """
+        Decide contiguity in the ORIGINAL graph:
+          prev -> cur is the unique edge forward AND cur has prev as its unique predecessor.
+        """
+        prev_next = nexts_map.get(prev_id, [])
+        cur_prev = prevs_map.get(cur_id, [])
+        return (
+            len(prev_next) == 1 and prev_next[0] == cur_id and
+            len(cur_prev) == 1 and cur_prev[0] == prev_id and 
+            cmd_map.get(prev_id) not in LAST_BARRIER_CMDS and 
+            cmd_map.get(cur_id) not in BARRIER_CMDS
+        )
+
+    # same_series[i] means candidate i continues from candidate i-1 in the same series
+    same_series = [False] * len(cand_ids)
+    for i in range(1, len(cand_ids)):
+        prev_id = cand_ids[i - 1]
+        cur_id = cand_ids[i]
+        if cmd_map.get(prev_id) in BARRIER_CMDS:
+            same_series[i] = False
+        else:
+            same_series[i] = continues_linear_series(prev_id, cur_id)
+
+    # --- Apply transformations ---
+    series_idx = -1
+    current_fan_out = None
+
+    for i, (node_id, parallelizer) in enumerate(node_id_non_none_parallelizer_list):
+        cmd = cmd_map.get(node_id, graph.get_node(node_id).cmd_invocation_with_io_vars.cmd_name)
+
+        starts_new_series = (i == 0) or (not same_series[i])
+        if starts_new_series:
+            series_idx += 1
+
+            if series_idx == 0:
+                eligible = is_first_command_after_cat(node_id)
+                current_fan_out = ORIGINAL_FAN_OUT if eligible else FORCED_FAN_OUT
+            else:
+                current_fan_out = FORCED_FAN_OUT
+
+        graph.apply_parallelization_to_node(
+            node_id,
+            parallelizer,
+            fileIdGen,
+            current_fan_out,
+            r_split_batch_size
+        )
 
 
 def apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, r_split_batch_size):
@@ -415,8 +517,8 @@ def add_eager_nodes(graph):
     ## Generate a fileIdGen that doesnt clash with graph fids.
     fileIdGen = graph.get_file_id_gen()
 
-    ## Get the next nodes
-    workset = [node for source_node_id in source_node_ids for node in graph.get_next_nodes(source_node_id)]
+    ## Get all nodes
+    workset = [node for node in graph.nodes]
     visited = set()
     while (len(workset) > 0):
         curr_id = workset.pop(0)
@@ -430,6 +532,7 @@ def add_eager_nodes(graph):
 
             ## Add eager nodes if the node has more than one input
             curr_input_ids = graph.get_node_input_ids(curr_id)
+            # Optional: not isinstance(curr, ServerlessRemotePipe))
             if (len(curr_input_ids) > 1):
                 ## TODO: If we know that a command reads its inputs in a list,
                 ##       then we might not need to put an eager on its first input.
@@ -440,7 +543,7 @@ def add_eager_nodes(graph):
                     _fid, from_node, to_node = graph.edges[curr_input_id]
                     assert(to_node == curr_id)
                     ## If the edge is an input edge, then we don't want to put eager.
-                    if(not from_node is None):
+                    if(not from_node is None) or (graph.get_edge_fid(curr_input_id).is_ephemeral()):
                         add_eager(curr_input_id, graph, fileIdGen)
 
             if(isinstance(curr, Split)):

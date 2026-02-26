@@ -22,7 +22,8 @@ from definitions.ir.nodes.r_wrap import RWrap
 from definitions.ir.nodes.r_split import RSplit
 from definitions.ir.nodes.r_merge import RMerge
 from definitions.ir.nodes.cat import make_cat_node
-from dspash.ir_helper import split_ir
+import serverless.split_ir
+import dspash.ir_helper
 from ir_to_ast import to_shell
 from ir import *
 import config
@@ -292,7 +293,7 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
 # Main Pipeline Functions
 # ============================================================================
 
-def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace, recover: bool = False):
+def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace, recover: bool = False):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
         read/write nodes for data movement and lambda invocation nodes to trigger
         downstream processing (lambda). This function also produces graph that should run in
@@ -370,13 +371,31 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         print("="*80)
     #exit()
     #TODO careful with this exit
-    
+
+    if args.no_resplitting:
+        lambda_subgraphs = []
+        # preprocessing
+        for subgraph in subgraphs:
+            sink_nodes = subgraph.sink_nodes()
+            source_nodes = subgraph.source_nodes()
+            for source in source_nodes:
+                for in_edge in subgraph.get_node_input_fids(source):
+                    if in_edge.has_file_resource() and in_edge == ec2_in_edge:
+                        lambda_subgraphs.append(subgraph)
+                        break
+        if len(lambda_subgraphs) == 0:
+            # No lambdas can be used, fallback to original graph
+            print("[IR Helper] No subgraph eligible for S3 direct streaming; all subgraphs will run on EC2")
+            subgraphs = [ir]
+            input_fifo_map = {}
+
     # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
     for subgraph in subgraphs:
         sink_nodes = subgraph.sink_nodes()
-        assert(len(sink_nodes) == 1)
-        out_edges = subgraph.get_node_output_fids(sink_nodes[0])
+        # assert(len(sink_nodes) == 1)
+        # out_edges = subgraph.get_node_output_fids(sink_nodes[0])
+        out_edges = [edge for node_id in sink_nodes for edge in subgraph.get_node_output_fids(node_id)]
         for out_edge in out_edges:
             # Replace the old edge with an ephemeral edge in case it isn't and
             # to avoid modifying the edge in case it's used in some other subgraph
@@ -469,11 +488,13 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 else:
                     key_to_sender_receiver[str(communication_key)][1] = matching_subgraph
 
+                # Dont need to add eager now, will add eager for the entire ec2 graph later
                 if not args.no_eager:
                     if recover:
                         eager_edges.append((new_edge, matching_subgraph))
                     else:
-                        pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
+                        if not args.no_resplitting:
+                            pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
 
             else: #similar to what is done here we want to add this node before the lambda pash node or in lieu of
                 remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=new_edge.get_ident(),
@@ -685,6 +706,8 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                                                                                 remote_key=filename,
                                                                                 output_edge=None,
                                                                                 is_tcp=False)
+                        # If using unlimited_lambda, we add eager with is_s3=True, otherwise this node will run on ec2
+                        pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen, is_s3=args.unlimited_lambda)
                     if in_edge == ec2_in_edge and not args.no_eager:
                         # Add dgsh-tee for eager S3 data prefetching when using S3 direct streaming
                         # This ensures data is pulled from S3 as fast as possible and buffered for downstream
@@ -820,6 +843,11 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         for args_list in args_lists:
             stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(args_list)
             subgraph.add_node(stun_lib)
+    
+    if args.no_resplitting and (not args.unlimited_lambda):
+        for subgraph in subgraphs:
+            if subgraph not in lambda_subgraphs:
+                pash_compiler.add_eager_nodes(subgraph)
 
     return main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_renamed
 
@@ -843,11 +871,19 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         script_id_to_script: mapping from unique script id to script content
     """
     # split IR
-    subgraphs, mapping = split_ir(ir)
+    if args.no_resplitting:
+        subgraphs, mapping = serverless.split_ir.split_ir(ir)
+    else:
+        subgraphs, mapping = dspash.ir_helper.split_ir(ir)
 
+    print(f"[IR Helper] Total subgraphs after splitting: {len(subgraphs)}")
     #todo. chaneg the first one 
-    main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_replaced = add_nodes_to_subgraphs(subgraphs, ir.get_file_id_gen(), mapping, args, recover=recover)
-
+    try:
+        main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_replaced = add_nodes_to_subgraphs(ir, subgraphs, ir.get_file_id_gen(), mapping, args, recover=recover)
+    except Exception as e:
+        print(f"[IR Helper] Error during add_nodes_to_subgraphs: {e}")
+        print(f"Types of error: {type(e)}")
+        raise
     # read the declared functions
     declared_functions = ""
     with open(declared_functions_filename, "r") as f:
@@ -857,6 +893,8 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     script_id_to_script = {}
     ec2_set = set()
     for subgraph, id_ in subgraph_script_id_pairs.items():
+        if id_ == main_graph_script_id:
+            continue
         # making necessary temp directories
         dir_set = set()
         for edge in subgraph.all_fids():
@@ -889,7 +927,11 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         else:
             log("[Serverless Manager] Script for other lambda saved in:"+script_name)
         # log(script)
-        if ("split" in script) or ("s3-put" in script) or ("sort -m" in script) or ("merge" in script):
-            ec2_set.add(str(id_))
+
+        # If not using unlimited lambdas when leveraging pipeline parallelism, offload merger/splitter to ec2
+        if not args.unlimited_lambda:
+            if ("split" in script) or ("s3-put" in script) or ("sort -m" in script) or ("merge" in script):
+                ec2_set.add(str(id_))
+    print(f"[IR Helper] Total number of scripts generated: {len(script_id_to_script)} (with {len(ec2_set)} offloaded to EC2)")
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set
