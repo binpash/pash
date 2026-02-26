@@ -5,9 +5,9 @@
 # Size flags are currently ignored for this benchmark.
 set_leash_benchmark_inputs() {
     SCRIPT_INPUT_WIDTH=(
-        "1.sh:in_tiny.csv:2"
-        # "2.sh:in.csv:16"
-        # "3.sh:in.csv:16"
-        # "4.sh:in.csv:16"
+        "1.sh:in_tiny.csv:64"
+        "2.sh:in.csv:64"
+        "3.sh:in.csv:64"
+        "4.sh:in.csv:64"
     )
 }
