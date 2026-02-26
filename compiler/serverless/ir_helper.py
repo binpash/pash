@@ -706,6 +706,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
                                                                                 remote_key=filename,
                                                                                 output_edge=None,
                                                                                 is_tcp=False)
+                        pash_compiler.add_eager(ephemeral_edge.get_ident(), subgraph, file_id_gen, is_s3=True)
                     if in_edge == ec2_in_edge and not args.no_eager:
                         # Add dgsh-tee for eager S3 data prefetching when using S3 direct streaming
                         # This ensures data is pulled from S3 as fast as possible and buffered for downstream
@@ -842,7 +843,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
             stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(args_list)
             subgraph.add_node(stun_lib)
     
-    if args.no_resplitting:
+    if args.no_resplitting and (not args.unlimited_lambda):
         for subgraph in subgraphs:
             if subgraph not in lambda_subgraphs:
                 pash_compiler.add_eager_nodes(subgraph)
@@ -925,7 +926,10 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         else:
             log("[Serverless Manager] Script for other lambda saved in:"+script_name)
         # log(script)
-        if ("split" in script) or ("s3-put" in script) or ("sort -m" in script) or ("merge" in script):
-            ec2_set.add(str(id_))
+
+        # If not using unlimited lambdas when leveraging pipeline parallelism, offload merger/splitter to ec2
+        if not args.unlimited_lambda:
+            if ("split" in script) or ("s3-put" in script) or ("sort -m" in script) or ("merge" in script):
+                ec2_set.add(str(id_))
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set

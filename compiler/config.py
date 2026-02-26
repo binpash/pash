@@ -208,6 +208,10 @@ def add_common_arguments(parser):
                         help="(experimental) disable resplitting to lambdas after initial splitting (only valid with --enable_s3_direct)",
                         action="store_true",
                         default=False)
+    parser.add_argument("--unlimited_lambda",
+                        help="(experimental) do not limit the number of lambdas, only use when running unlimited parallelism",
+                        action="store_true",
+                        default=False)
     parser.add_argument("--ec2_width",
                         type=int,
                         help="(experimental) set data-parallelism factor for EC2 execution (only valid with --no-resplitting)",
