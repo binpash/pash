@@ -931,5 +931,6 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         if not args.unlimited_lambda:
             if ("split" in script) or ("s3-put" in script) or ("sort -m" in script) or ("merge" in script):
                 ec2_set.add(str(id_))
+    print(f"[IR Helper] Total number of scripts generated: {len(script_id_to_script)} (with {len(ec2_set)} offloaded to EC2)")
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set
