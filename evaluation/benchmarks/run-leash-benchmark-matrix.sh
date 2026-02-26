@@ -31,10 +31,13 @@ Runner flags include:
   --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
 
-Chunking flags (mutually exclusive):
+Chunking flags (mutually exclusive; N can be comma-separated for sweeps, e.g. 1,2,4):
   --chunks-per-lambda N   Use a fixed N chunks per lambda (default: 16)
   --chunk-size [N]        Compute chunks-per-lambda from file size. N is in MB (default: 1)
                           Formula: ceil(F / (w * N * 1024 * 1024))
+
+Width flag (comma-separated for sweeps, e.g. 32,64):
+  --width N, -w N         Override width for all inputs (default: use width from leash-matrix-inputs.sh)
 
 Design:
   - This script is the only runner implementation.
@@ -43,6 +46,10 @@ Design:
 EOF
             exit 0
             ;;
+        --width|-w)
+            RUNNER_ARGS+=("--width" "$2"); shift 2 ;;
+        --width=*)
+            RUNNER_ARGS+=("--width" "${1#*=}"); shift ;;
         *)
             if [[ -z "${BENCHMARK_NAME}" ]]; then
                 if [[ "$1" == --* ]]; then
@@ -115,7 +122,7 @@ MODE_FLAGS=(
 ALL_ALLOWED_FLAGS=(
     "${MODE_FLAGS[@]}"
     --small
-    --mediuP0+r\P0+r\P0+r\m
+    --medium
     --large
     --skip-logs
     --debug
@@ -124,6 +131,7 @@ ALL_ALLOWED_FLAGS=(
     --parallel_pipelines_limit
     --chunks-per-lambda
     --chunk-size
+    --width
 )
 
 is_allowed_runner_flag() {
@@ -167,26 +175,47 @@ validate_runner_flags() {
                 exit 2
             fi
             local cpl_value="${RUNNER_ARGS[$((i + 1))]}"
-            if ! [[ "$cpl_value" =~ ^[0-9]+$ ]] || [ "$cpl_value" -lt 1 ]; then
-                echo "Error: --chunks-per-lambda requires a positive integer value, got: $cpl_value" >&2
-                exit 2
-            fi
+            IFS=',' read -ra _cpl_tokens <<< "$cpl_value"
+            for _tok in "${_cpl_tokens[@]}"; do
+                if ! [[ "$_tok" =~ ^[0-9]+$ ]] || [ "$_tok" -lt 1 ]; then
+                    echo "Error: --chunks-per-lambda: '$_tok' must be a positive integer" >&2; exit 2
+                fi
+            done
             i=$((i + 2))
             continue
         fi
 
         if [[ "$arg" == "--chunk-size" ]]; then
             saw_chunk_size=true
-            # optional numeric argument
             if [ $((i + 1)) -lt "${#RUNNER_ARGS[@]}" ]; then
                 local cs_next="${RUNNER_ARGS[$((i + 1))]}"
-                if [[ "$cs_next" =~ ^[0-9]+$ ]] && [ "$cs_next" -ge 1 ]; then
+                if [[ "$cs_next" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+                    IFS=',' read -ra _cs_tokens <<< "$cs_next"
+                    for _tok in "${_cs_tokens[@]}"; do
+                        if [ "$_tok" -lt 1 ]; then
+                            echo "Error: --chunk-size: '$_tok' must be >= 1" >&2; exit 2
+                        fi
+                    done
                     i=$((i + 2))
                     continue
                 fi
             fi
             i=$((i + 1))
             continue
+        fi
+
+        if [[ "$arg" == "--width" ]]; then
+            if [ $((i + 1)) -ge "${#RUNNER_ARGS[@]}" ]; then
+                echo "Error: --width requires a value" >&2; exit 2
+            fi
+            local w_value="${RUNNER_ARGS[$((i + 1))]}"
+            IFS=',' read -ra _w_tokens <<< "$w_value"
+            for _tok in "${_w_tokens[@]}"; do
+                if ! [[ "$_tok" =~ ^[0-9]+$ ]] || [ "$_tok" -lt 1 ]; then
+                    echo "Error: --width: '$_tok' must be a positive integer" >&2; exit 2
+                fi
+            done
+            i=$((i + 2)); continue
         fi
 
         if [[ "$arg" == --* ]] && ! is_allowed_runner_flag "$arg"; then
@@ -210,7 +239,7 @@ validate_runner_flags
 #   --noopt                  : Baseline (EC2 split + Lambda compute)
 #   --smart-prealigned       : Smart prealigned chunks (EC2 scans boundaries)
 #   --approx-tail            : Approx chunks + Lambda tail coordination (legacy)
-#   --approx-dynamic       P0+r\P0+r\  : Approx chunks + dynamic correction window
+#   --approx-dynamic       : Approx chunks + dynamic correction window
 #   --approx-adaptive-gap    : Approx chunks + adaptive gap-window (EC2-side)
 #   --approx-adaptive-simple : Approx chunks + fixed window from simple sampling
 #   --approx-adaptive-single-shot : Approx chunks + adaptive single midpoint sample window
@@ -290,19 +319,26 @@ if [[ "$*" =~ --repeats[[:space:]]+([0-9]+) ]]; then
 fi
 
 CHUNKS_MODE="fixed"
-FIXED_CHUNKS_PER_LAMBDA=16
-CHUNK_SIZE_MB=1  # only used in dynamic mode
+CHUNKS_PER_LAMBDA_VALUES=(16)   # array; default single value
+CHUNK_SIZE_MB_VALUES=(1)        # array; default single value
+WIDTH_OVERRIDE_VALUES=()        # empty = use per-entry width from config
+FIXED_CHUNKS_PER_LAMBDA=16      # set per sweep iteration
+CHUNK_SIZE_MB=1                 # set per sweep iteration
 
-if [[ "$*" =~ --chunks-per-lambda[[:space:]]+([0-9]+) ]]; then
-    FIXED_CHUNKS_PER_LAMBDA="${BASH_REMATCH[1]}"
+if [[ "$*" =~ --chunks-per-lambda[[:space:]]+([^[:space:]]+) ]]; then
+    IFS=',' read -ra CHUNKS_PER_LAMBDA_VALUES <<< "${BASH_REMATCH[1]}"
     CHUNKS_MODE="fixed"
 fi
 
 if [[ "$*" == *"--chunk-size"* ]]; then
     CHUNKS_MODE="dynamic"
-    if [[ "$*" =~ --chunk-size[[:space:]]+([0-9]+) ]]; then
-        CHUNK_SIZE_MB="${BASH_REMATCH[1]}"
+    if [[ "$*" =~ --chunk-size[[:space:]]+([0-9][0-9,]*) ]]; then
+        IFS=',' read -ra CHUNK_SIZE_MB_VALUES <<< "${BASH_REMATCH[1]}"
     fi
+fi
+
+if [[ "$*" =~ --width[[:space:]]+([^[:space:]]+) ]]; then
+    IFS=',' read -ra WIDTH_OVERRIDE_VALUES <<< "${BASH_REMATCH[1]}"
 fi
 
 # If no mode flags specified, run all modes (default behavior)
@@ -803,34 +839,62 @@ echo "run_start_time,benchmark,script,input,width,mode,run_number,wall_time_sec,
 echo "CSV results: $RESULTS_CSV"
 
 # Run benchmarks for all enabled modes
-for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
+
+# Width sweep: if --width not given, use sentinel "" (per-entry width from config)
+_WIDTH_SWEEP=("${WIDTH_OVERRIDE_VALUES[@]}")
+[ "${#_WIDTH_SWEEP[@]}" -eq 0 ] && _WIDTH_SWEEP=("")
+
+# Chunking sweep
+if [ "$CHUNKS_MODE" = "fixed" ]; then
+    _CHUNK_SWEEP=("${CHUNKS_PER_LAMBDA_VALUES[@]}")
+else
+    _CHUNK_SWEEP=("${CHUNK_SIZE_MB_VALUES[@]}")
+fi
+
+for _W in "${_WIDTH_SWEEP[@]}"; do
+    [ -n "$_W" ] && echo "######## width sweep: ${_W} ########"
+
+    for _C in "${_CHUNK_SWEEP[@]}"; do
+        if [ "$CHUNKS_MODE" = "fixed" ]; then
+            FIXED_CHUNKS_PER_LAMBDA="$_C"
+            echo "######## chunks-per-lambda sweep: ${FIXED_CHUNKS_PER_LAMBDA} ########"
+        else
+            CHUNK_SIZE_MB="$_C"
+            echo "######## chunk-size sweep: ${CHUNK_SIZE_MB} MB ########"
+        fi
+
+        for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     echo "========================================================================"
     echo "Running benchmark for $SCRIPT_INPUT"
     SCRIPT=$(echo "$SCRIPT_INPUT" | cut -d: -f1)
     INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
     WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
     WIDTH=${WIDTH:-64}
+    [ -n "$_W" ] && WIDTH="$_W"
+
+    _cs_file_size=$(aws s3api head-object \
+        --bucket "$AWS_BUCKET" \
+        --key "$BENCHMARK_DIR/inputs/$INPUT" \
+        --query ContentLength --output text 2>/dev/null) || true
 
     if [ "$CHUNKS_MODE" = "fixed" ]; then
         CURRENT_CHUNKS_PER_LAMBDA="$FIXED_CHUNKS_PER_LAMBDA"
-        echo "[chunks-per-lambda] INPUT=$INPUT WIDTH=$WIDTH chunks_per_lambda=${CURRENT_CHUNKS_PER_LAMBDA}"
-    else
-        _cs_file_size=$(aws s3api head-object \
-            --bucket "$AWS_BUCKET" \
-            --key "$BENCHMARK_DIR/inputs/$INPUT" \
-            --query ContentLength --output text 2>/dev/null) || true
-
         if [[ "$_cs_file_size" =~ ^[0-9]+$ ]]; then
-            _cs_chunk_bytes=$(( CHUNK_SIZE_MB * 1024 * 1024 ))
+            CHUNK_SIZE_MB=$(awk "BEGIN{printf \"%.4g\", $_cs_file_size / ($WIDTH * $CURRENT_CHUNKS_PER_LAMBDA * 1024 * 1024)}")
+        fi
+    else
+        if [[ "$_cs_file_size" =~ ^[0-9]+$ ]]; then
+            _cs_chunk_bytes=$(awk "BEGIN{printf \"%d\", $CHUNK_SIZE_MB * 1024 * 1024}")
             _cs_denom=$(( WIDTH * _cs_chunk_bytes ))
             CURRENT_CHUNKS_PER_LAMBDA=$(( (_cs_file_size + _cs_denom - 1) / _cs_denom ))
             [ "$CURRENT_CHUNKS_PER_LAMBDA" -lt 1 ] && CURRENT_CHUNKS_PER_LAMBDA=1
-            echo "[chunk-size] INPUT=$INPUT WIDTH=$WIDTH file=${_cs_file_size}B chunk=${CHUNK_SIZE_MB}MB => chunks_per_lambda=${CURRENT_CHUNKS_PER_LAMBDA}"
         else
             echo "Warning: could not determine file size for '$INPUT'; defaulting chunks_per_lambda=16" >&2
             CURRENT_CHUNKS_PER_LAMBDA=16
         fi
     fi
+    _cs_display=$(printf "%.4g" "$CHUNK_SIZE_MB")
+    echo "[chunks] INPUT=$INPUT WIDTH=$WIDTH chunk_size_mb=${_cs_display} chunks_per_lambda=${CURRENT_CHUNKS_PER_LAMBDA}"
 
     NOOPT_WALL_TIME="N/A"
     NOOPT_BILLED_MS="N/A"
@@ -980,7 +1044,9 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     echo "Completed benchmark for $SCRIPT_INPUT (all modes)"
     echo "========================================================================"
     echo ""
-done
+        done  # end for SCRIPT_INPUT
+    done  # end for _C (chunking sweep)
+done  # end for _W (width sweep)
 
 echo ""
 echo "========================================================================"
