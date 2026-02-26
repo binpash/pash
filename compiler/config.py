@@ -204,6 +204,14 @@ def add_common_arguments(parser):
                         help="(experimental) enable S3 direct lambda streaming optimization for serverless execution",
                         action="store_true",
                         default=False)
+    parser.add_argument("--no_resplitting",
+                        help="(experimental) disable resplitting to lambdas after initial splitting (only valid with --enable_s3_direct)",
+                        action="store_true",
+                        default=False)
+    parser.add_argument("--ec2_width",
+                        type=int,
+                        help="(experimental) set data-parallelism factor for EC2 execution (only valid with --no-resplitting)",
+                        default=16)
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
