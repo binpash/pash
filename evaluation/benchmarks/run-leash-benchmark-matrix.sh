@@ -110,6 +110,7 @@ MODE_FLAGS=(
     --approx-adaptive-gap
     --approx-adaptive-simple
     --approx-adaptive-single-shot
+    --no-resplitting-approx-dynamic
 )
 
 ALL_ALLOWED_FLAGS=(
@@ -259,6 +260,10 @@ if [[ "$*" == *"--approx-adaptive-single-shot"* ]]; then
     RUN_APPROX_ADAPTIVE_SINGLE_SHOT=true
 fi
 
+if [[ "$*" == *"--no-resplitting-approx-dynamic"* ]]; then
+    RUN_APPROX_DYNAMIC_NO_RESPLITTING=true
+fi
+
 if [[ "$*" == *"--parallel_pipelines"* ]]; then
     PARALLEL_PIPELINES=true
 fi
@@ -312,7 +317,8 @@ if [ "$RUN_NOOPT" = false ] && \
    [ "$RUN_APPROX_DYNAMIC" = false ] && \
    [ "$RUN_APPROX_ADAPTIVE_GAP" = false ] && \
    [ "$RUN_APPROX_ADAPTIVE_SIMPLE" = false ] && \
-   [ "$RUN_APPROX_ADAPTIVE_SINGLE_SHOT" = false ]; then
+   [ "$RUN_APPROX_ADAPTIVE_SINGLE_SHOT" = false ] && \
+   [ "$RUN_APPROX_DYNAMIC_NO_RESPLITTING" = false ]; then
     RUN_NOOPT=true
     RUN_SMART_PREALIGNED=true
     RUN_APPROX_TAIL=true
@@ -330,6 +336,7 @@ MODES=(
     s3_approx_adaptive_gap
     s3_approx_adaptive_simple
     s3_approx_adaptive_single_shot
+    s3_approx_dynamic_no_resplitting
 )
 
 # Reader strategy mapping:
@@ -348,6 +355,7 @@ MODE_DESC[s3_approx_dynamic]="WITH S3 direct streaming - APPROX chunks + dynamic
 MODE_DESC[s3_approx_adaptive_gap]="WITH S3 direct streaming - APPROX chunks + adaptive gap-window (EC2-side)"
 MODE_DESC[s3_approx_adaptive_simple]="WITH S3 direct streaming - APPROX chunks + adaptive simple (fixed sampled window)"
 MODE_DESC[s3_approx_adaptive_single_shot]="WITH S3 direct streaming - APPROX chunks + adaptive single-shot sampled window"
+MODE_DESC[s3_approx_dynamic_no_resplitting]="WITH S3 direct streaming - APPROX chunks + dynamic correction windows, WITHOUT resplitting and streaming to lambdas after direct s3"
 
 MODE_FLAG[noopt]="--noopt"
 MODE_FLAG[s3_smart_prealigned]="--smart-prealigned"
@@ -356,6 +364,7 @@ MODE_FLAG[s3_approx_dynamic]="--approx-dynamic"
 MODE_FLAG[s3_approx_adaptive_gap]="--approx-adaptive-gap"
 MODE_FLAG[s3_approx_adaptive_simple]="--approx-adaptive-simple"
 MODE_FLAG[s3_approx_adaptive_single_shot]="--approx-adaptive-single-shot"
+MODE_FLAG[s3_approx_dynamic_no_resplitting]="--approx-dynamic --no_resplitting --ec2_width $(nproc)"
 
 MODE_ENV[noopt]=""
 MODE_ENV[s3_smart_prealigned]="USE_SMART_BOUNDARIES=true"
@@ -364,6 +373,7 @@ MODE_ENV[s3_approx_dynamic]="USE_DYNAMIC_BOUNDARIES=true"
 MODE_ENV[s3_approx_adaptive_gap]="USE_ADAPTIVE_BOUNDARIES=true PASH_GAP_SAMPLE_KB=256 PASH_GAP_DELTA=0.001 PASH_GAP_K_SAMPLES=4096 PASH_GAP_SAFETY_FACTOR=1.2 PASH_GAP_MAX_WINDOW_KB=1024"
 MODE_ENV[s3_approx_adaptive_simple]="USE_ADAPTIVE_SIMPLE=true PASH_ADAPTIVE_SIMPLE_NUM_SAMPLES=5 PASH_ADAPTIVE_SIMPLE_SAMPLE_KB=256 PASH_ADAPTIVE_SIMPLE_SAFETY_FACTOR=1.5"
 MODE_ENV[s3_approx_adaptive_single_shot]="USE_SINGLE_SHOT=true PASH_SINGLE_SHOT_SAMPLE_KB=256 PASH_SINGLE_SHOT_SAFETY_FACTOR=2.0"
+MODE_ENV[s3_approx_dynamic_no_resplitting]="USE_DYNAMIC_BOUNDARIES=true NO_RESPLITTING=true"
 
 MODE_USES_CHUNKS_PER_LAMBDA[noopt]="false"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_smart_prealigned]="true"
@@ -372,6 +382,7 @@ MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_gap]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_simple]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_single_shot]="true"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic_no_resplitting]="true"
 
 MODE_SUFFIX[noopt]="noopt"
 MODE_SUFFIX[s3_smart_prealigned]="s3smartprealigned"
@@ -380,6 +391,7 @@ MODE_SUFFIX[s3_approx_dynamic]="s3approxdynamic"
 MODE_SUFFIX[s3_approx_adaptive_gap]="s3approxadaptivegap"
 MODE_SUFFIX[s3_approx_adaptive_simple]="s3approxadaptivesimple"
 MODE_SUFFIX[s3_approx_adaptive_single_shot]="s3approxadaptivesingleshot"
+MODE_SUFFIX[s3_approx_dynamic_no_resplitting]="s3approxdynamicnoresplit"
 
 MODE_ENABLE_S3[noopt]="false"
 MODE_ENABLE_S3[s3_smart_prealigned]="true"
@@ -388,6 +400,7 @@ MODE_ENABLE_S3[s3_approx_dynamic]="true"
 MODE_ENABLE_S3[s3_approx_adaptive_gap]="true"
 MODE_ENABLE_S3[s3_approx_adaptive_simple]="true"
 MODE_ENABLE_S3[s3_approx_adaptive_single_shot]="true"
+MODE_ENABLE_S3[s3_approx_dynamic_no_resplitting]="true"
 
 MODE_ENABLED[noopt]="$RUN_NOOPT"
 MODE_ENABLED[s3_smart_prealigned]="$RUN_SMART_PREALIGNED"
@@ -396,6 +409,7 @@ MODE_ENABLED[s3_approx_dynamic]="$RUN_APPROX_DYNAMIC"
 MODE_ENABLED[s3_approx_adaptive_gap]="$RUN_APPROX_ADAPTIVE_GAP"
 MODE_ENABLED[s3_approx_adaptive_simple]="$RUN_APPROX_ADAPTIVE_SIMPLE"
 MODE_ENABLED[s3_approx_adaptive_single_shot]="$RUN_APPROX_ADAPTIVE_SINGLE_SHOT"
+MODE_ENABLED[s3_approx_dynamic_no_resplitting]="$RUN_APPROX_DYNAMIC_NO_RESPLITTING"
 
 MODE_IS_BASELINE[noopt]="true"
 
@@ -464,6 +478,7 @@ run_pash_with_timing() {
     local mode_env="$1"
     local enable_s3="$2"
     local out_prefix="$3"
+    local no_resplitting_flag="$4"
     local start_ns
     local end_ns
 
@@ -477,7 +492,7 @@ run_pash_with_timing() {
     fi
     if [ "$enable_s3" = "true" ]; then
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
-            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
+            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
@@ -591,7 +606,12 @@ run_mode() {
         local out_prefix="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
         local mode_wall_time
 
-        run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix"
+        no_resplitting=""
+        if [[ "$mode" == "s3_approx_dynamic_no_resplitting" ]]; then
+            echo "Running APPROX DYNAMIC NO RESPLITTING mode with ec2_width $(nproc)"
+            no_resplitting="--no_resplitting --ec2_width $(nproc)"
+        fi
+        run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix" "$no_resplitting"
         mode_wall_time="$LAST_WALL_TIME"
         echo "[TIMING] ${mode} wall time: ${mode_wall_time}s"
 
