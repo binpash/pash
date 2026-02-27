@@ -268,6 +268,11 @@ class ServerlessManager:
             if job_id:
                 log(f"[Serverless Manager] Using job ID: {job_id}")
 
+            # Experimental: if runnning with unlimited lambda, return immediately after invocation to avoid too many waiting threads
+            if args.unlimited_lambda:
+                conn.sendall(bytes_message)
+                conn.close() 
+
             invocation_threads = []
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
@@ -282,6 +287,9 @@ class ServerlessManager:
                     invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id))
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
+
+            if args.unlimited_lambda:
+                return
                 
             for invocation_thread in invocation_threads:
                 invocation_thread.join()

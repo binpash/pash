@@ -490,11 +490,15 @@ run_pash_with_timing() {
             parallel_config+=" --parallel_pipelines_limits $PARALLEL_PIPELINES_LIMITS"
         fi
     fi
+    benchmark_dir=$BENCHMARK_DIR
+    if [[ $BENCHMARK_NAME == "file-enc" ]]; then
+        benchmark_dir="log-analysis"
+    fi
     if [ "$enable_s3" = "true" ]; then
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$benchmark_dir/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$benchmark_dir/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
@@ -609,7 +613,7 @@ run_mode() {
         no_resplitting=""
         if [[ "$mode" == "s3_approx_dynamic_no_resplitting" ]]; then
             no_resplitting="--no_resplitting --ec2_width $(nproc)"
-            if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
+            if [[ " nlp file-enc media-conv log-analysis " == *" $BENCHMARK_NAME "* ]]; then
                 no_resplitting="--no_resplitting --ec2_width 1 --unlimited_lambda"
             fi
             echo "Running APPROX DYNAMIC NO RESPLITTING mode $no_resplitting"
@@ -656,7 +660,7 @@ run_mode() {
             MODE_COST_TOTAL[$mode]="$total_cost"
 
             if [ "$is_baseline" = "true" ]; then
-                if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
+                if [[ " nlp file-enc media-conv log-analysis " == *" $BENCHMARK_NAME "* ]]; then
                     echo ""
                     echo "Downloading ${mode_suffix} output from S3..."
                     download_mode_output "$mode_suffix"

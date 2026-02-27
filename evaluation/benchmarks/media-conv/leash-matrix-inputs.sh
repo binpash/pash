@@ -4,8 +4,8 @@
 # Mirrors the original nlp run-leash.sh selection.
 # Size flags are currently ignored for this benchmark.
 set_leash_benchmark_inputs() {
-    export ENTRIES=150
+    export LEASH_ENTRIES=150
     SCRIPT_INPUT_WIDTH=(
-        "to_mp3_heavy.sh:wav_full_heavy/wav/:1",
+        "to_mp3_heavy.sh:wav_full_heavy/wav/:1"
     )
 }
