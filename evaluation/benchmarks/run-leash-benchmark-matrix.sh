@@ -961,20 +961,20 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
         mode_index=$((mode_index + 1))
     done
 
-    mode_suffix="${MODE_SUFFIX[$mode]}"
-
-    if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
-        echo "Skipping output comparison for $BENCHMARK_NAME benchmark"
-        write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
-        continue
-    fi
-
     # Compare outputs (baseline vs enabled modes)
     for mode in "${MODES[@]}"; do
         if [ "${MODE_IS_BASELINE[$mode]:-false}" = "true" ]; then
             continue
         fi
+
+        mode_suffix="${MODE_SUFFIX[$mode]}"
         if [ "${MODE_ENABLED[$mode]}" != true ]; then
+            continue
+        fi
+
+        if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
+            echo "Skipping output comparison for $BENCHMARK_NAME benchmark"
+            write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
             continue
         fi
 
