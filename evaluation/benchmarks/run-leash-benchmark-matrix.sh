@@ -262,6 +262,7 @@ PASH_DEBUG=false
 SKIP_LOGS=false
 PARALLEL_PIPELINES=false
 PARALLEL_PIPELINES_LIMITS=""
+RUN_APPROX_DYNAMIC_NO_RESPLITTING=false
 
 if [[ "$*" == *"--noopt"* ]]; then
     RUN_NOOPT=true
@@ -531,6 +532,7 @@ run_pash_with_timing() {
         benchmark_dir="log-analysis"
     fi
     if [ "$enable_s3" = "true" ]; then
+        LEASH_ENTRIES=${LEASH_ENTRIES:-1}
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$benchmark_dir/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
