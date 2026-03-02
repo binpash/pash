@@ -336,6 +336,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
     subgraph_stun_lib_args = {}
     key_to_sender_receiver = {}
     key_to_data_type = {} # batch or line
+    subgraph_to_is_stateless = {}  # True if batch, False if line
     eager_edges = []
 
     #modify the first subgraph if it is a s3 -> cat -> split
@@ -420,14 +421,15 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
                 # arg = send_rdvkey_0_1_input-fifoname
                 out_node = subgraph.get_node(sink_nodes[0])
                 # print(out_node)
-                key_to_data_type[str(communication_key)] = "line"
+                key_to_data_type[str(communication_key)] = "line" # default : stateless
                 if isinstance(out_node, RWrap):
-                    key_to_data_type[str(communication_key)] = "batch"
+                    key_to_data_type[str(communication_key)] = "batch" # stateful
                 if isinstance(out_node, RSplit):
-                    key_to_data_type[str(communication_key)] = "batch"
+                    key_to_data_type[str(communication_key)] = "batch" # stateful
                     for flag in out_node.cmd_invocation_with_io_vars.flag_option_list:
                         if flag.get_name() == "-r":
-                            key_to_data_type[str(communication_key)] = "line"
+                            key_to_data_type[str(communication_key)] = "line" # stateless if no headers
+                subgraph_to_is_stateless[subgraph] = (key_to_data_type[str(communication_key)] == "line")
                 if str(communication_key) not in key_to_sender_receiver:
                     key_to_sender_receiver[str(communication_key)] = [subgraph, None]
                 else:
@@ -849,7 +851,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
             if subgraph not in lambda_subgraphs:
                 pash_compiler.add_eager_nodes(subgraph)
 
-    return main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_renamed
+    return main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_renamed, subgraph_to_is_stateless
 
 
 def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse.Namespace, declared_functions_filename, recover: bool = False) -> Tuple[str, str, Dict[str, str]]:
@@ -879,7 +881,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     print(f"[IR Helper] Total subgraphs after splitting: {len(subgraphs)}")
     #todo. chaneg the first one 
     try:
-        main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_replaced = add_nodes_to_subgraphs(ir, subgraphs, ir.get_file_id_gen(), mapping, args, recover=recover)
+        main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id, fifo_to_be_replaced, subgraph_to_is_stateless = add_nodes_to_subgraphs(ir, subgraphs, ir.get_file_id_gen(), mapping, args, recover=recover)
     except Exception as e:
         print(f"[IR Helper] Error during add_nodes_to_subgraphs: {e}")
         print(f"Types of error: {type(e)}")
@@ -891,10 +893,12 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     
     # save the output scripts
     script_id_to_script = {}
+    script_id_to_is_stateless = {}
     ec2_set = set()
     for subgraph, id_ in subgraph_script_id_pairs.items():
         if id_ == main_graph_script_id:
             continue
+        script_id_to_is_stateless[str(id_)] = subgraph_to_is_stateless.get(subgraph, False)
         # making necessary temp directories
         dir_set = set()
         for edge in subgraph.all_fids():
@@ -934,4 +938,4 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
                 ec2_set.add(str(id_))
     print(f"[IR Helper] Total number of scripts generated: {len(script_id_to_script)} (with {len(ec2_set)} offloaded to EC2)")
 
-    return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set
+    return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script, ec2_set, script_id_to_is_stateless

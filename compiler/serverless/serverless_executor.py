@@ -170,7 +170,7 @@ class ServerlessManager:
         self.counter.decrement()
         return
 
-    def invoke_lambda(self, folder_ids, script_ids, job_id=None, time_to_crash=None, chunk_start_idx=None):
+    def invoke_lambda(self, folder_ids, script_ids, job_id=None, time_to_crash=None, chunk_start_idx=None, is_stateless=None):
         # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
         start = time.time()
         try:
@@ -184,6 +184,8 @@ class ServerlessManager:
                 payload["time_to_crash"] = int(time_to_crash)
             if chunk_start_idx:
                 payload["chunk_start_idx"] = int(chunk_start_idx)
+            if is_stateless is not None:
+                payload["is_stateless"] = is_stateless
 
             response = lambda_client.invoke(
                 FunctionName="lambda",
@@ -229,7 +231,7 @@ class ServerlessManager:
         try:
             # prepare scripts
             ir, shell_vars, args = init(ir_filename)
-            main_graph_script_id, main_subgraph_script_id, script_id_to_script, ec2_set = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file, recover=self.recovery)
+            main_graph_script_id, main_subgraph_script_id, script_id_to_script, ec2_set, script_id_to_is_stateless = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file, recover=self.recovery)
             s3_folder_id = str(int(time.time()))
 
             client_config = BotocoreConfig(max_pool_connections=1000)
@@ -297,7 +299,7 @@ class ServerlessManager:
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
                 else:
-                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id, time_to_crash, chunk_start_idx))
+                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id, time_to_crash, chunk_start_idx, script_id_to_is_stateless.get(script_id, False)))
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
 
