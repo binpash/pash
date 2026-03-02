@@ -32,6 +32,7 @@ Runner flags include:
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
   --time-to-crash N       Crash each lambda after N seconds (logs actual elapsed time)
   --chunk-start-idx N     Only process chunks with block_id >= N (default: 0)
+  --lambda-crash-idx N    Apply --time-to-crash and --chunk-start-idx only to lambda index N (0-based)
 
 Chunking flags (mutually exclusive; N can be comma-separated for sweeps, e.g. 1,2,4):
   --chunks-per-lambda N   Use a fixed N chunks per lambda (default: 16)
@@ -137,6 +138,7 @@ ALL_ALLOWED_FLAGS=(
     --width
     --time-to-crash
     --chunk-start-idx
+    --lambda-crash-idx
 )
 
 is_allowed_runner_flag() {
@@ -191,6 +193,17 @@ validate_runner_flags() {
             local csi_value="${RUNNER_ARGS[$((i + 1))]}"
             if ! [[ "$csi_value" =~ ^[0-9]+$ ]]; then
                 echo "Error: --chunk-start-idx: '$csi_value' must be a non-negative integer" >&2; exit 2
+            fi
+            i=$((i + 2)); continue
+        fi
+
+        if [[ "$arg" == "--lambda-crash-idx" ]]; then
+            if [ $((i + 1)) -ge "${#RUNNER_ARGS[@]}" ]; then
+                echo "Error: --lambda-crash-idx requires a non-negative integer value" >&2; exit 2
+            fi
+            local lci_value="${RUNNER_ARGS[$((i + 1))]}"
+            if ! [[ "$lci_value" =~ ^[0-9]+$ ]]; then
+                echo "Error: --lambda-crash-idx: '$lci_value' must be a non-negative integer" >&2; exit 2
             fi
             i=$((i + 2)); continue
         fi
@@ -358,6 +371,11 @@ fi
 CHUNK_START_IDX=""
 if [[ "$*" =~ --chunk-start-idx[[:space:]]+([0-9]+) ]]; then
     CHUNK_START_IDX="${BASH_REMATCH[1]}"
+fi
+
+LAMBDA_CRASH_IDX=""
+if [[ "$*" =~ --lambda-crash-idx[[:space:]]+([0-9]+) ]]; then
+    LAMBDA_CRASH_IDX="${BASH_REMATCH[1]}"
 fi
 
 CHUNKS_MODE="fixed"
@@ -687,6 +705,9 @@ run_mode() {
         fi
         if [ -n "$CHUNK_START_IDX" ]; then
             export PASH_CHUNK_START_IDX="$CHUNK_START_IDX"
+        fi
+        if [ -n "$LAMBDA_CRASH_IDX" ]; then
+            export PASH_LAMBDA_CRASH_IDX="$LAMBDA_CRASH_IDX"
         fi
 
         START_TIME_MS=$(($(date +%s%3N) - 10000))

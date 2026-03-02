@@ -283,12 +283,17 @@ class ServerlessManager:
             if chunk_start_idx:
                 log(f"[Serverless Manager] chunk_start_idx set to {chunk_start_idx}")
 
+            lambda_crash_idx = os.environ.get('PASH_LAMBDA_CRASH_IDX')
+            if lambda_crash_idx is not None:
+                log(f"[Serverless Manager] lambda_crash_idx set to {lambda_crash_idx} (crash flags apply only to lambda #{lambda_crash_idx})")
+
             # Experimental: if runnning with unlimited lambda, return immediately after invocation to avoid too many waiting threads
             if args.unlimited_lambda:
                 conn.sendall(bytes_message)
                 conn.close() 
 
             invocation_threads = []
+            lambda_invoke_idx = 0
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
@@ -299,9 +304,20 @@ class ServerlessManager:
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
                 else:
-                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id, time_to_crash, chunk_start_idx, script_id_to_is_stateless.get(script_id, False)))
+                    # Apply crash flags only to the targeted lambda index (if set)
+                    if lambda_crash_idx is not None and str(lambda_invoke_idx) != str(lambda_crash_idx):
+                        effective_time_to_crash = None
+                        effective_chunk_start_idx = None
+                    else:
+                        effective_time_to_crash = time_to_crash
+                        effective_chunk_start_idx = chunk_start_idx
+                    invocation_thread = threading.Thread(
+                        target=self.invoke_lambda,
+                        args=([s3_folder_id], [script_id], job_id, effective_time_to_crash, effective_chunk_start_idx, script_id_to_is_stateless.get(script_id, False))
+                    )
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
+                    lambda_invoke_idx += 1
 
             if args.unlimited_lambda:
                 return
