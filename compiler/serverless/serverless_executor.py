@@ -170,7 +170,7 @@ class ServerlessManager:
         self.counter.decrement()
         return
 
-    def invoke_lambda(self, folder_ids, script_ids, job_id=None, time_to_crash=None):
+    def invoke_lambda(self, folder_ids, script_ids, job_id=None, time_to_crash=None, chunk_start_idx=None):
         # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
         start = time.time()
         try:
@@ -182,6 +182,8 @@ class ServerlessManager:
                 payload["job_id"] = job_id
             if time_to_crash:
                 payload["time_to_crash"] = int(time_to_crash)
+            if chunk_start_idx:
+                payload["chunk_start_idx"] = int(chunk_start_idx)
 
             response = lambda_client.invoke(
                 FunctionName="lambda",
@@ -275,6 +277,10 @@ class ServerlessManager:
             if time_to_crash:
                 log(f"[Serverless Manager] time_to_crash set to {time_to_crash}s")
 
+            chunk_start_idx = os.environ.get('PASH_CHUNK_START_IDX')
+            if chunk_start_idx:
+                log(f"[Serverless Manager] chunk_start_idx set to {chunk_start_idx}")
+
             # Experimental: if runnning with unlimited lambda, return immediately after invocation to avoid too many waiting threads
             if args.unlimited_lambda:
                 conn.sendall(bytes_message)
@@ -291,7 +297,7 @@ class ServerlessManager:
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
                 else:
-                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id, time_to_crash))
+                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id, time_to_crash, chunk_start_idx))
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
 

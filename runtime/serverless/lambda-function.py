@@ -19,6 +19,10 @@ def lambda_handler(event, context):
             os._exit(1)
         threading.Thread(target=_crash_timer, daemon=True).start()
 
+    chunk_start_idx = event.get('chunk_start_idx')
+    if chunk_start_idx is not None:
+        os.environ['PASH_CHUNK_START_IDX'] = str(chunk_start_idx)
+
     for i, folder_id in enumerate(event['folder_ids']):
         id_ = event['ids'][i]
         # load the data from s3

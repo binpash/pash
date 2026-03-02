@@ -31,6 +31,7 @@ Runner flags include:
   --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
   --time-to-crash N       Crash each lambda after N seconds (logs actual elapsed time)
+  --chunk-start-idx N     Only process chunks with block_id >= N (default: 0)
 
 Chunking flags (mutually exclusive; N can be comma-separated for sweeps, e.g. 1,2,4):
   --chunks-per-lambda N   Use a fixed N chunks per lambda (default: 16)
@@ -135,6 +136,7 @@ ALL_ALLOWED_FLAGS=(
     --chunk-size
     --width
     --time-to-crash
+    --chunk-start-idx
 )
 
 is_allowed_runner_flag() {
@@ -178,6 +180,17 @@ validate_runner_flags() {
             local ttc_value="${RUNNER_ARGS[$((i + 1))]}"
             if ! [[ "$ttc_value" =~ ^[0-9]+$ ]] || [ "$ttc_value" -lt 1 ]; then
                 echo "Error: --time-to-crash: '$ttc_value' must be a positive integer" >&2; exit 2
+            fi
+            i=$((i + 2)); continue
+        fi
+
+        if [[ "$arg" == "--chunk-start-idx" ]]; then
+            if [ $((i + 1)) -ge "${#RUNNER_ARGS[@]}" ]; then
+                echo "Error: --chunk-start-idx requires a non-negative integer value" >&2; exit 2
+            fi
+            local csi_value="${RUNNER_ARGS[$((i + 1))]}"
+            if ! [[ "$csi_value" =~ ^[0-9]+$ ]]; then
+                echo "Error: --chunk-start-idx: '$csi_value' must be a non-negative integer" >&2; exit 2
             fi
             i=$((i + 2)); continue
         fi
@@ -340,6 +353,11 @@ fi
 TIME_TO_CRASH=""
 if [[ "$*" =~ --time-to-crash[[:space:]]+([0-9]+) ]]; then
     TIME_TO_CRASH="${BASH_REMATCH[1]}"
+fi
+
+CHUNK_START_IDX=""
+if [[ "$*" =~ --chunk-start-idx[[:space:]]+([0-9]+) ]]; then
+    CHUNK_START_IDX="${BASH_REMATCH[1]}"
 fi
 
 CHUNKS_MODE="fixed"
@@ -666,6 +684,9 @@ run_mode() {
         echo "Job ID: $JOB_ID"
         if [ -n "$TIME_TO_CRASH" ]; then
             export PASH_TIME_TO_CRASH="$TIME_TO_CRASH"
+        fi
+        if [ -n "$CHUNK_START_IDX" ]; then
+            export PASH_CHUNK_START_IDX="$CHUNK_START_IDX"
         fi
 
         START_TIME_MS=$(($(date +%s%3N) - 10000))

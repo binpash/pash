@@ -182,6 +182,7 @@ def main():
         num_shards = int(kwargs.get("num_shards", 1))
         job_uid = kwargs.get("job_uid", "default")
 
+        chunk_start_idx = int(os.environ.get('PASH_CHUNK_START_IDX', '0'))
         perf_mode = os.environ.get("PASH_PERF_MODE", "false").lower() == "true"
         debug = kwargs.get("debug", "false").lower() == "true" and not perf_mode
 
@@ -213,6 +214,10 @@ def main():
 
             total_written = 0
             for chunk in chunks:
+                if chunk['block_id'] < chunk_start_idx:
+                    print(f"[CHUNK_SKIP] block_id={chunk['block_id']} (chunk_start_idx={chunk_start_idx})", file=sys.stderr, flush=True)
+                    continue
+                print(f"[CHUNK_PROCESS] block_id={chunk['block_id']}", file=sys.stderr, flush=True)
                 total_written += stream_chunk(
                     fifo,
                     s3_client,
