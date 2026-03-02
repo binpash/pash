@@ -36,6 +36,8 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
 fi
 
 ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE_NAME}"
+BASIC_EXEC_POLICY_ARN="arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+INLINE_POLICY_NAME="pash-inline"
 
 ZIP_NAME="lambda.zip"
 
@@ -72,14 +74,28 @@ JSON
   echo "  - Created role: ${ROLE_NAME}"
 fi
 
-# Attach basic logging policy (safe to re-run)
-aws iam attach-role-policy \
-  --role-name "${ROLE_NAME}" \
-  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
-  >/dev/null 2>&1 || true
+# Attach basic logging policy only when missing.
+policy_updated=0
+attached_policy_count="$(
+  aws iam list-attached-role-policies \
+    --role-name "${ROLE_NAME}" \
+    --query "length(AttachedPolicies[?PolicyArn=='${BASIC_EXEC_POLICY_ARN}'])" \
+    --output text 2>/dev/null || echo "0"
+)"
+
+if [ "${attached_policy_count}" = "0" ]; then
+  aws iam attach-role-policy \
+    --role-name "${ROLE_NAME}" \
+    --policy-arn "${BASIC_EXEC_POLICY_ARN}" \
+    >/dev/null
+  policy_updated=1
+  echo "  - Attached managed policy: AWSLambdaBasicExecutionRole"
+else
+  echo "  - Managed policy already attached: AWSLambdaBasicExecutionRole"
+fi
 
 # Inline policy roughly matching your serverless.yml broad permissions
-echo "[3/6] Putting inline policy on role (broad permissions)..."
+echo "[3/6] Ensuring inline policy on role (broad permissions)..."
 cat > /tmp/pash-inline-policy.json <<'JSON'
 {
   "Version": "2012-10-17",
@@ -109,14 +125,27 @@ cat > /tmp/pash-inline-policy.json <<'JSON'
 }
 JSON
 
-aws iam put-role-policy \
+if aws iam get-role-policy \
   --role-name "${ROLE_NAME}" \
-  --policy-name "pash-inline" \
-  --policy-document file:///tmp/pash-inline-policy.json \
-  >/dev/null
+  --policy-name "${INLINE_POLICY_NAME}" \
+  >/dev/null 2>&1; then
+  echo "  - Inline policy already attached: ${INLINE_POLICY_NAME}"
+else
+  aws iam put-role-policy \
+    --role-name "${ROLE_NAME}" \
+    --policy-name "${INLINE_POLICY_NAME}" \
+    --policy-document file:///tmp/pash-inline-policy.json \
+    >/dev/null
+  policy_updated=1
+  echo "  - Attached inline policy: ${INLINE_POLICY_NAME}"
+fi
 
-# IAM propagation can take a moment; a short sleep helps avoid create-function failures.
-sleep 6
+# IAM propagation can take a moment after adding role policies.
+if [ "${policy_updated}" -eq 1 ]; then
+  sleep 6
+else
+  echo "  - Skipping IAM propagation sleep (no role policy changes)."
+fi
 
 # ---- Package zip (include runtime/** aws/** lambda-function.py ; exclude resumability/**) ----
 echo "[4/6] Packaging zip: ${ZIP_NAME}"
