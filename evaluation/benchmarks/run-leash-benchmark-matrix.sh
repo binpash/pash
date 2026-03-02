@@ -611,6 +611,11 @@ download_mode_output() {
     download_s3_output "$s3_key" "$local_file"
 }
 
+# Benchmarks with large outputs where we intentionally skip file-by-file comparison.
+should_skip_output_comparison() {
+    [[ " nlp file-enc media-conv log-analysis " == *" $BENCHMARK_NAME "* ]]
+}
+
 # Generic runner for modes (baseline included)
 run_mode() {
     local mode="$1"
@@ -698,7 +703,7 @@ run_mode() {
             MODE_COST_TOTAL[$mode]="$total_cost"
 
             if [ "$is_baseline" = "true" ]; then
-                if [[ " nlp file-enc media-conv log-analysis " == *" $BENCHMARK_NAME "* ]]; then
+                if ! should_skip_output_comparison; then
                     echo ""
                     echo "Downloading ${mode_suffix} output from S3..."
                     download_mode_output "$mode_suffix"
@@ -972,7 +977,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             continue
         fi
 
-        if [[ " nlp file-enc media-conv log-analysis" == *" $BENCHMARK_NAME "* ]]; then
+        if should_skip_output_comparison; then
             echo "Skipping output comparison for $BENCHMARK_NAME benchmark"
             write_csv_row "$RUN_START_TIME" "$SCRIPT" "$INPUT" "$WIDTH" "$mode_suffix" "1" "${MODE_REP1_TIME[$mode]}" "${MODE_BILLED_MS[$mode]}" "${MODE_COST_LAMBDA[$mode]}" "${MODE_COST_TOTAL[$mode]}" "N/A" "N/A" "N/A" "N/A" "$LAMBDA_MEM_MB" "$LAMBDA_STORAGE_MB" "$CURRENT_CHUNKS_PER_LAMBDA" "$CHUNK_SIZE_MB"
             continue
@@ -985,6 +990,15 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
         echo ""
 
         if [ "${MODE_ENABLED[noopt]}" = true ]; then
+            if [ -z "$noopt_local_file" ] || [ ! -f "$noopt_local_file" ]; then
+                echo ""
+                echo "Downloading noopt output from S3..."
+                download_mode_output "${MODE_SUFFIX[noopt]}"
+                MODE_LOCAL_FILE[noopt]="$LAST_LOCAL_FILE"
+                noopt_local_file="$LAST_LOCAL_FILE"
+                echo ""
+            fi
+
             echo ""
             echo "╔════════════════════════════════════════════════════════════════════════╗"
             echo "║  LIVE COMPARISON FOR: $SCRIPT_INPUT (noopt vs ${mode_suffix})"
@@ -1017,8 +1031,10 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
         rm -f "${MODE_LOCAL_FILE[$mode]}"
     done
 
-    echo "Removing noopt local file: $noopt_local_file..."
-    rm -f "$noopt_local_file"
+    if [ -n "$noopt_local_file" ]; then
+        echo "Removing noopt local file: $noopt_local_file..."
+        rm -f "$noopt_local_file"
+    fi
 
     if [ "$NUM_REPEATS" -gt 1 ]; then
         # Min/max/avg summary calculations disabled per request.
@@ -1140,4 +1156,3 @@ echo ""
 echo "Cleaning up temporary files..."
 rm -f /tmp/compare_*.txt
 echo "Done!"
-
