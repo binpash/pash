@@ -1,11 +1,23 @@
 import subprocess
 import json
 import os
+import threading
+import time
 import boto3
 BUCKET=os.environ.get("AWS_BUCKET")
 
 def lambda_handler(event, context):
     job_id = event.get('job_id', 'UNKNOWN')
+
+    time_to_crash = event.get('time_to_crash')
+    if time_to_crash:
+        crash_start = time.time()
+        def _crash_timer():
+            time.sleep(time_to_crash)
+            elapsed = time.time() - crash_start
+            print(f"[JOB:{job_id}] [CRASH] Crashing after {time_to_crash}s, actual elapsed: {elapsed:.3f}s", flush=True)
+            os._exit(1)
+        threading.Thread(target=_crash_timer, daemon=True).start()
 
     for i, folder_id in enumerate(event['folder_ids']):
         id_ = event['ids'][i]

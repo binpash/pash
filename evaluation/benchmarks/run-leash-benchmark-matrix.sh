@@ -30,6 +30,7 @@ Runner flags include:
   --approx-dynamic, --approx-adaptive-gap, --approx-adaptive-simple,
   --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
+  --time-to-crash N       Crash each lambda after N seconds (logs actual elapsed time)
 
 Chunking flags (mutually exclusive; N can be comma-separated for sweeps, e.g. 1,2,4):
   --chunks-per-lambda N   Use a fixed N chunks per lambda (default: 16)
@@ -133,6 +134,7 @@ ALL_ALLOWED_FLAGS=(
     --chunks-per-lambda
     --chunk-size
     --width
+    --time-to-crash
 )
 
 is_allowed_runner_flag() {
@@ -167,6 +169,17 @@ validate_runner_flags() {
             fi
             i=$((i + 2))
             continue
+        fi
+
+        if [[ "$arg" == "--time-to-crash" ]]; then
+            if [ $((i + 1)) -ge "${#RUNNER_ARGS[@]}" ]; then
+                echo "Error: --time-to-crash requires a positive integer value" >&2; exit 2
+            fi
+            local ttc_value="${RUNNER_ARGS[$((i + 1))]}"
+            if ! [[ "$ttc_value" =~ ^[0-9]+$ ]] || [ "$ttc_value" -lt 1 ]; then
+                echo "Error: --time-to-crash: '$ttc_value' must be a positive integer" >&2; exit 2
+            fi
+            i=$((i + 2)); continue
         fi
 
         if [[ "$arg" == "--chunks-per-lambda" ]]; then
@@ -322,6 +335,11 @@ fi
 NUM_REPEATS=1
 if [[ "$*" =~ --repeats[[:space:]]+([0-9]+) ]]; then
     NUM_REPEATS="${BASH_REMATCH[1]}"
+fi
+
+TIME_TO_CRASH=""
+if [[ "$*" =~ --time-to-crash[[:space:]]+([0-9]+) ]]; then
+    TIME_TO_CRASH="${BASH_REMATCH[1]}"
 fi
 
 CHUNKS_MODE="fixed"
@@ -646,6 +664,9 @@ run_mode() {
         JOB_ID="${mode_suffix}_${SCRIPT//\//_}_${INPUT//\//_}_${WIDTH}_$(date +%s%N)_rep${REP}"
         export PASH_JOB_ID="$JOB_ID"
         echo "Job ID: $JOB_ID"
+        if [ -n "$TIME_TO_CRASH" ]; then
+            export PASH_TIME_TO_CRASH="$TIME_TO_CRASH"
+        fi
 
         START_TIME_MS=$(($(date +%s%3N) - 10000))
         echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
@@ -1121,10 +1142,10 @@ match_count=0
 differ_count=0
 for result in "${comparison_results[@]}"; do
     if [[ "$result" == *"✓ MATCH"* ]]; then
-        ((match_count++))
+        match_count=$((match_count + 1))
         echo "  ✓ $result"
     else
-        ((differ_count++))
+        differ_count=$((differ_count + 1))
         echo "  ✗ $result"
     fi
 done

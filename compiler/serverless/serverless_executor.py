@@ -170,16 +170,18 @@ class ServerlessManager:
         self.counter.decrement()
         return
 
-    def invoke_lambda(self, folder_ids, script_ids, job_id=None):
+    def invoke_lambda(self, folder_ids, script_ids, job_id=None, time_to_crash=None):
         # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
         start = time.time()
         try:
             lambda_client = boto3.client("lambda",region_name='us-east-1', config=self.lambda_config)
 
-            # Include job_id in payload
+            # Include job_id and time_to_crash in payload
             payload = {"folder_ids": folder_ids, "ids": script_ids}
             if job_id:
                 payload["job_id"] = job_id
+            if time_to_crash:
+                payload["time_to_crash"] = int(time_to_crash)
 
             response = lambda_client.invoke(
                 FunctionName="lambda",
@@ -268,6 +270,11 @@ class ServerlessManager:
             if job_id:
                 log(f"[Serverless Manager] Using job ID: {job_id}")
 
+            # Read time_to_crash from environment
+            time_to_crash = os.environ.get('PASH_TIME_TO_CRASH')
+            if time_to_crash:
+                log(f"[Serverless Manager] time_to_crash set to {time_to_crash}s")
+
             # Experimental: if runnning with unlimited lambda, return immediately after invocation to avoid too many waiting threads
             if args.unlimited_lambda:
                 conn.sendall(bytes_message)
@@ -284,7 +291,7 @@ class ServerlessManager:
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
                 else:
-                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id))
+                    invocation_thread = threading.Thread(target=self.invoke_lambda, args=([s3_folder_id], [script_id], job_id, time_to_crash))
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
 
