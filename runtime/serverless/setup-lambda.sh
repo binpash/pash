@@ -16,14 +16,14 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 REGION="${REGION:-us-east-1}"
-FUNCTION_NAME="${FUNCTION_NAME:-lambda-auto}"
+FUNCTION_NAME="${FUNCTION_NAME:-lambda}"
 ROLE_NAME="${ROLE_NAME:-leash-lambda-exec}"
 
 RUNTIME="python3.12"
 HANDLER="lambda-function.lambda_handler"
 MEMORY_SIZE="1769"
 EPHEMERAL_DISK_SIZE="10240"
-TIMEOUT="30"
+TIMEOUT="600"
 
 # Detect account ID if not provided
 if [ -z "$AWS_BUCKET" ]; then
