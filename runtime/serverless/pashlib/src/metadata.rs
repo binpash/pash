@@ -47,14 +47,6 @@ impl LambdaMetadata {
         }
     }
 
-    pub fn stream_mode(&self) -> StreamMode {
-        if self.is_stateless {
-            StreamMode::RawBytes
-        } else {
-            StreamMode::Chunked
-        }
-    }
-
     pub fn from_metadata_blob(blob: &str, chunk_start_id: u32, is_stateless: bool) -> Self {
         let kv = parse_metadata_kv(blob);
         Self {

@@ -4,8 +4,8 @@ use tracing::{info};
 use crate::db_helper::{create_rdv_table_if_not_exists, make_db_client};
 use crate::holepunch::PashCtx;
 use crate::lambda_helper::invoke_recovery_lambda;
-use crate::metadata::{LambdaMetadata,StreamMode};
-use crate::receiver::{read_metadata, read_payload_to_fifo, ReceiverProgress};
+use crate::metadata::{LambdaMetadata, StreamMode};
+use crate::receiver::{read_metadata, ChunkReader, RawReader, ReceiverProgress};
 use crate::sender::{write_fifo_payload, write_metadata};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,9 +68,59 @@ impl FtExecutor {
         }
     }
 
+    async fn send_attempt<W>(&self, writer: &mut W) -> Result<LambdaMetadata>
+    where
+        W: tokio::io::AsyncWrite + Unpin,
+    {
+        let metadata = LambdaMetadata::from_env();
+        write_metadata(writer, &metadata).await?;
+        // we do not handle recovery at the sender side
+        write_fifo_payload(writer, &self.fifo_name).await?;
+        Ok(metadata)
+    }
+
+    async fn recv_attempt<R>(
+        &self,
+        reader: &mut R,
+        raw_reader: &mut Option<RawReader>,
+        chunk_reader: &mut Option<ChunkReader>,
+    ) -> Result<(ReceiverProgress, LambdaMetadata)>
+    where
+        R: tokio::io::AsyncRead + Unpin,
+    {
+        let metadata = read_metadata(reader).await?;
+        let recv_mode = if metadata.is_stateless {
+            StreamMode::Chunked
+        } else {
+            StreamMode::RawBytes
+        };
+        info!(
+            is_stateless = metadata.is_stateless,
+            recv_mode = ?recv_mode,
+            "[recovery.rs] Selected recv mode"
+        );
+        let progress = match recv_mode {
+            StreamMode::RawBytes => {
+                if raw_reader.is_none() {
+                    *raw_reader = Some(RawReader::new(&self.fifo_name).await?);
+                }
+                raw_reader.as_mut().unwrap().read_from(reader).await
+            }
+            StreamMode::Chunked => {
+                if chunk_reader.is_none() {
+                    *chunk_reader = Some(ChunkReader::new(&self.fifo_name).await?);
+                }
+                chunk_reader.as_mut().unwrap().read_from(reader).await
+            }
+        }?;
+        Ok((progress, metadata))
+    }
+
     pub async fn execute(&self) -> Result<Vec<ReceiverProgress>> {
         let mut progress_history = Vec::new();
         let mut attempt: u64 = 0;
+        let mut raw_reader: Option<RawReader> = None;
+        let mut chunk_reader: Option<ChunkReader> = None;
         let client = make_db_client().await;
         create_rdv_table_if_not_exists(&client).await;
         let lambda_client = {
@@ -97,54 +147,25 @@ impl FtExecutor {
                 let (mut rd, mut wr) = stream.into_split();
                 info!(attempt, me = %self.me, peer = %self.peer, "[recovery.rs] Connected to peer");
 
-                // 2) handshake
-                let metadata = match self.mode {
-                    EndpointMode::Send => {
-                        let metadata = LambdaMetadata::from_env();
-                        write_metadata(&mut wr, &metadata).await?;
-                        info!(
-                            attempt,
-                            %metadata,
-                            "[recovery.rs] Sent metadata"
-                        );
-                        metadata
-                    }
-                    EndpointMode::Recv => {
-                        let metadata = read_metadata(&mut rd).await?;
-                        info!(
-                            attempt,
-                            metadata = %metadata,
-                            "[recovery.rs] Received metadata"
-                        );
-                        metadata
-                    }
-                };
-
-                let recv_mode = if metadata.is_stateless {
-                    StreamMode::Chunked
-                } else {
-                    StreamMode::RawBytes
-                };
-
-                // 3) read or write based on mode
+                // 2) send/recv
                 match self.mode {
                     EndpointMode::Send => {
-                        // we do not handle recovery at the sender side
-                        write_fifo_payload(&mut wr, &self.fifo_name).await?;
+                        info!(attempt, "[recovery.rs] Sending payload");
+                        let metadata = self.send_attempt(&mut wr).await?;
+                        info!(attempt, %metadata, "[recovery.rs] Sent metadata");
                         info!(attempt, "[recovery.rs] Sent payload");
                         Ok(None)
                     }
                     EndpointMode::Recv => {
-                        let progress = read_payload_to_fifo(
-                            &mut rd,
-                            &self.fifo_name,
-                            recv_mode,
-                        )
-                        .await?;
+                        info!(attempt, "[recovery.rs] Receiving payload");
+                        let (progress, metadata) =
+                            self.recv_attempt(&mut rd, &mut raw_reader, &mut chunk_reader).await?;
+                        info!(attempt, metadata = %metadata, "[recovery.rs] Received metadata");
                         let (success, num, class) = match &progress {
                             ReceiverProgress::Chunk {
                                 success,
                                 num_of_completed_chunks: num,
+                                ..
                             } => (*success, *num, "chunk"),
 
                             ReceiverProgress::Raw {
@@ -163,7 +184,8 @@ impl FtExecutor {
                         Ok(Some((progress, Some(metadata))))
                     }
                 }
-            }.await;
+            }
+            .await;
 
             match attempt_result {
                 Ok(Some((progress, metadata))) => {
@@ -173,23 +195,23 @@ impl FtExecutor {
                         info!(attempt, "[recovery.rs] Final recv succeeded");
                         return Ok(progress_history);
                     }
-                    if let (Some(lambda_client), Some(metadata)) =
-                        (lambda_client.as_ref(), metadata.as_ref())
-                    {
-                        let num_of_completed_chunks = Self::completed_chunks(&progress);
-                        if let Err(err) = invoke_recovery_lambda(
-                            lambda_client,
-                            "lambda",
-                            metadata,
-                            num_of_completed_chunks,
-                        )
-                        .await
-                        {
-                            info!(attempt, error = %err, "[recovery.rs] Recovery lambda invocation failed");
-                        } else {
-                            info!(attempt, function = "lambda", "[recovery.rs] Recovery lambda invoked");
-                        }
-                    }
+                    // if let (Some(lambda_client), Some(metadata)) =
+                    //     (lambda_client.as_ref(), metadata.as_ref())
+                    // {
+                    //     let num_of_completed_chunks = Self::completed_chunks(&progress);
+                    //     if let Err(err) = invoke_recovery_lambda(
+                    //         lambda_client,
+                    //         "lambda",
+                    //         metadata,
+                    //         num_of_completed_chunks,
+                    //     )
+                    //     .await
+                    //     {
+                    //         info!(attempt, error = %err, "[recovery.rs] Recovery lambda invocation failed");
+                    //     } else {
+                    //         info!(attempt, function = "lambda", "[recovery.rs] Recovery lambda invoked");
+                    //     }
+                    // }
                     info!(attempt, "[recovery.rs] Recv incomplete, retrying");
                 }
                 Ok(None) => {
@@ -197,6 +219,10 @@ impl FtExecutor {
                     return Ok(progress_history);
                 }
                 Err(err) => {
+                    if self.mode == EndpointMode::Send {
+                        info!(attempt, error = %err, "[recovery.rs] Sender attempt failed, not retrying");
+                        return Err(err);
+                    }
                     info!(attempt, error = %err, "[recovery.rs] Attempt failed, retrying");
                     continue;
                 }
