@@ -11,4 +11,6 @@ tests/perf*
 tests/*out
 in_gate*
 out_gate*
-pashlib
+/pashlib
+/pashlib/target/
+/serverless/pashlib/target/
