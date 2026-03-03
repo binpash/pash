@@ -3,7 +3,7 @@ use aws_sdk_lambda::primitives::Blob;
 use aws_sdk_lambda::types::InvocationType;
 use aws_sdk_lambda::Client;
 use serde::Serialize;
-use tracing::{debug, info};
+use tracing::{info};
 
 use crate::metadata::LambdaMetadata;
 
@@ -11,8 +11,8 @@ use crate::metadata::LambdaMetadata;
 pub struct RecoveryInvokePayload {
     pub leash_job_id: String,
     pub folders_id: Vec<String>,
-    pub scripts_id: Vec<String>,
-    pub chunk_start_id: u32,
+    pub ids: Vec<String>,
+    pub chunk_start_idx: u32,
     pub is_stateless: bool,
 }
 
@@ -24,8 +24,8 @@ impl RecoveryInvokePayload {
         Self {
             leash_job_id: metadata.leash_job_id.clone(),
             folders_id: vec![metadata.folders_id.clone()],
-            scripts_id: vec![metadata.script_id.clone()],
-            chunk_start_id: resume_chunk_start + 1,
+            ids: vec![metadata.script_id.clone()],
+            chunk_start_idx: resume_chunk_start + 1,
             is_stateless: metadata.is_stateless,
         }
     }
@@ -37,7 +37,7 @@ pub async fn invoke_lambda(
     invocation_type: InvocationType,
     payload: Vec<u8>,
 ) -> Result<()> {
-    debug!(
+    info!(
         function_name = %function_name,
         invocation_type = ?invocation_type,
         payload_bytes = payload.len(),

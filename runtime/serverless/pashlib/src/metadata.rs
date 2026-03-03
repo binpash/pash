@@ -22,13 +22,13 @@ pub struct LambdaMetadata {
 impl LambdaMetadata {
     pub fn from_env() -> Self {
         let leash_job_id = std::env::var("LEASH_JOB_ID").unwrap_or_default();
-        let folders_id = std::env::var("FOLDERS_ID").unwrap_or_default();
-        let script_id = std::env::var("SCRIPT_ID").unwrap_or_default();
-        let chunk_start_id = std::env::var("CHUNK_START_ID")
+        let folders_id = std::env::var("PASH_FOLDER_ID").unwrap_or_default();
+        let script_id = std::env::var("PASH_SCRIPT_ID").unwrap_or_default();
+        let chunk_start_id = std::env::var("PASH_CHUNK_START_IDX")
             .ok()
             .and_then(|v| v.parse::<u32>().ok())
             .unwrap_or(0);
-        let is_stateless = std::env::var("IS_STATELESS")
+        let is_stateless = std::env::var("PASH_IS_STATELESS")
             .ok()
             .map(|v| matches!(v.as_str(), "1" | "true" | "True" | "TRUE"))
             .unwrap_or(false);

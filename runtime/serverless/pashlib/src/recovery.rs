@@ -1,11 +1,12 @@
 use anyhow::{anyhow, Result};
-use tracing::{info, warn};
+use tracing::{info};
 
+use crate::db_helper::{create_rdv_table_if_not_exists, make_db_client};
 use crate::holepunch::PashCtx;
-use crate::metadata::{LambdaMetadata, StreamMode};
+use crate::lambda_helper::invoke_recovery_lambda;
+use crate::metadata::{LambdaMetadata,StreamMode};
 use crate::receiver::{read_metadata, read_payload_to_fifo, ReceiverProgress};
 use crate::sender::{write_fifo_payload, write_metadata};
-use crate::db_helper::{make_db_client, create_rdv_table_if_not_exists};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EndpointMode {
@@ -57,11 +58,27 @@ impl FtExecutor {
         ctx.connect(&self.peer).await
     }
 
+    fn completed_chunks(progress: &ReceiverProgress) -> u64 {
+        match progress {
+            ReceiverProgress::Chunk {
+                num_of_completed_chunks,
+                ..
+            } => *num_of_completed_chunks,
+            ReceiverProgress::Raw { .. } => 0,
+        }
+    }
+
     pub async fn execute(&self) -> Result<Vec<ReceiverProgress>> {
         let mut progress_history = Vec::new();
         let mut attempt: u64 = 0;
         let client = make_db_client().await;
         create_rdv_table_if_not_exists(&client).await;
+        let lambda_client = {
+            let cfg = aws_config::defaults(aws_config::BehaviorVersion::latest())
+                .load()
+                .await;
+            Some(aws_sdk_lambda::Client::new(&cfg))
+        };
 
         // Recovery loop: connect -> handshake -> read/write per attempt.
         loop {
@@ -74,7 +91,7 @@ impl FtExecutor {
                 rdv_key = %self.rdv_key,
                 "[recovery.rs] Attempt start"
             );
-            let attempt_result: Result<Option<ReceiverProgress>> = async {
+            let attempt_result: Result<Option<(ReceiverProgress, Option<LambdaMetadata>)>> = async {
                 // 1) connect
                 let stream = self.connect_to_peer().await;
                 let (mut rd, mut wr) = stream.into_split();
@@ -102,7 +119,7 @@ impl FtExecutor {
                         metadata
                     }
                 };
-                
+
                 let recv_mode = if metadata.is_stateless {
                     StreamMode::Chunked
                 } else {
@@ -143,18 +160,35 @@ impl FtExecutor {
                             class,
                             "[recovery.rs] Received payload"
                         );
-                        Ok(Some(progress))
+                        Ok(Some((progress, Some(metadata))))
                     }
                 }
             }.await;
 
             match attempt_result {
-                Ok(Some(progress)) => {
+                Ok(Some((progress, metadata))) => {
                     let is_success = progress.success();
-                    progress_history.push(progress);
+                    progress_history.push(progress.clone());
                     if is_success {
                         info!(attempt, "[recovery.rs] Final recv succeeded");
                         return Ok(progress_history);
+                    }
+                    if let (Some(lambda_client), Some(metadata)) =
+                        (lambda_client.as_ref(), metadata.as_ref())
+                    {
+                        let num_of_completed_chunks = Self::completed_chunks(&progress);
+                        if let Err(err) = invoke_recovery_lambda(
+                            lambda_client,
+                            "lambda",
+                            metadata,
+                            num_of_completed_chunks,
+                        )
+                        .await
+                        {
+                            info!(attempt, error = %err, "[recovery.rs] Recovery lambda invocation failed");
+                        } else {
+                            info!(attempt, function = "lambda", "[recovery.rs] Recovery lambda invoked");
+                        }
                     }
                     info!(attempt, "[recovery.rs] Recv incomplete, retrying");
                 }
@@ -163,7 +197,7 @@ impl FtExecutor {
                     return Ok(progress_history);
                 }
                 Err(err) => {
-                    warn!(attempt, error = %err, "[recovery.rs] Attempt failed, retrying");
+                    info!(attempt, error = %err, "[recovery.rs] Attempt failed, retrying");
                     continue;
                 }
             }

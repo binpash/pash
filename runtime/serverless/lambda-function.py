@@ -8,6 +8,7 @@ BUCKET=os.environ.get("AWS_BUCKET")
 
 def lambda_handler(event, context):
     job_id = event.get('job_id', 'UNKNOWN')
+    os.environ['LEASH_JOB_ID'] = job_id
 
     time_to_crash = event.get('time_to_crash')
     if time_to_crash:
@@ -30,6 +31,8 @@ def lambda_handler(event, context):
 
     for i, folder_id in enumerate(event['folder_ids']):
         id_ = event['ids'][i]
+        os.environ['PASH_FOLDER_ID'] = folder_id
+        os.environ['PASH_SCRIPT_ID'] = id_
         # load the data from s3
         s3 = boto3.client("s3")
         key = f"sls-scripts/{folder_id}/{id_}.sh"
