@@ -9,7 +9,6 @@ export LC_ALL=C.UTF-8
 
 aws s3 cp scripts/nfa-regex-lambda-1.sh s3://${AWS_BUCKET}/sls-scripts/${FOLDER_ID}/nfa-regex-lambda-1.sh
 aws s3 cp scripts/nfa-regex-lambda-2.sh s3://${AWS_BUCKET}/sls-scripts/${FOLDER_ID}/nfa-regex-lambda-2.sh
-aws s3 cp scripts/test.sh s3://${AWS_BUCKET}/sls-scripts/${FOLDER_ID}/test.sh
 SCRIPT_ID_1="nfa-regex-lambda-1"
 SCRIPT_ID_2="nfa-regex-lambda-2"
 
