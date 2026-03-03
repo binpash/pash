@@ -2,7 +2,7 @@ use anyhow::Result;
 use tokio::fs::File;
 use tokio::io::{self, AsyncWrite, AsyncWriteExt};
 
-use crate::metadata::{encode_handshake, LambdaMetadata};
+use crate::metadata::{encode_handshake, LambdaMetadata, COMPLETION_MSG};
 
 pub async fn write_metadata<W>(writer: &mut W, metadata: &LambdaMetadata) -> Result<()>
 where
@@ -25,5 +25,10 @@ where
 
     let mut file = File::open(fifo_name).await?;
     let copied = io::copy(&mut file, writer).await?;
+
+    // Send completion message
+    writer.write_all(&COMPLETION_MSG).await?;
+    writer.flush().await?;
+
     Ok(copied)
 }

@@ -2,7 +2,20 @@ use anyhow::Result;
 use tokio::fs::File;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 
-use crate::metadata::{decode_handshake, LambdaMetadata, StreamMode, HANDSHAKE_SIZE};
+use crate::metadata::{
+    decode_completion_msg, decode_handshake, LambdaMetadata, StreamMode, COMPLETION_MSG_SIZE,
+    HANDSHAKE_SIZE,
+};
+
+const BLOCK_HEADER_SIZE: usize = 24;
+
+struct BlockHeader {
+    #[allow(dead_code)]
+    block_id: i64,
+    block_size: u64,
+    #[allow(dead_code)]
+    is_last: i8,
+}
 
 #[derive(Debug, Clone)]
 pub enum ReceiverProgress {
@@ -102,20 +115,13 @@ where
     let mut completed_chunks = 0u64;
 
     loop {
-        match reader.read(&mut buf).await {
-            Ok(0) => {
+        let header = match read_block_header_or_completion(reader).await {
+            Ok(Some(header)) => header,
+            Ok(None) => {
                 return Ok(ReceiverProgress::Chunk {
                     success: true,
                     num_of_completed_chunks: completed_chunks,
                 });
-            }
-            Ok(n) => {
-                if to_stdout {
-                    stdout.write_all(&buf[..n]).await?;
-                } else if let Some(f) = &mut file {
-                    f.write_all(&buf[..n]).await?;
-                }
-                completed_chunks += 1;
             }
             Err(_) => {
                 return Ok(ReceiverProgress::Chunk {
@@ -123,6 +129,73 @@ where
                     num_of_completed_chunks: completed_chunks,
                 });
             }
+        };
+
+        let mut remaining = header.block_size;
+        while remaining > 0 {
+            let to_read = (buf.len() as u64).min(remaining) as usize;
+            let n = match reader.read(&mut buf[..to_read]).await {
+                Ok(0) => {
+                    return Ok(ReceiverProgress::Chunk {
+                        success: false,
+                        num_of_completed_chunks: completed_chunks,
+                    });
+                }
+                Ok(n) => n,
+                Err(_) => {
+                    return Ok(ReceiverProgress::Chunk {
+                        success: false,
+                        num_of_completed_chunks: completed_chunks,
+                    });
+                }
+            };
+
+            if to_stdout {
+                stdout.write_all(&buf[..n]).await?;
+            } else if let Some(f) = &mut file {
+                f.write_all(&buf[..n]).await?;
+            }
+            remaining = remaining.saturating_sub(n as u64);
+        }
+
+        completed_chunks += 1;
+    }
+}
+
+async fn read_block_header_or_completion<R>(reader: &mut R) -> Result<Option<BlockHeader>>
+where
+    R: AsyncRead + Unpin,
+{
+    const BLOCK_HEADER_SIZE: usize = 24;
+    let mut buf = [0u8; BLOCK_HEADER_SIZE];
+    let mut read = 0usize;
+
+    while read < BLOCK_HEADER_SIZE {
+        let n = reader.read(&mut buf[read..]).await?;
+        if n == 0 {
+            break;
+        }
+        read += n;
+    }
+
+    if read == BLOCK_HEADER_SIZE {
+        let block_id = i64::from_le_bytes(buf[0..8].try_into().unwrap());
+        let block_size = u64::from_le_bytes(buf[8..16].try_into().unwrap());
+        let is_last = i8::from_le_bytes([buf[16]]);
+        return Ok(Some(BlockHeader {
+            block_id,
+            block_size,
+            is_last,
+        }));
+    }
+
+    if read == COMPLETION_MSG_SIZE {
+        let mut completion_buf = [0u8; COMPLETION_MSG_SIZE];
+        completion_buf.copy_from_slice(&buf[..COMPLETION_MSG_SIZE]);
+        if decode_completion_msg(&completion_buf) {
+            return Ok(None);
         }
     }
+
+    anyhow::bail!("incomplete block header or missing completion message");
 }

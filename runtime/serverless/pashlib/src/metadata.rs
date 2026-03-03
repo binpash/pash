@@ -3,6 +3,11 @@ use std::collections::HashMap;
 use std::fmt;
 
 pub const HANDSHAKE_SIZE: usize = 128;
+pub const COMPLETION_MSG_SIZE: usize = 16;
+pub const COMPLETION_MSG: [u8; COMPLETION_MSG_SIZE] = [
+    0x9f, 0x2a, 0x13, 0x8c, 0x44, 0xd1, 0x7b, 0x0e,
+    0x6a, 0x55, 0xc9, 0x30, 0x1d, 0x88, 0x02, 0xfe,
+];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StreamMode {
@@ -113,4 +118,8 @@ pub fn decode_handshake(buf: &[u8; HANDSHAKE_SIZE]) -> Result<LambdaMetadata> {
         chunk_start_id,
         is_stateless,
     ))
+}
+
+pub fn decode_completion_msg(buf: &[u8; COMPLETION_MSG_SIZE]) -> bool {
+    buf == &COMPLETION_MSG
 }
