@@ -16,6 +16,7 @@ struct BlockHeader {
     block_size: u64,
     #[allow(dead_code)]
     is_last: i8,
+    raw: [u8; BLOCK_HEADER_SIZE],
 }
 
 #[derive(Debug, Clone)]
@@ -218,6 +219,7 @@ pub struct ChunkReader {
     stdout: tokio::io::Stdout,
     completed_chunks: u64,
     partial_bytes: u64,
+    partial_header_written: bool,
 }
 
 impl ChunkReader {
@@ -234,6 +236,7 @@ impl ChunkReader {
             stdout: tokio::io::stdout(),
             completed_chunks: 0,
             partial_bytes: 0,
+            partial_header_written: false,
         })
     }
 
@@ -245,6 +248,7 @@ impl ChunkReader {
         let mut attempt_completed = 0u64;
         let mut skip_chunks = self.completed_chunks;
         let mut skip_chunk_bytes = self.partial_bytes;
+        let mut header_already_written = self.partial_header_written;
         if skip_chunks > 0 || skip_chunk_bytes > 0 {
             info!(
                 skip_chunks,
@@ -277,6 +281,16 @@ impl ChunkReader {
                 block_size = header.block_size,
                 "[receiver.rs] ChunkReader received block header"
             );
+
+            if skip_chunks == 0 && skip_chunk_bytes == 0 && !header_already_written {
+                if self.to_stdout {
+                    self.stdout.write_all(&header.raw).await?;
+                } else if let Some(f) = &mut self.file {
+                    f.write_all(&header.raw).await?;
+                }
+                header_already_written = true;
+            }
+
             let mut remaining = header.block_size;
             let mut current_written: u64 = 0;
             let initial_skip = if skip_chunks == 0 { skip_chunk_bytes } else { 0 };
@@ -292,6 +306,7 @@ impl ChunkReader {
                         };
                         if skip_chunks == 0 {
                             self.partial_bytes = partial;
+                            self.partial_header_written = header_already_written;
                         }
                         return Ok(ReceiverProgress::Chunk {
                             success: false,
@@ -308,6 +323,7 @@ impl ChunkReader {
                         };
                         if skip_chunks == 0 {
                             self.partial_bytes = partial;
+                            self.partial_header_written = header_already_written;
                         }
                         return Ok(ReceiverProgress::Chunk {
                             success: false,
@@ -339,6 +355,7 @@ impl ChunkReader {
 
             if skip_chunks > 0 {
                 skip_chunks -= 1;
+                header_already_written = false;
                 info!("[receiver.rs] ChunkReader skipped full chunk");
                 continue;
             }
@@ -346,7 +363,9 @@ impl ChunkReader {
             attempt_completed += 1;
             self.completed_chunks = self.completed_chunks.saturating_add(1);
             self.partial_bytes = 0;
+            self.partial_header_written = false;
             skip_chunk_bytes = 0;
+            header_already_written = false;
         }
     }
 }
@@ -374,6 +393,7 @@ where
             block_id,
             block_size,
             is_last,
+            raw: buf,
         }));
     }
 

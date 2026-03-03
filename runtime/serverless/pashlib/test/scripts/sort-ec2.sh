@@ -43,7 +43,7 @@ pids_to_kill="${!} ${pids_to_kill}"
 pids_to_kill="${!} ${pids_to_kill}"
 { runtime/dgsh-tee -i "/tmp/pash_mExGzpm/5e70c60be6cb4f048462289dd017d2ad/#fifo17" -o "/tmp/pash_mExGzpm/df22ddb96643420cb1ebf41ebb6053fb/#fifo19" -I -f -b 5M & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ python3 aws/s3-put-object.py ft/sort-1M.txt "/tmp/pash_mExGzpm/5e70c60be6cb4f048462289dd017d2ad/#fifo12" $1 & }
+{ python3 aws/s3-put-object.py "ft/100M.txt" "/tmp/pash_mExGzpm/5e70c60be6cb4f048462289dd017d2ad/#fifo12" $1 & }
 pids_to_kill="${!} ${pids_to_kill}"
 source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
 rm_pash_fifos
