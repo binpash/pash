@@ -83,12 +83,6 @@ impl PashCtx {
             .unwrap();
         stream.set_nodelay(true).unwrap();
         delete_key(&client, &self.rdv_key).await;
-        info!(
-            me = %self.name,
-            peer = %dst_name,
-            rdv_key = %self.rdv_key,
-            "[holepunch.rs] connected and cleaned: "
-        );
         stream
     }
 
@@ -163,12 +157,6 @@ impl PashCtx {
             .unwrap();
         stream.set_nodelay(true).unwrap();
         delete_key(&client, &self.rdv_key).await;
-        info!(
-            me = %self.name,
-            peer = %dst_name,
-            rdv_key = %self.rdv_key,
-            "[holepunch.rs] connected lambda and cleaned rendezvous key"
-        );
         stream
     }
 }

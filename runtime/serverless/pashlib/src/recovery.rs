@@ -72,13 +72,13 @@ impl FtExecutor {
                 me = %self.me,
                 peer = %self.peer,
                 rdv_key = %self.rdv_key,
-                "[recovery.rs] attempt start"
+                "[recovery.rs] Attempt start"
             );
             let attempt_result: Result<Option<ReceiverProgress>> = async {
                 // 1) connect
                 let stream = self.connect_to_peer().await;
                 let (mut rd, mut wr) = stream.into_split();
-                info!(attempt, me = %self.me, peer = %self.peer, "[recovery.rs] connected");
+                info!(attempt, me = %self.me, peer = %self.peer, "[recovery.rs] Connected to peer");
 
                 // 2) handshake
                 let metadata = match self.mode {
@@ -87,30 +87,26 @@ impl FtExecutor {
                         write_metadata(&mut wr, &metadata).await?;
                         info!(
                             attempt,
-                            job = %metadata.leash_job_id,
-                            chunk_start_id = metadata.chunk_start_id,
-                            is_stateless = metadata.is_stateless,
-                            "[recovery.rs] sent metadata"
+                            %metadata,
+                            "[recovery.rs] Sent metadata"
                         );
                         metadata
                     }
                     EndpointMode::Recv => {
-                        let lambda_metadata = read_metadata(&mut rd).await?;
+                        let metadata = read_metadata(&mut rd).await?;
                         info!(
                             attempt,
-                            job = %lambda_metadata.leash_job_id,
-                            chunk_start_id = lambda_metadata.chunk_start_id,
-                            is_stateless = lambda_metadata.is_stateless,
-                            "[recovery.rs] received metadata"
+                            metadata = %metadata,
+                            "[recovery.rs] Received metadata"
                         );
-                        lambda_metadata
+                        metadata
                     }
                 };
                 
                 let recv_mode = if metadata.is_stateless {
-                    StreamMode::RawBytes
-                } else {
                     StreamMode::Chunked
+                } else {
+                    StreamMode::RawBytes
                 };
 
                 // 3) read or write based on mode
@@ -118,7 +114,7 @@ impl FtExecutor {
                     EndpointMode::Send => {
                         // we do not handle recovery at the sender side
                         write_fifo_payload(&mut wr, &self.fifo_name).await?;
-                        info!(attempt, fifo = %self.fifo_name, "[recovery.rs] sent payload");
+                        info!(attempt, "[recovery.rs] Sent payload");
                         Ok(None)
                     }
                     EndpointMode::Recv => {
@@ -145,8 +141,7 @@ impl FtExecutor {
                             success,
                             num,
                             class,
-                            fifo = %self.fifo_name,
-                            "[recovery.rs] received payload"
+                            "[recovery.rs] Received payload"
                         );
                         Ok(Some(progress))
                     }
@@ -158,17 +153,17 @@ impl FtExecutor {
                     let is_success = progress.success();
                     progress_history.push(progress);
                     if is_success {
-                        info!(attempt, "[recovery.rs] recv succeeded");
+                        info!(attempt, "[recovery.rs] Final recv succeeded");
                         return Ok(progress_history);
                     }
-                    warn!(attempt, "[recovery.rs] recv incomplete, retrying");
+                    info!(attempt, "[recovery.rs] Recv incomplete, retrying");
                 }
                 Ok(None) => {
-                    info!(attempt, "[recovery.rs] send succeeded");
+                    info!(attempt, "[recovery.rs] Final send succeeded");
                     return Ok(progress_history);
                 }
                 Err(err) => {
-                    warn!(attempt, error = %err, "[recovery.rs] attempt failed, retrying");
+                    warn!(attempt, error = %err, "[recovery.rs] Attempt failed, retrying");
                     continue;
                 }
             }

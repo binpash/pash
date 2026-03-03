@@ -6,3 +6,5 @@ cargo build --release
 
 cp target/release/pashlib ../runtime/pashlib # Copy the compiled pashlib to the runtime directory for packaging.
 cp target/release/pashlib $PASH_TOP/runtime/pashlib # Copy the compiled pashlib to the ec2 runtime directory
+cp target/release/pashlib-ft ../runtime/pashlib-ft # Copy the compiled pashlib-ft to the runtime directory for packaging.
+cp target/release/pashlib-ft $PASH_TOP/runtime/pashlib-ft # Copy the compiled pashlib-ft to the ec2 runtime directory

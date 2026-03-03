@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::collections::HashMap;
+use std::fmt;
 
 pub const HANDSHAKE_SIZE: usize = 128;
 
@@ -64,6 +65,16 @@ impl LambdaMetadata {
         format!(
             "LEASH_JOB_ID={};FOLDERS_ID={};SCRIPT_ID={}",
             self.leash_job_id, self.folders_id, self.script_id
+        )
+    }
+}
+
+impl fmt::Display for LambdaMetadata {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "LambdaMetadata {{ leash_job_id: {}, folders_id: {}, script_id: {}, chunk_start_id: {}, is_stateless: {} }}",
+            self.leash_job_id, self.folders_id, self.script_id, self.chunk_start_id, self.is_stateless
         )
     }
 }
