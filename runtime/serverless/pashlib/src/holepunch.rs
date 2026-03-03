@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use tokio::net::{TcpSocket, TcpStream};
 use crate::db_helper::*;
 use crate::stun_helper;
+use tracing::info;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PashCtx {
@@ -81,6 +82,13 @@ impl PashCtx {
             .await
             .unwrap();
         stream.set_nodelay(true).unwrap();
+        delete_key(&client, &self.rdv_key).await;
+        info!(
+            me = %self.name,
+            peer = %dst_name,
+            rdv_key = %self.rdv_key,
+            "[holepunch.rs] connected and cleaned: "
+        );
         stream
     }
 
@@ -154,6 +162,13 @@ impl PashCtx {
             .await
             .unwrap();
         stream.set_nodelay(true).unwrap();
+        delete_key(&client, &self.rdv_key).await;
+        info!(
+            me = %self.name,
+            peer = %dst_name,
+            rdv_key = %self.rdv_key,
+            "[holepunch.rs] connected lambda and cleaned rendezvous key"
+        );
         stream
     }
 }

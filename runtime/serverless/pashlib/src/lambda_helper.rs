@@ -1,0 +1,81 @@
+use anyhow::{anyhow, Result};
+use aws_sdk_lambda::primitives::Blob;
+use aws_sdk_lambda::types::InvocationType;
+use aws_sdk_lambda::Client;
+use serde::Serialize;
+use tracing::{debug, info};
+
+use crate::metadata::LambdaMetadata;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RecoveryInvokePayload {
+    pub leash_job_id: String,
+    pub folders_id: Vec<String>,
+    pub scripts_id: Vec<String>,
+    pub chunk_start_id: u32,
+    pub is_stateless: bool,
+}
+
+impl RecoveryInvokePayload {
+    pub fn from_progress(metadata: &LambdaMetadata, num_of_completed_chunks: u64) -> Self {
+        let resume_chunk_start = metadata
+            .chunk_start_id
+            .saturating_add(num_of_completed_chunks as u32);
+        Self {
+            leash_job_id: metadata.leash_job_id.clone(),
+            folders_id: vec![metadata.folders_id.clone()],
+            scripts_id: vec![metadata.script_id.clone()],
+            chunk_start_id: resume_chunk_start + 1,
+            is_stateless: metadata.is_stateless,
+        }
+    }
+}
+
+pub async fn invoke_lambda(
+    lambda_client: &Client,
+    function_name: &str,
+    invocation_type: InvocationType,
+    payload: Vec<u8>,
+) -> Result<()> {
+    debug!(
+        function_name = %function_name,
+        invocation_type = ?invocation_type,
+        payload_bytes = payload.len(),
+        "[lambda_helper.rs] invoking lambda"
+    );
+    let resp = lambda_client
+        .invoke()
+        .function_name(function_name)
+        .invocation_type(invocation_type)
+        .payload(Blob::new(payload))
+        .send()
+        .await?;
+
+    let status = resp.status_code;
+    if !(200..=299).contains(&status) {
+        return Err(anyhow!(
+            "lambda invoke failed with status {} for function {}",
+            status,
+            function_name
+        ));
+    }
+    info!(function_name = %function_name, status, "[lambda_helper.rs] lambda invoke succeeded");
+    Ok(())
+}
+
+pub async fn invoke_recovery_lambda(
+    lambda_client: &Client,
+    function_name: &str,
+    metadata: &LambdaMetadata,
+    num_of_completed_chunks: u64,
+) -> Result<()> {
+    let payload = RecoveryInvokePayload::from_progress(metadata, num_of_completed_chunks);
+    let payload_bytes = serde_json::to_vec(&payload)?;
+    invoke_lambda(
+        lambda_client,
+        function_name,
+        InvocationType::Event,
+        payload_bytes,
+    )
+    .await
+}

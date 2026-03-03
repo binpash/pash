@@ -11,6 +11,10 @@ path = "bin/pashlib-oneproc/main.rs"
 name = "stun-test"
 path = "bin/stun-test/main.rs"
 
+[[bin]]
+name = "pashlib-ft"
+path = "bin/pashlib-ft/main.rs"
+
 [dependencies]
 # common
 rand = "0.8"
