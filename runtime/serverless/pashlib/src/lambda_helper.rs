@@ -28,7 +28,7 @@ impl RecoveryInvokePayload {
             let resume_chunk_start = metadata
                 .chunk_start_idx
                 .saturating_add(num_of_completed_chunks as u32);
-            resume_chunk_start + 1
+            resume_chunk_start
         } else {
             0
         };

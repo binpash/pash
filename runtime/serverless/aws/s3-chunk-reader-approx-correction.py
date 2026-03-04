@@ -385,8 +385,8 @@ def main():
             log_timing("STREAM_START", "Streaming chunks", debug)
 
             total_written = 0
-            for chunk in chunks:
-                if chunk['block_id'] < chunk_start_idx:
+            for i, chunk in enumerate(chunks):
+                if i < chunk_start_idx:
                     print(f"[CHUNK_SKIP] block_id={chunk['block_id']} (chunk_start_idx={chunk_start_idx})", file=sys.stderr, flush=True)
                     continue
                 print(f"[CHUNK_PROCESS] block_id={chunk['block_id']}", file=sys.stderr, flush=True)
