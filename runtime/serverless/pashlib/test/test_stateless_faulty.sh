@@ -15,8 +15,12 @@ export LC_ALL=C.UTF-8
 
 aws s3 cp scripts/nfa-regex-lambda-1-faulty.sh s3://${AWS_BUCKET}/sls-scripts/${FOLDER_ID}/nfa-regex-lambda-1-faulty.sh
 aws s3 cp scripts/nfa-regex-lambda-2-faulty.sh s3://${AWS_BUCKET}/sls-scripts/${FOLDER_ID}/nfa-regex-lambda-2-faulty.sh
+aws s3 cp scripts/nfa-regex-lambda-3-faulty.sh s3://${AWS_BUCKET}/sls-scripts/${FOLDER_ID}/nfa-regex-lambda-3-faulty.sh
+aws s3 cp scripts/nfa-regex-lambda-4-faulty.sh s3://${AWS_BUCKET}/sls-scripts/${FOLDER_ID}/nfa-regex-lambda-4-faulty.sh
 SCRIPT_ID_1="nfa-regex-lambda-1-faulty"
 SCRIPT_ID_2="nfa-regex-lambda-2-faulty"
+SCRIPT_ID_3="nfa-regex-lambda-3-faulty"
+SCRIPT_ID_4="nfa-regex-lambda-4-faulty"
 
 aws lambda invoke \
     --function-name lambda \
@@ -24,7 +28,8 @@ aws lambda invoke \
     \"job_id\": \"${JOB_ID}\",
     \"folder_ids\": [\"${FOLDER_ID}\"],
     \"ids\": [\"${SCRIPT_ID_1}\"],
-    \"is_stateless\": true
+    \"is_stateless\": true,
+    \"time_to_crash\": 10
     }" \
     --invocation-type Event \
     response.json
@@ -35,6 +40,28 @@ aws lambda invoke \
     \"job_id\": \"${JOB_ID}\",
     \"folder_ids\": [\"${FOLDER_ID}\"],
     \"ids\": [\"${SCRIPT_ID_2}\"],
+    \"is_stateless\": true
+    }" \
+    --invocation-type Event \
+    response.json
+
+aws lambda invoke \
+    --function-name lambda \
+    --payload "{
+    \"job_id\": \"${JOB_ID}\",
+    \"folder_ids\": [\"${FOLDER_ID}\"],
+    \"ids\": [\"${SCRIPT_ID_3}\"],
+    \"is_stateless\": true
+    }" \
+    --invocation-type Event \
+    response.json
+
+aws lambda invoke \
+    --function-name lambda \
+    --payload "{
+    \"job_id\": \"${JOB_ID}\",
+    \"folder_ids\": [\"${FOLDER_ID}\"],
+    \"ids\": [\"${SCRIPT_ID_4}\"],
     \"is_stateless\": true
     }" \
     --invocation-type Event \

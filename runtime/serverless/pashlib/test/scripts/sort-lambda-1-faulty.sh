@@ -21,7 +21,7 @@ mkfifo_pash_fifos() {
 rm_pash_fifos
 mkfifo_pash_fifos
 pids_to_kill=""
-{ sort <"/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo19" >"/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo9" & }
+{ cat "/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo19" | tr A-Z a-z >"/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo9" & }
 pids_to_kill="${!} ${pids_to_kill}"
 { runtime/dgsh-tee -i "/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo18" -o "/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo19" -I -m 1G -b 5M & }
 pids_to_kill="${!} ${pids_to_kill}"

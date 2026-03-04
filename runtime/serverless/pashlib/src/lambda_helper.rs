@@ -10,7 +10,7 @@ use crate::metadata::LambdaMetadata;
 #[derive(Debug, Clone, Serialize)]
 pub struct RecoveryInvokePayload {
     pub leash_job_id: String,
-    pub folders_id: Vec<String>,
+    pub folder_ids: Vec<String>,
     pub ids: Vec<String>,
     pub chunk_start_idx: u32,
     pub is_stateless: bool,
@@ -18,14 +18,21 @@ pub struct RecoveryInvokePayload {
 
 impl RecoveryInvokePayload {
     pub fn from_progress(metadata: &LambdaMetadata, num_of_completed_chunks: u64) -> Self {
-        let resume_chunk_start = metadata
-            .chunk_start_id
-            .saturating_add(num_of_completed_chunks as u32);
+        // Stateful mode retries from the beginning and does not use chunk resume.
+        // Stateless mode resumes from the next chunk after completed chunks.
+        let chunk_start_idx = if metadata.is_stateless {
+            let resume_chunk_start = metadata
+                .chunk_start_id
+                .saturating_add(num_of_completed_chunks as u32);
+            resume_chunk_start + 1
+        } else {
+            0
+        };
         Self {
             leash_job_id: metadata.leash_job_id.clone(),
-            folders_id: vec![metadata.folders_id.clone()],
+            folder_ids: vec![metadata.folder_id.clone()],
             ids: vec![metadata.script_id.clone()],
-            chunk_start_idx: resume_chunk_start + 1,
+            chunk_start_idx,
             is_stateless: metadata.is_stateless,
         }
     }

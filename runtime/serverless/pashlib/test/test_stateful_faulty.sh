@@ -43,33 +43,48 @@ aws lambda invoke \
 
 bash scripts/sort-ec2-faulty.sh
 
+faultless_out="/tmp/leash-ft-stateful-faultless.out"
+rm -f ${faultless_out}
+aws s3 cp s3://${AWS_BUCKET}/ft/stateful-faulty.txt  ${faultless_out}
+
+echo "Finished running fault-free execution"
+
+echo "================================"
+
+aws lambda invoke \
+    --function-name lambda \
+    --payload "{
+    \"job_id\": \"${JOB_ID}\",
+    \"folder_ids\": [\"${FOLDER_ID}\"],
+    \"ids\": [\"${SCRIPT_ID_1}\"],
+    \"is_stateless\": false,
+    \"time_to_crash\": 5
+    }" \
+    --invocation-type Event \
+    response.json
+
+aws lambda invoke \
+    --function-name lambda \
+    --payload "{
+    \"job_id\": \"${JOB_ID}\",
+    \"folder_ids\": [\"${FOLDER_ID}\"],
+    \"ids\": [\"${SCRIPT_ID_2}\"],
+    \"is_stateless\": false
+    }" \
+    --invocation-type Event \
+    response.json
+
+bash scripts/sort-ec2-faulty.sh
+
 echo "Finished execution, checking results..."
-
-input_file="/tmp/1G.txt"
-base_line_out="/tmp/ft-sort-1G.out"
-baseline_out_s3_path="s3://${AWS_BUCKET}/ft/ft-sort-1G.out"
-rm -f ${input_file} ${base_line_out}
-
-# if base_line_out presents in s3, skip the generation, otherwise generate it
-if aws s3 ls ${baseline_out_s3_path} > /dev/null 2>&1; then
-    echo "Baseline output already exists in S3, skipping generation."
-    aws s3 cp ${baseline_out_s3_path} ${base_line_out}
+faulty_out="/tmp/leash-ft-stateful-faulty.out"
+rm -f ${faulty_out}
+aws s3 cp s3://${AWS_BUCKET}/ft/stateful-faulty.txt  ${faulty_out}
+echo "Comparing recovery vs fault-free execution..."
+if diff -q ${faultless_out} ${faulty_out} > /dev/null; then
+    echo "✅ Successfully recovered from failure, outputs match!"
 else
-    echo "Baseline output does not exist in S3, generating it..."
-    aws s3 cp s3://${AWS_BUCKET}/oneliners/inputs/1G.txt $input_file
-    sort $input_file -o $base_line_out
-    aws s3 cp ${base_line_out} ${baseline_out_s3_path}
+    echo "❌ Recovery failed, outputs do NOT match!"
 fi
 
-leash_out="/tmp/leash-ft-sort-1G.out"
-rm -f ${leash_out}
-aws s3 cp s3://${AWS_BUCKET}/ft/1G.txt ${leash_out}
-
-echo "Comparing leash output with baseline..."
-if diff -q ${base_line_out} ${leash_out} > /dev/null; then
-    echo "✅ Leash output matches baseline!"
-else
-    echo "❌ Leash output does NOT match baseline!"
-fi
-
-rm -f ${base_line_out} ${leash_out}
+rm -f ${faultless_out}

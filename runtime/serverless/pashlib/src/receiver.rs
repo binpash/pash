@@ -14,7 +14,6 @@ struct BlockHeader {
     #[allow(dead_code)]
     block_id: i64,
     block_size: u64,
-    #[allow(dead_code)]
     is_last: i8,
     raw: [u8; BLOCK_HEADER_SIZE],
 }
@@ -23,8 +22,9 @@ struct BlockHeader {
 pub enum ReceiverProgress {
     Chunk {
         success: bool,
+        // Number of fully completed chunks in this attempt.
+        // A chunk is complete when we see a block with is_last != 0.
         num_of_completed_chunks: u64,
-        num_of_partial_bytes: u64,
     },
     Raw {
         success: bool,
@@ -88,8 +88,11 @@ impl RawReader {
     {
         info!("[receiver.rs] Starting to read raw bytes to {}", if self.to_stdout { "stdout" } else { self.fifo_name.as_str() });
         let mut buf = [0u8; 8192];
+        // Number of bytes forwarded to downstream in this attempt.
         let mut recv_bytes = 0u64;
+        // Retry dedup: bytes already forwarded in previous attempts.
         let mut skip_remaining = self.total_received;
+        let mut skipped_this_attempt = 0u64;
         self.carry.clear();
         if skip_remaining > 0 {
             info!(
@@ -102,6 +105,12 @@ impl RawReader {
             match reader.read(&mut buf).await {
                 Ok(0) => {
                     self.total_received = self.total_received.saturating_add(recv_bytes);
+                    info!(
+                        skipped_this_attempt,
+                        recv_bytes,
+                        total_received = self.total_received,
+                        "[receiver.rs] RawReader EOF before completion message"
+                    );
                     return Ok(ReceiverProgress::Raw {
                         success: false,
                         num_of_recv_bytes: recv_bytes,
@@ -119,7 +128,7 @@ impl RawReader {
                                 "[receiver.rs] RawReader detected completion message (combined)"
                             );
                             let payload = &combined[..pos];
-                            let (_discarded, written) = discard_and_write(
+                            let (discarded, written) = discard_and_write(
                                 payload,
                                 &mut skip_remaining,
                                 self.to_stdout,
@@ -127,8 +136,15 @@ impl RawReader {
                                 &mut self.stdout,
                             )
                             .await?;
+                            skipped_this_attempt = skipped_this_attempt.saturating_add(discarded as u64);
                             recv_bytes += written as u64;
                             self.total_received = self.total_received.saturating_add(recv_bytes);
+                            info!(
+                                skipped_this_attempt,
+                                recv_bytes,
+                                total_received = self.total_received,
+                                "[receiver.rs] RawReader completed"
+                            );
                             return Ok(ReceiverProgress::Raw {
                                 success: true,
                                 num_of_recv_bytes: recv_bytes,
@@ -140,7 +156,7 @@ impl RawReader {
                             let write_len = combined.len() - keep;
                             if write_len > 0 {
                                 let payload = &combined[..write_len];
-                                let (_discarded, written) = discard_and_write(
+                                let (discarded, written) = discard_and_write(
                                     payload,
                                     &mut skip_remaining,
                                     self.to_stdout,
@@ -148,6 +164,7 @@ impl RawReader {
                                     &mut self.stdout,
                                 )
                                 .await?;
+                                skipped_this_attempt = skipped_this_attempt.saturating_add(discarded as u64);
                                 recv_bytes += written as u64;
                             }
                             self.carry.clear();
@@ -162,7 +179,7 @@ impl RawReader {
                                 "[receiver.rs] RawReader detected completion message (buffer)"
                             );
                             let payload = &buf[..pos];
-                            let (_discarded, written) = discard_and_write(
+                            let (discarded, written) = discard_and_write(
                                 payload,
                                 &mut skip_remaining,
                                 self.to_stdout,
@@ -170,8 +187,15 @@ impl RawReader {
                                 &mut self.stdout,
                             )
                             .await?;
+                            skipped_this_attempt = skipped_this_attempt.saturating_add(discarded as u64);
                             recv_bytes += written as u64;
                             self.total_received = self.total_received.saturating_add(recv_bytes);
+                            info!(
+                                skipped_this_attempt,
+                                recv_bytes,
+                                total_received = self.total_received,
+                                "[receiver.rs] RawReader completed"
+                            );
                             return Ok(ReceiverProgress::Raw {
                                 success: true,
                                 num_of_recv_bytes: recv_bytes,
@@ -183,7 +207,7 @@ impl RawReader {
                             let write_len = n - keep;
                             if write_len > 0 {
                                 let payload = &buf[..write_len];
-                                let (_discarded, written) = discard_and_write(
+                                let (discarded, written) = discard_and_write(
                                     payload,
                                     &mut skip_remaining,
                                     self.to_stdout,
@@ -191,6 +215,7 @@ impl RawReader {
                                     &mut self.stdout,
                                 )
                                 .await?;
+                                skipped_this_attempt = skipped_this_attempt.saturating_add(discarded as u64);
                                 recv_bytes += written as u64;
                             }
                             self.carry.clear();
@@ -203,6 +228,12 @@ impl RawReader {
                 }
                 Err(_) => {
                     self.total_received = self.total_received.saturating_add(recv_bytes);
+                    info!(
+                        skipped_this_attempt,
+                        recv_bytes,
+                        total_received = self.total_received,
+                        "[receiver.rs] RawReader read error before completion message"
+                    );
                     return Ok(ReceiverProgress::Raw {
                         success: false,
                         num_of_recv_bytes: recv_bytes,
@@ -217,8 +248,20 @@ pub struct ChunkReader {
     to_stdout: bool,
     file: Option<File>,
     stdout: tokio::io::Stdout,
+    // Total chunks completed across attempts.
     completed_chunks: u64,
-    partial_bytes: u64,
+    // - "block" = a single r_merge header + payload.
+    // - "chunk" = one or more blocks within the same logical S3 chunk,
+    //             consisting of a series block with the same block_id, and
+    //             terminated when a block has is_last != 0.
+    //
+    // For the current (incomplete) chunk, how many full blocks were forwarded.
+    // On retry, we skip these blocks.
+    partial_blocks_forwarded: u64,
+    // For the current block within the current chunk, how many bytes were forwarded.
+    // On retry, we discard these bytes from the payload.
+    partial_block_bytes_forwarded: u64,
+    // Whether the current block's header has already been forwarded.
     partial_header_written: bool,
 }
 
@@ -235,7 +278,8 @@ impl ChunkReader {
             file,
             stdout: tokio::io::stdout(),
             completed_chunks: 0,
-            partial_bytes: 0,
+            partial_blocks_forwarded: 0,
+            partial_block_bytes_forwarded: 0,
             partial_header_written: false,
         })
     }
@@ -245,14 +289,19 @@ impl ChunkReader {
         R: AsyncRead + Unpin,
     {
         let mut buf = [0u8; 8192];
+        // Retry dedup state:
+        // - We do not skip already completed chunks here. Recovery restarts from
+        //   the next chunk using chunk_start_id.
+        // - We only skip duplicated blocks/bytes in the current incomplete chunk.
         let mut attempt_completed = 0u64;
-        let mut skip_chunks = self.completed_chunks;
-        let mut skip_chunk_bytes = self.partial_bytes;
+        let mut skip_blocks_remaining = self.partial_blocks_forwarded;
+        let mut skip_bytes_remaining = self.partial_block_bytes_forwarded;
         let mut header_already_written = self.partial_header_written;
-        if skip_chunks > 0 || skip_chunk_bytes > 0 {
+
+        if skip_blocks_remaining > 0 || skip_bytes_remaining > 0 {
             info!(
-                skip_chunks,
-                skip_chunk_bytes,
+                skip_blocks_remaining,
+                skip_bytes_remaining,
                 "[receiver.rs] ChunkReader skipping previously received data"
             );
         }
@@ -264,14 +313,12 @@ impl ChunkReader {
                     return Ok(ReceiverProgress::Chunk {
                         success: true,
                         num_of_completed_chunks: attempt_completed,
-                        num_of_partial_bytes: 0,
                     });
                 }
                 Err(_) => {
                     return Ok(ReceiverProgress::Chunk {
                         success: false,
                         num_of_completed_chunks: attempt_completed,
-                        num_of_partial_bytes: 0,
                     });
                 }
             };
@@ -279,10 +326,39 @@ impl ChunkReader {
             info!(
                 block_id = header.block_id,
                 block_size = header.block_size,
+                is_last = header.is_last,
                 "[receiver.rs] ChunkReader received block header"
             );
 
-            if skip_chunks == 0 && skip_chunk_bytes == 0 && !header_already_written {
+            // Skip full blocks already forwarded in the current (incomplete) chunk.
+            if skip_blocks_remaining > 0 {
+                let mut remaining = header.block_size;
+                while remaining > 0 {
+                    let to_read = (buf.len() as u64).min(remaining) as usize;
+                    let n = match reader.read(&mut buf[..to_read]).await {
+                        Ok(0) => {
+                            return Ok(ReceiverProgress::Chunk {
+                                success: false,
+                                num_of_completed_chunks: attempt_completed,
+                            });
+                        }
+                        Ok(n) => n,
+                        Err(_) => {
+                            return Ok(ReceiverProgress::Chunk {
+                                success: false,
+                                num_of_completed_chunks: attempt_completed,
+                            });
+                        }
+                    };
+                    remaining = remaining.saturating_sub(n as u64);
+                }
+                skip_blocks_remaining -= 1;
+                header_already_written = false;
+                continue;
+            }
+
+            // Forward this block (and discard any previously forwarded bytes within it).
+            if !header_already_written {
                 if self.to_stdout {
                     self.stdout.write_all(&header.raw).await?;
                 } else if let Some(f) = &mut self.file {
@@ -293,79 +369,61 @@ impl ChunkReader {
 
             let mut remaining = header.block_size;
             let mut current_written: u64 = 0;
-            let initial_skip = if skip_chunks == 0 { skip_chunk_bytes } else { 0 };
-
             while remaining > 0 {
                 let to_read = (buf.len() as u64).min(remaining) as usize;
                 let n = match reader.read(&mut buf[..to_read]).await {
                     Ok(0) => {
-                        let partial = if skip_chunks == 0 {
-                            initial_skip + current_written
-                        } else {
-                            0
-                        };
-                        if skip_chunks == 0 {
-                            self.partial_bytes = partial;
-                            self.partial_header_written = header_already_written;
-                        }
+                        self.partial_block_bytes_forwarded =
+                            self.partial_block_bytes_forwarded.saturating_add(current_written);
+                        self.partial_header_written = header_already_written;
                         return Ok(ReceiverProgress::Chunk {
                             success: false,
                             num_of_completed_chunks: attempt_completed,
-                            num_of_partial_bytes: partial,
                         });
                     }
                     Ok(n) => n,
                     Err(_) => {
-                        let partial = if skip_chunks == 0 {
-                            initial_skip + current_written
-                        } else {
-                            0
-                        };
-                        if skip_chunks == 0 {
-                            self.partial_bytes = partial;
-                            self.partial_header_written = header_already_written;
-                        }
+                        self.partial_block_bytes_forwarded =
+                            self.partial_block_bytes_forwarded.saturating_add(current_written);
+                        self.partial_header_written = header_already_written;
                         return Ok(ReceiverProgress::Chunk {
                             success: false,
                             num_of_completed_chunks: attempt_completed,
-                            num_of_partial_bytes: partial,
                         });
                     }
                 };
 
-                if skip_chunks == 0 {
-                    let mut start = 0usize;
-                    if skip_chunk_bytes > 0 {
-                        let discard = (skip_chunk_bytes as usize).min(n);
-                        skip_chunk_bytes -= discard as u64;
-                        start = discard;
-                    }
-                    if start < n {
-                        let data = &buf[start..n];
-                        if self.to_stdout {
-                            self.stdout.write_all(data).await?;
-                        } else if let Some(f) = &mut self.file {
-                            f.write_all(data).await?;
-                        }
-                        current_written += data.len() as u64;
-                    }
+                let mut start = 0usize;
+                if skip_bytes_remaining > 0 {
+                    let discard = (skip_bytes_remaining as usize).min(n);
+                    skip_bytes_remaining -= discard as u64;
+                    start = discard;
                 }
+                if start < n {
+                    let data = &buf[start..n];
+                    if self.to_stdout {
+                        self.stdout.write_all(data).await?;
+                    } else if let Some(f) = &mut self.file {
+                        f.write_all(data).await?;
+                    }
+                    current_written += data.len() as u64;
+                }
+
                 remaining = remaining.saturating_sub(n as u64);
             }
 
-            if skip_chunks > 0 {
-                skip_chunks -= 1;
-                header_already_written = false;
-                info!("[receiver.rs] ChunkReader skipped full chunk");
-                continue;
-            }
-
-            attempt_completed += 1;
-            self.completed_chunks = self.completed_chunks.saturating_add(1);
-            self.partial_bytes = 0;
+            self.partial_blocks_forwarded = self.partial_blocks_forwarded.saturating_add(1);
+            self.partial_block_bytes_forwarded = 0;
+            skip_bytes_remaining = 0;
             self.partial_header_written = false;
-            skip_chunk_bytes = 0;
             header_already_written = false;
+
+            if header.is_last != 0 {
+                attempt_completed += 1;
+                self.completed_chunks = self.completed_chunks.saturating_add(1);
+                self.partial_blocks_forwarded = 0;
+                self.partial_block_bytes_forwarded = 0;
+            }
         }
     }
 }
@@ -388,7 +446,7 @@ where
     if read == BLOCK_HEADER_SIZE {
         let block_id = i64::from_le_bytes(buf[0..8].try_into().unwrap());
         let block_size = u64::from_le_bytes(buf[8..16].try_into().unwrap());
-        let is_last = i8::from_le_bytes([buf[16]]);
+        let is_last = buf[16] as i8;
         return Ok(Some(BlockHeader {
             block_id,
             block_size,

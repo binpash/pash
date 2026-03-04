@@ -1,5 +1,4 @@
 use pash_sls_lib::stun_helper;
-use tokio::io;
 
 #[tokio::main]
 async fn main() {

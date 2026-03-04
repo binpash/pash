@@ -64,6 +64,7 @@ impl FtExecutor {
                 num_of_completed_chunks,
                 ..
             } => *num_of_completed_chunks,
+            // Raw mode does not use chunk-based resume.
             ReceiverProgress::Raw { .. } => 0,
         }
     }
@@ -195,23 +196,23 @@ impl FtExecutor {
                         info!(attempt, "[recovery.rs] Final recv succeeded");
                         return Ok(progress_history);
                     }
-                    // if let (Some(lambda_client), Some(metadata)) =
-                    //     (lambda_client.as_ref(), metadata.as_ref())
-                    // {
-                    //     let num_of_completed_chunks = Self::completed_chunks(&progress);
-                    //     if let Err(err) = invoke_recovery_lambda(
-                    //         lambda_client,
-                    //         "lambda",
-                    //         metadata,
-                    //         num_of_completed_chunks,
-                    //     )
-                    //     .await
-                    //     {
-                    //         info!(attempt, error = %err, "[recovery.rs] Recovery lambda invocation failed");
-                    //     } else {
-                    //         info!(attempt, function = "lambda", "[recovery.rs] Recovery lambda invoked");
-                    //     }
-                    // }
+                    if let (Some(lambda_client), Some(metadata)) =
+                        (lambda_client.as_ref(), metadata.as_ref())
+                    {
+                        let num_of_completed_chunks = Self::completed_chunks(&progress);
+                        if let Err(err) = invoke_recovery_lambda(
+                            lambda_client,
+                            "lambda",
+                            metadata,
+                            num_of_completed_chunks,
+                        )
+                        .await
+                        {
+                            info!(attempt, error = %err, "[recovery.rs] Recovery lambda invocation failed");
+                        } else {
+                            info!(attempt, function = "lambda", "[recovery.rs] Recovery lambda invoked");
+                        }
+                    }
                     info!(attempt, "[recovery.rs] Recv incomplete, retrying");
                 }
                 Ok(None) => {

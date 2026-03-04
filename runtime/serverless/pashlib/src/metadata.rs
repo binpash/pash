@@ -18,7 +18,7 @@ pub enum StreamMode {
 #[derive(Debug, Clone, Default)]
 pub struct LambdaMetadata {
     pub leash_job_id: String,
-    pub folders_id: String,
+    pub folder_id: String,
     pub script_id: String,
     pub chunk_start_id: u32,
     pub is_stateless: bool,
@@ -27,7 +27,7 @@ pub struct LambdaMetadata {
 impl LambdaMetadata {
     pub fn from_env() -> Self {
         let leash_job_id = std::env::var("LEASH_JOB_ID").unwrap_or_default();
-        let folders_id = std::env::var("PASH_FOLDER_ID").unwrap_or_default();
+        let folder_id = std::env::var("PASH_FOLDER_ID").unwrap_or_default();
         let script_id = std::env::var("PASH_SCRIPT_ID").unwrap_or_default();
         let chunk_start_id = std::env::var("PASH_CHUNK_START_IDX")
             .ok()
@@ -40,7 +40,7 @@ impl LambdaMetadata {
 
         Self {
             leash_job_id,
-            folders_id,
+            folder_id,
             script_id,
             chunk_start_id,
             is_stateless,
@@ -51,7 +51,7 @@ impl LambdaMetadata {
         let kv = parse_metadata_kv(blob);
         Self {
             leash_job_id: kv.get("LEASH_JOB_ID").cloned().unwrap_or_default(),
-            folders_id: kv.get("FOLDERS_ID").cloned().unwrap_or_default(),
+            folder_id: kv.get("FOLDERS_ID").cloned().unwrap_or_default(),
             script_id: kv.get("SCRIPT_ID").cloned().unwrap_or_default(),
             chunk_start_id,
             is_stateless,
@@ -61,7 +61,7 @@ impl LambdaMetadata {
     pub fn to_metadata_blob(&self) -> String {
         format!(
             "LEASH_JOB_ID={};FOLDERS_ID={};SCRIPT_ID={}",
-            self.leash_job_id, self.folders_id, self.script_id
+            self.leash_job_id, self.folder_id, self.script_id
         )
     }
 }
@@ -70,8 +70,8 @@ impl fmt::Display for LambdaMetadata {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "LambdaMetadata {{ leash_job_id: {}, folders_id: {}, script_id: {}, chunk_start_id: {}, is_stateless: {} }}",
-            self.leash_job_id, self.folders_id, self.script_id, self.chunk_start_id, self.is_stateless
+            "LambdaMetadata {{ leash_job_id: {}, folder_id: {}, script_id: {}, chunk_start_id: {}, is_stateless: {} }}",
+            self.leash_job_id, self.folder_id, self.script_id, self.chunk_start_id, self.is_stateless
         )
     }
 }

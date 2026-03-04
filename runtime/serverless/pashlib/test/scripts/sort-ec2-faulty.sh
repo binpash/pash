@@ -28,7 +28,7 @@ mkfifo_pash_fifos() {
 rm_pash_fifos
 mkfifo_pash_fifos
 pids_to_kill=""
-{ sort -m "/tmp/pash_NSonVV8/706abff955484bd5a54470191dee43d0/#fifo18" "/tmp/pash_NSonVV8/706abff955484bd5a54470191dee43d0/#fifo19" >"/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo12" & }
+{ cat "/tmp/pash_NSonVV8/706abff955484bd5a54470191dee43d0/#fifo18" "/tmp/pash_NSonVV8/706abff955484bd5a54470191dee43d0/#fifo19" >"/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo12" & }
 pids_to_kill="${!} ${pids_to_kill}"
 { runtime/pashlib-ft recv*4c1a5c79-5201-459a-83ae-1a8225370842*1*0*/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo11 recv*b04e1ae6-5eb1-43b1-95a0-7a8334174ba1*1*0*/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo17 & }
 pids_to_kill="${!} ${pids_to_kill}"
@@ -36,7 +36,7 @@ pids_to_kill="${!} ${pids_to_kill}"
 pids_to_kill="${!} ${pids_to_kill}"
 { runtime/dgsh-tee -i "/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo17" -o "/tmp/pash_NSonVV8/706abff955484bd5a54470191dee43d0/#fifo19" -I -f -b 5M & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ python3 aws/s3-put-object.py ft/1G.txt "/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo12" $1 & }
+{ python3 aws/s3-put-object.py ft/stateful-faulty.txt "/tmp/pash_NSonVV8/0682d5c7ec004809ad404f1434914cab/#fifo12" $1 & }
 pids_to_kill="${!} ${pids_to_kill}"
 source runtime/wait_for_output_and_sigpipe_rest.sh ${pids_to_kill}
 rm_pash_fifos
