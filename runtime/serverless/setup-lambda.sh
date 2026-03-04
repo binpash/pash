@@ -23,7 +23,7 @@ RUNTIME="python3.12"
 HANDLER="lambda-function.lambda_handler"
 MEMORY_SIZE="1769"
 EPHEMERAL_DISK_SIZE="10240"
-TIMEOUT="10" # TESTING PURPOSE
+TIMEOUT="120" # TESTING PURPOSE
 
 # Detect account ID if not provided
 if [ -z "$AWS_BUCKET" ]; then

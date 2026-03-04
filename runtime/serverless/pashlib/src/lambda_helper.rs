@@ -7,6 +7,10 @@ use tracing::{info};
 
 use crate::metadata::LambdaMetadata;
 
+fn short_rdv_key(rdv_key: &str) -> &str {
+    rdv_key.get(..6).unwrap_or(rdv_key)
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct RecoveryInvokePayload {
     pub leash_job_id: String,
@@ -22,7 +26,7 @@ impl RecoveryInvokePayload {
         // Stateless mode resumes from the next chunk after completed chunks.
         let chunk_start_idx = if metadata.is_stateless {
             let resume_chunk_start = metadata
-                .chunk_start_id
+                .chunk_start_idx
                 .saturating_add(num_of_completed_chunks as u32);
             resume_chunk_start + 1
         } else {
@@ -43,13 +47,9 @@ pub async fn invoke_lambda(
     function_name: &str,
     invocation_type: InvocationType,
     payload: Vec<u8>,
+    rdv_key: &str,
 ) -> Result<()> {
-    info!(
-        function_name = %function_name,
-        invocation_type = ?invocation_type,
-        payload_bytes = payload.len(),
-        "[lambda_helper.rs] invoking lambda"
-    );
+    let rdv_key = short_rdv_key(rdv_key);
     let resp = lambda_client
         .invoke()
         .function_name(function_name)
@@ -66,7 +66,12 @@ pub async fn invoke_lambda(
             function_name
         ));
     }
-    info!(function_name = %function_name, status, "[lambda_helper.rs] lambda invoke succeeded");
+    info!(
+        function_name = %function_name,
+        status,
+        "[lambda_helper.rs][{}] lambda invoke succeeded",
+        rdv_key
+    );
     Ok(())
 }
 
@@ -75,14 +80,28 @@ pub async fn invoke_recovery_lambda(
     function_name: &str,
     metadata: &LambdaMetadata,
     num_of_completed_chunks: u64,
+    rdv_key: &str,
 ) -> Result<()> {
+    let rdv_key = short_rdv_key(rdv_key);
     let payload = RecoveryInvokePayload::from_progress(metadata, num_of_completed_chunks);
+    info!(
+        function_name = %function_name,
+        leash_job_id = %payload.leash_job_id,
+        folder_ids = ?payload.folder_ids,
+        ids = ?payload.ids,
+        chunk_start_idx = payload.chunk_start_idx,
+        is_stateless = payload.is_stateless,
+        num_of_completed_chunks,
+        "[lambda_helper.rs][{}] recovery lambda args",
+        rdv_key
+    );
     let payload_bytes = serde_json::to_vec(&payload)?;
     invoke_lambda(
         lambda_client,
         function_name,
         InvocationType::Event,
         payload_bytes,
+        rdv_key,
     )
     .await
 }

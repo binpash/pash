@@ -10,6 +10,10 @@ use crate::metadata::{
 
 const BLOCK_HEADER_SIZE: usize = 24;
 
+fn short_rdv_key(rdv_key: &str) -> &str {
+    rdv_key.get(..6).unwrap_or(rdv_key)
+}
+
 struct BlockHeader {
     #[allow(dead_code)]
     block_id: i64,
@@ -40,7 +44,7 @@ impl ReceiverProgress {
     }
 }
 
-pub async fn read_metadata<R>(reader: &mut R) -> Result<LambdaMetadata>
+pub async fn read_metadata<R>(reader: &mut R, rdv_key: &str) -> Result<LambdaMetadata>
 where
     R: AsyncRead + Unpin,
 {
@@ -49,13 +53,15 @@ where
     let metadata = decode_handshake(&buf)?;
     info!(
         is_stateless = metadata.is_stateless,
-        chunk_start_id = metadata.chunk_start_id,
-        "[receiver.rs] Decoded metadata"
+        chunk_start_idx = metadata.chunk_start_idx,
+        "[receiver.rs][{}] Decoded metadata",
+        short_rdv_key(rdv_key)
     );
     Ok(metadata)
 }
 
 pub struct RawReader {
+    rdv_key: String,
     to_stdout: bool,
     fifo_name: String,
     file: Option<File>,
@@ -65,7 +71,7 @@ pub struct RawReader {
 }
 
 impl RawReader {
-    pub async fn new(fifo_name: &str) -> Result<Self> {
+    pub async fn new(fifo_name: &str, rdv_key: &str) -> Result<Self> {
         let to_stdout = fifo_name == "-";
         let file = if to_stdout {
             None
@@ -73,6 +79,7 @@ impl RawReader {
             Some(File::create(fifo_name).await?)
         };
         Ok(Self {
+            rdv_key: short_rdv_key(rdv_key).to_string(),
             to_stdout,
             fifo_name: fifo_name.to_string(),
             file,
@@ -86,7 +93,12 @@ impl RawReader {
     where
         R: AsyncRead + Unpin,
     {
-        info!("[receiver.rs] Starting to read raw bytes to {}", if self.to_stdout { "stdout" } else { self.fifo_name.as_str() });
+        info!(
+            output = if self.to_stdout { "stdout" } else { self.fifo_name.as_str() },
+            prev_forwarded_bytes = self.total_received,
+            "[receiver.rs][{}] RawReader attempt start",
+            self.rdv_key
+        );
         let mut buf = [0u8; 8192];
         // Number of bytes forwarded to downstream in this attempt.
         let mut recv_bytes = 0u64;
@@ -94,13 +106,6 @@ impl RawReader {
         let mut skip_remaining = self.total_received;
         let mut skipped_this_attempt = 0u64;
         self.carry.clear();
-        if skip_remaining > 0 {
-            info!(
-                skip_remaining,
-                "[receiver.rs] RawReader skipping previously received bytes"
-            );
-        }
-
         loop {
             match reader.read(&mut buf).await {
                 Ok(0) => {
@@ -109,7 +114,8 @@ impl RawReader {
                         skipped_this_attempt,
                         recv_bytes,
                         total_received = self.total_received,
-                        "[receiver.rs] RawReader EOF before completion message"
+                        "[receiver.rs][{}] RawReader attempt end (incomplete)",
+                        self.rdv_key
                     );
                     return Ok(ReceiverProgress::Raw {
                         success: false,
@@ -123,10 +129,6 @@ impl RawReader {
                         combined.extend_from_slice(&buf[..n]);
 
                         if let Some(pos) = find_completion_msg(&combined) {
-                            info!(
-                                pos,
-                                "[receiver.rs] RawReader detected completion message (combined)"
-                            );
                             let payload = &combined[..pos];
                             let (discarded, written) = discard_and_write(
                                 payload,
@@ -143,7 +145,8 @@ impl RawReader {
                                 skipped_this_attempt,
                                 recv_bytes,
                                 total_received = self.total_received,
-                                "[receiver.rs] RawReader completed"
+                                "[receiver.rs][{}] RawReader attempt end (success)",
+                                self.rdv_key
                             );
                             return Ok(ReceiverProgress::Raw {
                                 success: true,
@@ -174,10 +177,6 @@ impl RawReader {
                         }
                     } else {
                         if let Some(pos) = find_completion_msg(&buf[..n]) {
-                            info!(
-                                pos,
-                                "[receiver.rs] RawReader detected completion message (buffer)"
-                            );
                             let payload = &buf[..pos];
                             let (discarded, written) = discard_and_write(
                                 payload,
@@ -194,7 +193,8 @@ impl RawReader {
                                 skipped_this_attempt,
                                 recv_bytes,
                                 total_received = self.total_received,
-                                "[receiver.rs] RawReader completed"
+                                "[receiver.rs][{}] RawReader attempt end (success)",
+                                self.rdv_key
                             );
                             return Ok(ReceiverProgress::Raw {
                                 success: true,
@@ -232,7 +232,8 @@ impl RawReader {
                         skipped_this_attempt,
                         recv_bytes,
                         total_received = self.total_received,
-                        "[receiver.rs] RawReader read error before completion message"
+                        "[receiver.rs][{}] RawReader attempt end (read error)",
+                        self.rdv_key
                     );
                     return Ok(ReceiverProgress::Raw {
                         success: false,
@@ -245,6 +246,7 @@ impl RawReader {
 }
 
 pub struct ChunkReader {
+    rdv_key: String,
     to_stdout: bool,
     file: Option<File>,
     stdout: tokio::io::Stdout,
@@ -266,7 +268,7 @@ pub struct ChunkReader {
 }
 
 impl ChunkReader {
-    pub async fn new(fifo_name: &str) -> Result<Self> {
+    pub async fn new(fifo_name: &str, rdv_key: &str) -> Result<Self> {
         let to_stdout = fifo_name == "-";
         let file = if to_stdout {
             None
@@ -274,6 +276,7 @@ impl ChunkReader {
             Some(File::create(fifo_name).await?)
         };
         Ok(Self {
+            rdv_key: short_rdv_key(rdv_key).to_string(),
             to_stdout,
             file,
             stdout: tokio::io::stdout(),
@@ -291,44 +294,49 @@ impl ChunkReader {
         let mut buf = [0u8; 8192];
         // Retry dedup state:
         // - We do not skip already completed chunks here. Recovery restarts from
-        //   the next chunk using chunk_start_id.
+        //   the next chunk using chunk_start_idx.
         // - We only skip duplicated blocks/bytes in the current incomplete chunk.
         let mut attempt_completed = 0u64;
         let mut skip_blocks_remaining = self.partial_blocks_forwarded;
         let mut skip_bytes_remaining = self.partial_block_bytes_forwarded;
         let mut header_already_written = self.partial_header_written;
 
-        if skip_blocks_remaining > 0 || skip_bytes_remaining > 0 {
-            info!(
-                skip_blocks_remaining,
-                skip_bytes_remaining,
-                "[receiver.rs] ChunkReader skipping previously received data"
-            );
-        }
+        info!(
+            prev_completed_chunks = self.completed_chunks,
+            skip_blocks_remaining,
+            skip_bytes_remaining,
+            "[receiver.rs][{}] ChunkReader attempt start",
+            self.rdv_key
+        );
 
         loop {
             let header = match read_block_header_or_completion(reader).await {
                 Ok(Some(header)) => header,
                 Ok(None) => {
+                    info!(
+                        attempt_completed,
+                        total_completed_chunks = self.completed_chunks,
+                        "[receiver.rs][{}] ChunkReader attempt end (success)",
+                        self.rdv_key
+                    );
                     return Ok(ReceiverProgress::Chunk {
                         success: true,
                         num_of_completed_chunks: attempt_completed,
                     });
                 }
                 Err(_) => {
+                    info!(
+                        attempt_completed,
+                        total_completed_chunks = self.completed_chunks,
+                        "[receiver.rs][{}] ChunkReader attempt end (header read error)",
+                        self.rdv_key
+                    );
                     return Ok(ReceiverProgress::Chunk {
                         success: false,
                         num_of_completed_chunks: attempt_completed,
                     });
                 }
             };
-
-            info!(
-                block_id = header.block_id,
-                block_size = header.block_size,
-                is_last = header.is_last,
-                "[receiver.rs] ChunkReader received block header"
-            );
 
             // Skip full blocks already forwarded in the current (incomplete) chunk.
             if skip_blocks_remaining > 0 {
@@ -337,6 +345,12 @@ impl ChunkReader {
                     let to_read = (buf.len() as u64).min(remaining) as usize;
                     let n = match reader.read(&mut buf[..to_read]).await {
                         Ok(0) => {
+                            info!(
+                                attempt_completed,
+                                total_completed_chunks = self.completed_chunks,
+                                "[receiver.rs][{}] ChunkReader attempt end (incomplete while skipping block)",
+                                self.rdv_key
+                            );
                             return Ok(ReceiverProgress::Chunk {
                                 success: false,
                                 num_of_completed_chunks: attempt_completed,
@@ -344,6 +358,12 @@ impl ChunkReader {
                         }
                         Ok(n) => n,
                         Err(_) => {
+                            info!(
+                                attempt_completed,
+                                total_completed_chunks = self.completed_chunks,
+                                "[receiver.rs][{}] ChunkReader attempt end (read error while skipping block)",
+                                self.rdv_key
+                            );
                             return Ok(ReceiverProgress::Chunk {
                                 success: false,
                                 num_of_completed_chunks: attempt_completed,
@@ -376,6 +396,14 @@ impl ChunkReader {
                         self.partial_block_bytes_forwarded =
                             self.partial_block_bytes_forwarded.saturating_add(current_written);
                         self.partial_header_written = header_already_written;
+                        info!(
+                            attempt_completed,
+                            total_completed_chunks = self.completed_chunks,
+                            partial_blocks_forwarded = self.partial_blocks_forwarded,
+                            partial_block_bytes_forwarded = self.partial_block_bytes_forwarded,
+                            "[receiver.rs][{}] ChunkReader attempt end (incomplete while forwarding)",
+                            self.rdv_key
+                        );
                         return Ok(ReceiverProgress::Chunk {
                             success: false,
                             num_of_completed_chunks: attempt_completed,
@@ -386,6 +414,14 @@ impl ChunkReader {
                         self.partial_block_bytes_forwarded =
                             self.partial_block_bytes_forwarded.saturating_add(current_written);
                         self.partial_header_written = header_already_written;
+                        info!(
+                            attempt_completed,
+                            total_completed_chunks = self.completed_chunks,
+                            partial_blocks_forwarded = self.partial_blocks_forwarded,
+                            partial_block_bytes_forwarded = self.partial_block_bytes_forwarded,
+                            "[receiver.rs][{}] ChunkReader attempt end (read error while forwarding)",
+                            self.rdv_key
+                        );
                         return Ok(ReceiverProgress::Chunk {
                             success: false,
                             num_of_completed_chunks: attempt_completed,
@@ -459,7 +495,6 @@ where
         let mut completion_buf = [0u8; COMPLETION_MSG_SIZE];
         completion_buf.copy_from_slice(&buf[..COMPLETION_MSG_SIZE]);
         if decode_completion_msg(&completion_buf) {
-            info!("[receiver.rs] Detected completion message");
             return Ok(None);
         }
     }
