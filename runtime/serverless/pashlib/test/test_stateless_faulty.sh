@@ -1,7 +1,7 @@
 #!/bin/bash
 cd $(dirname "$0")
 
-JOB_ID="test-ft-nfa-regex"
+JOB_ID="test-ft-nfa-regex-faulty"
 FOLDER_ID="ft-scripts"
 
 cleanup() {
@@ -83,7 +83,7 @@ if aws s3 ls ${baseline_out_s3_path} > /dev/null 2>&1; then
 else
     echo "Baseline output does not exist in S3, generating it..."
     aws s3 cp s3://${AWS_BUCKET}/oneliners/inputs/100M.txt $input_file
-    cat $input_file | tr A-Z a-z | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > ${base_line_out}
+    cat $input_file | tr A-Z a-z | grep '\(.\).*\1\(.\).*\2' > ${base_line_out}
     aws s3 cp ${base_line_out} ${baseline_out_s3_path}
 fi
 

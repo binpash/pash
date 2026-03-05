@@ -26,7 +26,7 @@ mkfifo_pash_fifos
 pids_to_kill=""
 { runtime/r_wrap bash -c ' tr A-Z a-z ' <"/tmp/pash_f7NsyHc/4a0e9f979abb43acbcdb621b0b5b67cd/#fifo39" >"/tmp/pash_f7NsyHc/9805ed4004cf44a88d5e3f51f2da8f23/#fifo13" & }
 pids_to_kill="${!} ${pids_to_kill}"
-{ runtime/r_wrap bash -c ' grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" ' <"/tmp/pash_f7NsyHc/9805ed4004cf44a88d5e3f51f2da8f23/#fifo13" >"/tmp/pash_f7NsyHc/4a0e9f979abb43acbcdb621b0b5b67cd/#fifo28" & }
+{ runtime/r_wrap bash -c ' grep "\\(.\\).*\\1\\(.\\).*\\2" ' <"/tmp/pash_f7NsyHc/9805ed4004cf44a88d5e3f51f2da8f23/#fifo13" >"/tmp/pash_f7NsyHc/4a0e9f979abb43acbcdb621b0b5b67cd/#fifo28" & }
 pids_to_kill="${!} ${pids_to_kill}"
 { runtime/dgsh-tee -i "/tmp/pash_f7NsyHc/4a0e9f979abb43acbcdb621b0b5b67cd/#fifo38" -o "/tmp/pash_f7NsyHc/4a0e9f979abb43acbcdb621b0b5b67cd/#fifo39" -I -m 1G -b 5M & }
 pids_to_kill="${!} ${pids_to_kill}"
