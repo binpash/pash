@@ -28,7 +28,7 @@ SCRIPTS=(
 
 for script in "${SCRIPTS[@]}"
 do
-    outfile_analysis="${output_dir}/leash-${script}-pash-w1-log-analysis.log"
+    outfile_analysis="${output_dir}/leash-${script}-pash-w1-analytics.log"
     outfile_time="${output_dir}/leash-${script}-pash-w1-time.log"
 
     # --- parse real time (e.g., 4m46.421s) ---

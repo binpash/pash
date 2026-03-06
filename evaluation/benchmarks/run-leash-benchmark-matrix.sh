@@ -583,7 +583,7 @@ run_pash_with_timing() {
     fi
     benchmark_dir=$BENCHMARK_DIR
     if [[ $BENCHMARK_NAME == "file-enc" ]]; then
-        benchmark_dir="log-analysis"
+        benchmark_dir="analytics"
     fi
     if [ "$enable_s3" = "true" ]; then
         LEASH_ENTRIES=${LEASH_ENTRIES:-1}
@@ -641,7 +641,7 @@ download_mode_output() {
     local mode_suffix="$1"
     local out_prefix="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
 
-    if [ "$BENCHMARK_NAME" == "max-temp" ]; then
+    if [ "$BENCHMARK_NAME" == "weather" ]; then
         local s3_key_1="${out_prefix}average.stdout.txt"
         local local_file_1="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}_average.txt"
         local s3_key_2="${out_prefix}min.stdout.txt"
@@ -667,7 +667,7 @@ download_mode_output() {
 
 # Benchmarks with large outputs where we intentionally skip file-by-file comparison.
 should_skip_output_comparison() {
-    [[ " nlp file-enc media-conv log-analysis " == *" $BENCHMARK_NAME "* ]]
+    [[ " nlp file-enc media-conv analytics " == *" $BENCHMARK_NAME "* ]]
 }
 
 # Generic runner for modes (baseline included)
@@ -719,7 +719,7 @@ run_mode() {
         no_resplitting=""
         if [[ "$mode" == "s3_approx_dynamic_no_resplitting" ]]; then
             no_resplitting="--no_resplitting --ec2_width $(nproc)"
-            if [[ " nlp file-enc media-conv log-analysis " == *" $BENCHMARK_NAME "* ]]; then
+            if [[ " nlp file-enc media-conv analytics " == *" $BENCHMARK_NAME "* ]]; then
                 no_resplitting="--no_resplitting --ec2_width 1 --unlimited_lambda"
             fi
             echo "Running APPROX DYNAMIC NO RESPLITTING mode $no_resplitting"

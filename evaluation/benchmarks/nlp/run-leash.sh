@@ -40,5 +40,5 @@ do
       echo "Removing existing logs directory: $logs_dir"
       rm -rf "$logs_dir"
   fi
-  python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" >outputs/leash-${script}-pash-w${WIDTH}-log-analysis.log
+  python3 $PASH_TOP/scripts/serverless/utils.py "$logs_dir" >outputs/leash-${script}-pash-w${WIDTH}-analytics.log
 done

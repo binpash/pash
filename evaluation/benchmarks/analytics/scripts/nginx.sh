@@ -27,7 +27,7 @@ pure_func() {
 }
 export -f pure_func
 
-for log in $(cat "$PASH_TOP/evaluation/benchmarks/log-analysis/log_list" | head -n ${ENTRIES}); do
+for log in $(cat "$PASH_TOP/evaluation/benchmarks/analytics/log_list" | head -n ${ENTRIES}); do
     cat $IN$log | pure_func > $OUT$log.out
 done
 

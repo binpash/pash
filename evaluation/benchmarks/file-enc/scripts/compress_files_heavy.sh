@@ -7,7 +7,7 @@ pure_func() {
     rm -f $tempfile
 }
 
-for item in $(cat "$PASH_TOP/evaluation/benchmarks/log-analysis/pcap_heavy_list" ); do
+for item in $(cat "$PASH_TOP/evaluation/benchmarks/analytics/pcap_heavy_list" ); do
     for j in $(seq 1 $ENTRIES); do
         cat $IN$item | pure_func > $OUT$item.$j.stdout
     done

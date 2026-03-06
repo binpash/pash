@@ -16,7 +16,7 @@ pure_func() {
 export -f pure_func
 
 
-for item in $(cat "$PASH_TOP/evaluation/benchmarks/log-analysis/pcap_list" | head -n ${ENTRIES}); do
+for item in $(cat "$PASH_TOP/evaluation/benchmarks/analytics/pcap_list" | head -n ${ENTRIES}); do
     cat $IN$item | pure_func > $OUT$item.out
 done
 

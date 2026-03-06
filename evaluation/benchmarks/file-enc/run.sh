@@ -31,7 +31,7 @@ TIMES_DIR="$BENCHMARK_DIR/times"
 SCRIPTS_DIR="$BENCHMARK_DIR/scripts"
 
 S3_BENCHMARK_DIR="file-enc"
-S3_INPUTS_DIR="log-analysis/inputs" # It uses the same data as log-analysis
+S3_INPUTS_DIR="analytics/inputs" # It uses the same data as analytics
 S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
 # ENVIRONMENT, MEMORY, SYSTEM, WIDTH

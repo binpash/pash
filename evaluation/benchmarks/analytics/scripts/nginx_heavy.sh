@@ -28,7 +28,7 @@ pure_func() {
 export -f pure_func
 
 for item in $(seq 1 $ENTRIES); do
-    for j in $(cat "$PASH_TOP/evaluation/benchmarks/log-analysis/log_heavy_list");do
+    for j in $(cat "$PASH_TOP/evaluation/benchmarks/analytics/log_heavy_list");do
         n=$(basename $j)
         cat ${IN}${j} | pure_func > ${OUT}${j}.${item}.stdout.log; 
     done

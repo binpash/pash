@@ -123,13 +123,13 @@ Daemon:  Variable Loading time: 7.975  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_4SICS-GeekLounge-151020.pcap
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_4SICS-GeekLounge-151020.pcap
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151020.pcap
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_4SICS-GeekLounge-151020.pcap
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151020.pcap
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_4SICS-GeekLounge-151020.pcap
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 5.944  ms
@@ -179,13 +179,13 @@ Daemon:  Variable Loading time: 9.586  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_4SICS-GeekLounge-151021.pcap
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_4SICS-GeekLounge-151021.pcap
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151021.pcap
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_4SICS-GeekLounge-151021.pcap
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151021.pcap
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_4SICS-GeekLounge-151021.pcap
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 4.767  ms
@@ -239,13 +239,13 @@ Daemon:  Variable Loading time: 8.924  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_4SICS-GeekLounge-151022.pcap
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_4SICS-GeekLounge-151022.pcap
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151022.pcap
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_4SICS-GeekLounge-151022.pcap
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_4SICS-GeekLounge-151022.pcap
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_4SICS-GeekLounge-151022.pcap
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 9.406  ms
@@ -299,13 +299,13 @@ Daemon:  Variable Loading time: 9.057  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_challenge101-0.pcapng
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_challenge101-0.pcapng
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-0.pcapng
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_challenge101-0.pcapng
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-0.pcapng
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_challenge101-0.pcapng
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 5.824  ms
@@ -363,13 +363,13 @@ Daemon:  Variable Loading time: 17.911  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_challenge101-1.pcapng
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_challenge101-1.pcapng
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-1.pcapng
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_challenge101-1.pcapng
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-1.pcapng
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_challenge101-1.pcapng
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 5.482  ms
@@ -433,13 +433,13 @@ Daemon:  Variable Loading time: 9.283  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_challenge101-3.pcapng
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_challenge101-3.pcapng
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-3.pcapng
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_challenge101-3.pcapng
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-3.pcapng
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_challenge101-3.pcapng
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 3.686  ms
@@ -500,13 +500,13 @@ Daemon:  Variable Loading time: 8.255  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_challenge101-4.pcapng
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_challenge101-4.pcapng
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-4.pcapng
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_challenge101-4.pcapng
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-4.pcapng
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_challenge101-4.pcapng
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 3.533  ms
@@ -567,13 +567,13 @@ Daemon:  Variable Loading time: 8.213  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_challenge101-5.pcapng
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_challenge101-5.pcapng
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-5.pcapng
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_challenge101-5.pcapng
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-5.pcapng
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_challenge101-5.pcapng
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 3.706  ms
@@ -634,13 +634,13 @@ Daemon:  Variable Loading time: 8.272  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_challenge101-6.pcapng
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_challenge101-6.pcapng
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-6.pcapng
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_challenge101-6.pcapng
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-6.pcapng
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_challenge101-6.pcapng
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 4.131  ms
@@ -701,13 +701,13 @@ Daemon:  Variable Loading time: 8.49  ms
 Daemon:  Selected width: 1
 Daemon:  Retrieving candidate DF region: /tmp/pash_Tk5tVC4/tmp2hqxouy6 ... 
 Daemon:  Done!
-Expansion: Var: IN value: log-analysis/inputs/pcap_data/
+Expansion: Var: IN value: analytics/inputs/pcap_data/
 Expansion: Var: item value: pcap10_challenge101-7.pcapng
 Expansion: Var: OUT value: file-enc/outputs/encrypt_files.sh__envAWS__mem2048M__sysSplash__w1.out/
 Expansion: Var: item value: pcap10_challenge101-7.pcapng
-Daemon:  filedes name: log-analysis/inputs/pcap_data/pcap10_challenge101-7.pcapng
+Daemon:  filedes name: analytics/inputs/pcap_data/pcap10_challenge101-7.pcapng
 Daemon:  filedes name type: <class 'definitions.ir.arg.Arg'>
-Daemon:  arg: log-analysis/inputs/pcap_data/pcap10_challenge101-7.pcapng
+Daemon:  arg: analytics/inputs/pcap_data/pcap10_challenge101-7.pcapng
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  class of path <class 'definitions.ir.arg.Arg'>
 Daemon:  Compilation time: 4.083  ms
