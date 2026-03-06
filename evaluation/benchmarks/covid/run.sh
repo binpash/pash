@@ -24,13 +24,13 @@ cd "$(dirname "$0")" || exit 1
 
 mkdir -p {outputs,times}/
 
-BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/covid-mts"
+BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/covid"
 INPUTS_DIR="$BENCHMARK_DIR/inputs"
 OUTPUTS_DIR="$BENCHMARK_DIR/outputs"
 TIMES_DIR="$BENCHMARK_DIR/times"
 SCRIPTS_DIR="$BENCHMARK_DIR/scripts"
 
-S3_BENCHMARK_DIR="covid-mts"
+S3_BENCHMARK_DIR="covid"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 

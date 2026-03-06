@@ -15,7 +15,7 @@ for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
     WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
     echo "Running $SCRIPT with input $INPUT and width $WIDTH"
-    time IN="covid-mts/inputs/$INPUT" OUT="covid-mts/outputs/$SCRIPT:$INPUT:$WIDTH:hybrid" $PASH_TOP/pa.sh --serverless_exec -w"$WIDTH" scripts/"$SCRIPT" --graphviz svg --graphviz_dir $PWD
+    time IN="covid/inputs/$INPUT" OUT="covid/outputs/$SCRIPT:$INPUT:$WIDTH:hybrid" $PASH_TOP/pa.sh --serverless_exec -w"$WIDTH" scripts/"$SCRIPT" --graphviz svg --graphviz_dir $PWD
     sleep 20
     logs_dir="logs/$SCRIPT:$INPUT:$WIDTH"
     if [ -d "$logs_dir" ]; then
