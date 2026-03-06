@@ -75,7 +75,7 @@ run_all_benchmarks() {
   # start preparing from execution
   export PASH_ALL_FLAGS=(" "
                          "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
-  export PASH_BENCHMARK=("oneliners" "unixfun" "analytics-mts" "nlp" "max-temp" "web-index" "dependency_untangling")
+  export PASH_BENCHMARK=("oneliners" "unixfun" "analytics-mts" "nlp" "weather" "web-search" "dependency_untangling")
   export PASH_MODE=("pash_aot" 
                     "pash_jit")
 
@@ -87,7 +87,7 @@ run_all_benchmarks() {
   ##### Figure 6
   export PASH_ALL_FLAGS=("--r_split --dgsh_tee --r_split_batch_size 1000000" 
                          "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines" )
-  export PASH_BENCHMARK=("nlp" "max-temp" "dependency_untangling")
+  export PASH_BENCHMARK=("nlp" "weather" "dependency_untangling")
   export PASH_MODE=("pash_jit_no_prof_no_du" 
                     "pash_jit_no_prof")
 
@@ -97,7 +97,7 @@ run_all_benchmarks() {
   export PASH_ALL_FLAGS=(
   #"--dgsh_tee  # omitted until it's fixed
   "--parallel_pipelines --profile_driven" )
-  export PASH_BENCHMARK=("oneliners" "unixfun" "analytics-mts" "max-temp" "web-index")
+  export PASH_BENCHMARK=("oneliners" "unixfun" "analytics-mts" "weather" "web-search")
   export PASH_MODE=("pash_jit_no_comm")
 
   time run_bench 

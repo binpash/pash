@@ -12,11 +12,11 @@ cd "$(dirname "$0")" || exit 1
   exit
 }
 
-BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/max-temp"
+BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/weather"
 INPUTS_DIR="$BENCHMARK_DIR/inputs"
 
 S3_BUCKET_PREFIX="s3://$AWS_BUCKET"
-S3_BENCHMARK_DIR="max-temp"
+S3_BENCHMARK_DIR="weather"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS=(

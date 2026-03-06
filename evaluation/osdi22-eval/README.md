@@ -358,7 +358,7 @@ Benchmark correspondence between the paper and the artifact are seen below:
   - [Bell Labs Unix50](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/unixfun)
   - [COVID-19 Transit Analytics](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/analytics-mts)
   - [Natural-Language Processing](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/nlp)
-  - [NOAA Weather Analysis](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/max-temp)
+  - [NOAA Weather Analysis](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/weather)
   - [Wikipedia Web Indexing](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/web-index)
   - [Video Processing](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/img_convert.sh)
   - [Audio Processing](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/to_mp3.sh)

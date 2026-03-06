@@ -3,7 +3,7 @@ mkdir -p inputs
 cd inputs
 
 if [ ! -f ./temperatures.2015.txt ]; then
-    bash ../max-temp-preprocess.sh
+    bash ../weather-preprocess.sh
 fi
 
 if [ ! -f ./temperatures_1G.txt  ]; then

@@ -34,7 +34,7 @@ prepare_run_data() {
         bench=$(echo $p | awk -F '/' '{print $3}')
         mode=$(echo $p | awk -F'/' '{print $2}')
         # echo "Bench: $bench, mode: $mode"
-        # if [[ $bench == max-temp ]]; then
+        # if [[ $bench == weather ]]; then
         # cat .tmp | sed -E 's/^([a-zA-Z_0-9\-]+):.*([0-9]+.[0-9]+\n)$/\1\t\2/g' #| cut -f 1 
         # fi
         # read the contents of each execution file
@@ -71,8 +71,8 @@ replace_string nlp NLP
 replace_string oneliners Classics
 replace_string unixfun Unix50
 replace_string analytics-mts COVID
-replace_string web-index WebIndex
-replace_string max-temp AvgTemp
+replace_string web-search WebIndex
+replace_string weather AvgTemp
 replace_string temp-analytics AvgTemp
 replace_string Genomics_Computation Genomics
 replace_string Program_Inference ProgInf

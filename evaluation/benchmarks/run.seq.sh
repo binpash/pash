@@ -102,16 +102,16 @@ unixfun(){
   cd ..
 }
 
-web-index(){
+web-search(){
   times_file="seq.res"
   outputs_suffix="seq.out"
   outputs_dir="outputs"
-  if [ -e "web-index/${times_file}" ]; then
-    echo "skipping web-index/${times_file}"
+  if [ -e "web-search/${times_file}" ]; then
+    echo "skipping web-search/${times_file}"
     return 0
   fi
 
-  cd web-index/
+  cd web-search/
 
   install_deps_source_setup $1
 
@@ -121,29 +121,29 @@ web-index(){
   
   touch "$times_file"
   echo executing web index $(date) | tee -a "$times_file"
-  outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
-  echo web-index.sh: $({ time ./web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  outputs_file="${outputs_dir}/web-search.${outputs_suffix}"
+  echo web-search.sh: $({ time ./web-search.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
-max-temp(){
+weather(){
   times_file="seq.res"
   outputs_suffix="seq.out"
   outputs_dir="outputs"
-  if [ -e "max-temp/${times_file}" ]; then
-    echo "skipping max-temp/${times_file}"
+  if [ -e "weather/${times_file}" ]; then
+    echo "skipping weather/${times_file}"
     return 0
   fi
-  cd max-temp/
-  
+  cd weather/
+
   install_deps_source_setup
-  
-  source_var 
+
+  source_var
   mkdir -p "$outputs_dir"
   touch "$times_file"
-  echo executing max temp $(date) | tee -a "$times_file"
+  echo executing weather $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
-  echo max-temp.sh: $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  echo weather.sh: $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 

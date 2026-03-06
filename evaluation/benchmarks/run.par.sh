@@ -112,19 +112,19 @@ unixfun_pash(){
   cd ..
 }
 
-web-index_pash(){
+web-search_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
   time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
-  if [ -e "web-index/${times_file}" ]; then
-    echo "skipping web-index/${times_file}"
+  if [ -e "web-search/${times_file}" ]; then
+    echo "skipping web-search/${times_file}"
     return 0
   fi
 
-  cd web-index/
+  cd web-search/
 
   install_deps_source_setup $1
 
@@ -134,37 +134,37 @@ web-index_pash(){
   mkdir -p "$pash_logs_dir"
   touch "$times_file"
   echo executing web index with pash $(date) | tee -a "$times_file"
-  outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
-  pash_log="${pash_logs_dir}/web-index.pash.log"
-  single_time_file="${outputs_dir}/web-index.${time_suffix}"
+  outputs_file="${outputs_dir}/web-search.${outputs_suffix}"
+  pash_log="${pash_logs_dir}/web-search.pash.log"
+  single_time_file="${outputs_dir}/web-search.${time_suffix}"
 
   ## FIXME: There is a bug when running with r_split at the moment. r_wrap cannot execute bash_functions
-  echo -n "web-index.sh:" | tee -a "$times_file"
-  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" web-index.sh > "$outputs_file"; } 2> "${single_time_file}"
+  echo -n "web-search.sh:" | tee -a "$times_file"
+  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" web-search.sh > "$outputs_file"; } 2> "${single_time_file}"
   cat "${single_time_file}" | tee -a "$times_file"
   cd ..
 }
 
-max-temp_pash(){
+weather_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
   time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
-  if [ -e "max-temp/${times_file}" ]; then
-    echo "skipping max-temp/${times_file}"
+  if [ -e "weather/${times_file}" ]; then
+    echo "skipping weather/${times_file}"
     return 0
   fi
-  cd max-temp/
+  cd weather/
 
   install_deps_source_setup
 
-  source_var 
+  source_var
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
   touch "$times_file"
-  echo executing max temp with pash $(date) | tee -a "$times_file"
+  echo executing weather with pash $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
   pash_log="${pash_logs_dir}/temp-analytics.pash.log"
   single_time_file="${outputs_dir}/temp-analytics.${time_suffix}"

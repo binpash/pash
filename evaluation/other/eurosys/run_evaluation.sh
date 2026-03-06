@@ -145,11 +145,11 @@ echo "Section 6.3: Use Case: NOAA Weather Analysis"
 ## Before running the script we first need to move to the correct directory
 ##   `cd $PASH_TOP/evaluation/eurosys`
 ##
-## The program that we run, described in Section 6.3, can be seen in `evaluation/scripts/max-temp-complete.sh`.
+## The program that we run, described in Section 6.3, can be seen in `evaluation/scripts/weather-complete.sh`.
 ## It takes as input a sequence of lines each containing a year (e.g. using `seq 2000 2004`).
 ##
 ## To run the script with a single year of input use:
-##   `./execute_max_temp_dish_evaluation.sh -s`
+##   `./execute_weather_dish_evaluation.sh -s`
 ##
 ## These should take less than 10 minutes.
 ##
@@ -158,33 +158,33 @@ echo "Section 6.3: Use Case: NOAA Weather Analysis"
 ## - pa.sh --width 16
 ##
 ## The results are saved in:
-## - `evaluation/results/max-temp-complete-2000-2000-seq.time`
-## - `evaluation/results/max-temp-complete-2000-2000-16-pash.time`
+## - `evaluation/results/weather-complete-2000-2000-seq.time`
+## - `evaluation/results/weather-complete-2000-2000-16-pash.time`
 ##
 ## If you want to run the program with 5 years of input (as is done in Section 6.3)
 ## you need to use the following:
-##   `./execute_max_temp_dish_evaluation.sh -l`
+##   `./execute_weather_dish_evaluation.sh -l`
 ##
 ## It should take less than an hour. 
 ## It also runs the script with bash and pash --width 16.
 ##
 ## The results are saved in:
-## - `evaluation/results/max-temp-complete-2000-2004-seq.time`
-## - `evaluation/results/max-temp-complete-2000-2004-16-pash.time`
+## - `evaluation/results/weather-complete-2000-2004-seq.time`
+## - `evaluation/results/weather-complete-2000-2004-16-pash.time`
 ##
 ## If you want to separate the preprocessing and processing (as done in Section 6.3)
 ## you need to add the `-e` flag to either 1 or 5 year execution, e.g.:
-##   `./execute_max_temp_dish_evaluation.sh -l -e`
+##   `./execute_weather_dish_evaluation.sh -l -e`
 ##
 ## This runs:
-## - `evaluation/scripts/max-temp-preprocess.sh`
-## - `evaluation/scripts/max-temp-process.sh`
+## - `evaluation/scripts/weather-preprocess.sh`
+## - `evaluation/scripts/weather-process.sh`
 ##
 ## with bash, and pash --width 16. It saves results in:
-## - `evaluation/results/max-temp-preprocess-2000-2000-seq.time`
-## - `evaluation/results/max-temp-preprocess-2000-2000-16-pash.time`
-## - `evaluation/results/max-temp-process-2000-2000-seq.time`
-## - `evaluation/results/max-temp-process-2000-2000-16-pash.time`
+## - `evaluation/results/weather-preprocess-2000-2000-seq.time`
+## - `evaluation/results/weather-preprocess-2000-2000-16-pash.time`
+## - `evaluation/results/weather-process-2000-2000-seq.time`
+## - `evaluation/results/weather-process-2000-2000-16-pash.time`
 ##
 ## and similarly for the large inputs (2000-2004).
 ##
@@ -202,27 +202,27 @@ echo "Section 6.4: Use Case: Wikipedia Web Indexing"
 ## Before running the script we first need to move to the correct directory
 ##   `cd $PASH_TOP/evaluation/eurosys`
 ##
-## The program that we run, described in Section 6.4, can be seen in `evaluation/scripts/web-index.sh`.
+## The program that we run, described in Section 6.4, can be seen in `evaluation/scripts/web-search.sh`.
 ## It requires having set the `$IN`, `$WIKI`, and `$WEB_INDEX_DIR` variables.
 ##
 ## To run the script for a 1000 wikipedia links use:
-##   `./execute_web_index_dish_evaluation.sh -s`
+##   `./execute_web_search_dish_evaluation.sh -s`
 ##
 ## This sets up the required variables and should take less than 5 minutes.
 ## It runs the script with bash, pash --width 2, pash --width 16.
 ##
 ## The results are saved in:
-## - `evaluation/results/web-index-1000-seq.time`
-## - `evaluation/results/web-index-1000-2-pash.time`
-## - `evaluation/results/web-index-1000-16-pash.time`
+## - `evaluation/results/web-search-1000-seq.time`
+## - `evaluation/results/web-search-1000-2-pash.time`
+## - `evaluation/results/web-search-1000-16-pash.time`
 ##
 ## If you want to run with the EuroSys evaluation inputs (100k links), use:
-##   `./execute_web_index_dish_evaluation.sh -l`
+##   `./execute_web_search_dish_evaluation.sh -l`
 ##
 ## This should take a couple hours and the results are saved in:
-## - `evaluation/results/web-index-100000-seq.time`
-## - `evaluation/results/web-index-100000-2-pash.time`
-## - `evaluation/results/web-index-100000-16-pash.time`
+## - `evaluation/results/web-search-100000-seq.time`
+## - `evaluation/results/web-search-100000-2-pash.time`
+## - `evaluation/results/web-search-100000-16-pash.time`
 
 echo ""
 echo "Section 6.5: Further Micro-benchmarks"

@@ -24,13 +24,13 @@ cd "$(dirname "$0")" || exit 1
 
 mkdir -p {outputs,times}/
 
-BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/max-temp"
+BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/weather"
 INPUTS_DIR="$BENCHMARK_DIR/inputs"
 OUTPUTS_DIR="$BENCHMARK_DIR/outputs"
 TIMES_DIR="$BENCHMARK_DIR/times"
 SCRIPTS_DIR="$BENCHMARK_DIR/scripts"
 
-S3_BENCHMARK_DIR="max-temp"
+S3_BENCHMARK_DIR="weather"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
@@ -56,12 +56,12 @@ CONFIGS=(
 if [[ "$*" == *"--small"* ]]
 then
   SCRIPTS_INPUTS=(
-    max-temp-process.sh:temperatures_small.txt
+    weather-process.sh:temperatures_small.txt
   )
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
-    max-temp-process.sh:temperatures.2015.txt
+    weather-process.sh:temperatures.2015.txt
   )
   INPUT_TYPE=""
 fi
