@@ -125,7 +125,7 @@ def _get_edge_info(fid, edge_id, subgraph, is_input):
 
     Returns:
         Formatted string like:
-        - "edge_16 [FILE] \"covid-mts/inputs/in_tiny.csv\""
+        - "edge_16 [FILE] \"covid/inputs/in_tiny.csv\""
         - "edge_17 [FIFO] '/tmp/pash_fifo_123'"
         - "edge_18 [stdin]"
     """
