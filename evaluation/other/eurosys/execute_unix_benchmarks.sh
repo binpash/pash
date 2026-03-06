@@ -24,10 +24,10 @@ done
 shift "$(( OPTIND - 1 ))"
 
 
-unix50_dir="$PASH_TOP/evaluation/unix50/"
-unix50_intermediary="${unix50_dir}/intermediary/"
+unixfun_dir="$PASH_TOP/evaluation/unixfun/"
+unixfun_intermediary="${unixfun_dir}/intermediary/"
 intermediary_dir="$PASH_TOP/evaluation/intermediary/"
-results_subdir_prefix="unix50"
+results_subdir_prefix="unixfun"
 
 if [ "$evaluation_level" -eq 1 ]; then
     echo "Executing Unix50 scripts with 1GB inputs and --width 4"
@@ -44,22 +44,22 @@ fi
 
 results_subdir="${results_subdir_prefix}_${n_in}_${maximum_input_size}"
 
-rm -r $unix50_intermediary
-mkdir -p $unix50_intermediary
+rm -r $unixfun_intermediary
+mkdir -p $unixfun_intermediary
 mkdir -p $intermediary_dir
 mkdir -p "$PASH_TOP/evaluation/results/${results_subdir}/"
 
 ## Make inputs larger and generate scripts and their envs
-python3 generate_unix50_scripts.py $unix50_dir $unix50_intermediary $maximum_input_size
+python3 generate_unixfun_scripts.py $unixfun_dir $unixfun_intermediary $maximum_input_size
 
-for unix50_pipeline in $(ls ${unix50_intermediary} | grep -v "_env" | cut -f 1 -d '.' | sort); do
-    echo $unix50_pipeline
+for unixfun_pipeline in $(ls ${unixfun_intermediary} | grep -v "_env" | cut -f 1 -d '.' | sort); do
+    echo $unixfun_pipeline
 
     echo "Generating input and intermediary scripts... be patient..."
     python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
-            $unix50_intermediary $unix50_pipeline $n_in $intermediary_dir
+            $unixfun_intermediary $unixfun_pipeline $n_in $intermediary_dir
 
     echo "Executing script with bash and pash..."
-    "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" -s -a "${unix50_pipeline}" "${n_in}" "${results_subdir}" > /dev/null 2>&1
+    "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" -s -a "${unixfun_pipeline}" "${n_in}" "${results_subdir}" > /dev/null 2>&1
     rm -f /tmp/eager*
 done

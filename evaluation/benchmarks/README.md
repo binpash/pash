@@ -1,5 +1,5 @@
 # Experimental Evaluation
-Quick Jump: [one-liners](#common-unix-one-liners) | [unix50](#unix-50-from-bell-labs) | [weather analysis](#noaa-weather-analysis) | [web indexing](#wikipedia-web-indexing)
+Quick Jump: [one-liners](#common-unix-one-liners) | [unixfun](#unix-50-from-bell-labs) | [weather analysis](#noaa-weather-analysis) | [web indexing](#wikipedia-web-indexing)
 
 _Most benchmark sets in the evaluation infrastructure include a `input/setup.sh` script for fetching inputs and setting up the experiment appropriately._
 See [Running other script]() later.
@@ -64,8 +64,8 @@ therefore having 0 speedups in some points of the plots.
 
 #### Unix50 from Bell Labs
 
-All of the Unix50 pipelines are in [evaluation/unix50/unix50.sh](../evaluation/unix50/unix50.sh).
-The inputs of the pipelines are in [evaluation/unix50/](../evaluation/unix50/).
+All of the Unix50 pipelines are in [evaluation/unixfun/unixfun.sh](../evaluation/unixfun/unixfun.sh).
+The inputs of the pipelines are in [evaluation/unixfun/](../evaluation/unixfun/).
 
 Before running the script we first need to move to the correct directory
   `cd $PASH_TOP/evaluation/eurosys`
@@ -76,7 +76,7 @@ There are two modes of execution (can be seen by calling the script with the -h 
   1. Small inputs (1GB) | --width 4
   2. Big inputs (10GB) | --width 16 (EuroSys evaluation)
 
-The first one, called with `-s`, uses pash on the unix50 scripts with 1GB input and width 4 
+The first one, called with `-s`, uses pash on the unixfun scripts with 1GB input and width 4 
 and should be done in less than an hour.
 The trend shown in the paper (Fig 10) should be visible in the results from this script.
 
@@ -93,11 +93,11 @@ python3 gather_results.py --eurosys2021
 This will create plots for both "1GB --width 4" and for "10GB --width 16".
 
 The plots are in:
-- for `-s`: [evaluation/plots/unix50_1GB_individual_speedups_4.pdf](../evaluation/plots/unix50_1GB_individual_speedups_4.pdf)
-- for `-l`: [evaluation/plots/unix50_10GB_individual_speedups_16.pdf](../evaluation/plots/unix50_10GB_individual_speedups_16.pdf)
+- for `-s`: [evaluation/plots/unixfun_1GB_individual_speedups_4.pdf](../evaluation/plots/unixfun_1GB_individual_speedups_4.pdf)
+- for `-l`: [evaluation/plots/unixfun_10GB_individual_speedups_16.pdf](../evaluation/plots/unixfun_10GB_individual_speedups_16.pdf)
 
 Note that the pipelines in the plot are sorted with respect to speedup, and not by their ID.
-So the first pipeline does not necessarily correspond to the first pipeline in [evaluation/unix50](../evaluation/unix50).
+So the first pipeline does not necessarily correspond to the first pipeline in [evaluation/unixfun](../evaluation/unixfun).
 
 There are two small differences of these plots compared to Figure 10.
 These differences are due to the evolution of PaSh and the refinement of its annotations.

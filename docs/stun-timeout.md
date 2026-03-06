@@ -58,7 +58,7 @@ Primary files:
 
 Useful benchmark entrypoint for repro:
 
-- `evaluation/benchmarks/unix50/run-leash-benchmark-matrix.sh`
+- `evaluation/benchmarks/unixfun/run-leash-benchmark-matrix.sh`
 
 ## Quick Triage
 
@@ -189,7 +189,7 @@ cargo run --bin stun-test
 ```
 
 ```bash
-cd /home/ubuntu/pash/evaluation/benchmarks/unix50
+cd /home/ubuntu/pash/evaluation/benchmarks/unixfun
 ./run-leash-benchmark-matrix.sh --small --noopt
 ```
 

@@ -26,7 +26,7 @@ cd "$(dirname "$0")" || exit 1
   exit
 }
 
-BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/unix50"
+BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/unixfun"
 OUTPUTS_DIR="$BENCHMARK_DIR/outputs"
 HASHES_DIR="$BENCHMARK_DIR/hashes"
 

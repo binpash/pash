@@ -19,11 +19,11 @@ cd "$(dirname "$0")" || exit 1
 
 mkdir -p outputs/
 
-BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/unix50"
+BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/unixfun"
 OUTPUTS_DIR="$BENCHMARK_DIR/outputs"
 
 S3_BUCKET_PREFIX="s3://$AWS_BUCKET"
-S3_BENCHMARK_DIR="unix50"
+S3_BENCHMARK_DIR="unixfun"
 S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
 CONFIGS=(

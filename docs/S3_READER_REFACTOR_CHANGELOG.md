@@ -45,7 +45,7 @@ Files restored/added:
 14. `compiler/serverless/s3_smart.py`
 15. `docs/DYNAMIC_BOUNDARIES.md`
 16. `docs/S3_DIRECT_STREAMING_METHODS.md`
-17. `evaluation/benchmarks/unix50/run-leash-compare-generic.sh`
+17. `evaluation/benchmarks/unixfun/run-leash-compare-generic.sh`
 
 ### 2) Reader file rename/refactor commit (`58eac160`)
 Purpose: make file names encode chunking strategy directly.
@@ -97,7 +97,7 @@ What changed:
 Purpose: make run modes and docs describe strategy clearly and consistently.
 
 Changed files:
-1. `evaluation/benchmarks/unix50/run-leash-compare-generic.sh`
+1. `evaluation/benchmarks/unixfun/run-leash-compare-generic.sh`
 2. `docs/DISCORD_S3_DIRECT_STREAMING.md`
 3. `docs/DYNAMIC_BOUNDARIES.md`
 4. `docs/S3_DIRECT_STREAMING_METHODS.md`
@@ -135,13 +135,13 @@ Purpose: keep one benchmark runner implementation while making benchmark-specifi
 
 Changed files:
 1. `evaluation/benchmarks/run-leash-benchmark-matrix.sh`
-2. `evaluation/benchmarks/unix50/leash-matrix-inputs.sh`
+2. `evaluation/benchmarks/unixfun/leash-matrix-inputs.sh`
 3. `evaluation/benchmarks/oneliners/leash-matrix-inputs.sh`
 4. `evaluation/benchmarks/uniq-ips/leash-matrix-inputs.sh`
-5. `evaluation/benchmarks/unix50/run-leash-benchmark-matrix.sh`
+5. `evaluation/benchmarks/unixfun/run-leash-benchmark-matrix.sh`
 6. `evaluation/benchmarks/oneliners/run-leash-benchmark-matrix.sh`
 7. `evaluation/benchmarks/uniq-ips/run-leash-benchmark-matrix.sh`
-8. `evaluation/benchmarks/unix50/run-leash-compare-generic.sh`
+8. `evaluation/benchmarks/unixfun/run-leash-compare-generic.sh`
 9. `evaluation/benchmarks/oneliners/run-leash-compare-generic.sh`
 10. `evaluation/benchmarks/uniq-ips/run-leash-compare-generic.sh`
 
@@ -170,11 +170,11 @@ What changed:
    - `python3 -m py_compile compiler/definitions/ir/nodes/serverless_remote_pipe.py`
    - `python3 -m py_compile compiler/serverless/ir_helper.py`
 2. Shell syntax check:
-   - `bash -n evaluation/benchmarks/unix50/run-leash-compare-generic.sh`
+   - `bash -n evaluation/benchmarks/unixfun/run-leash-compare-generic.sh`
    - `bash -n evaluation/benchmarks/run-leash-benchmark-matrix.sh`
    - `bash -n evaluation/benchmarks/oneliners/run-leash-benchmark-matrix.sh`
    - `bash -n evaluation/benchmarks/uniq-ips/run-leash-benchmark-matrix.sh`
-   - `bash -n evaluation/benchmarks/unix50/leash-matrix-inputs.sh`
+   - `bash -n evaluation/benchmarks/unixfun/leash-matrix-inputs.sh`
    - `bash -n evaluation/benchmarks/oneliners/leash-matrix-inputs.sh`
    - `bash -n evaluation/benchmarks/uniq-ips/leash-matrix-inputs.sh`
 3. Grep verification:

@@ -66,16 +66,16 @@ oneliners(){
   cd ..
 }
 
-unix50(){
+unixfun(){
   times_file="seq.res"
   outputs_suffix="seq.out"
   outputs_dir="outputs"
-  if [ -e "unix50/${times_file}" ]; then
-    echo "skipping unix50/${times_file}"
+  if [ -e "unixfun/${times_file}" ]; then
+    echo "skipping unixfun/${times_file}"
     return 0
   fi
 
-  cd unix50/
+  cd unixfun/
 
   install_deps_source_setup $1
 
