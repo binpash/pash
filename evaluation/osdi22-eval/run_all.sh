@@ -75,7 +75,7 @@ run_all_benchmarks() {
   # start preparing from execution
   export PASH_ALL_FLAGS=(" "
                          "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
-  export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "nlp" "max-temp" "web-index" "dependency_untangling")
+  export PASH_BENCHMARK=("oneliners" "unixfun" "analytics-mts" "nlp" "max-temp" "web-index" "dependency_untangling")
   export PASH_MODE=("pash_aot" 
                     "pash_jit")
 
@@ -97,7 +97,7 @@ run_all_benchmarks() {
   export PASH_ALL_FLAGS=(
   #"--dgsh_tee  # omitted until it's fixed
   "--parallel_pipelines --profile_driven" )
-  export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "max-temp" "web-index")
+  export PASH_BENCHMARK=("oneliners" "unixfun" "analytics-mts" "max-temp" "web-index")
   export PASH_MODE=("pash_jit_no_comm")
 
   time run_bench 

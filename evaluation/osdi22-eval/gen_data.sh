@@ -69,8 +69,8 @@ cat run.tmp | sed -s  's/,/ /g' | awk '{print $1,$2,$3,$4}' | awk ' {print $1','
 replace_string dependency_untangling for-loops 
 replace_string nlp NLP
 replace_string oneliners Classics
-replace_string unix50 Unix50
-replace_string analytics-mts COVID-mts
+replace_string unixfun Unix50
+replace_string analytics-mts COVID
 replace_string web-index WebIndex
 replace_string max-temp AvgTemp
 replace_string temp-analytics AvgTemp

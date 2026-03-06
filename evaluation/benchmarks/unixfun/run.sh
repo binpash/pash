@@ -24,13 +24,13 @@ cd "$(dirname "$0")" || exit 1
 
 mkdir -p {outputs,times}/
 
-BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/unix50"
+BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/unixfun"
 INPUTS_DIR="$BENCHMARK_DIR/inputs"
 OUTPUTS_DIR="$BENCHMARK_DIR/outputs"
 TIMES_DIR="$BENCHMARK_DIR/times"
 SCRIPTS_DIR="$BENCHMARK_DIR/scripts"
 
-S3_BENCHMARK_DIR="unix50"
+S3_BENCHMARK_DIR="unixfun"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 

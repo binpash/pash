@@ -11,7 +11,7 @@ import uuid
 BUCKET = "inout741448956691"
 
 KEYS = [
-    "unix50/inputs/1_20G.txt",
+    "unixfun/inputs/1_20G.txt",
     "oneliners/inputs/1G.txt",
     "oneliners/inputs/500M.txt",
     "oneliners/inputs/100M.txt",

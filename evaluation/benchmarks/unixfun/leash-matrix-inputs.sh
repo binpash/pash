@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Input matrix for evaluation/benchmarks/unix50.
-# Mirrors the original unix50 input selections (including commented candidates).
+# Input matrix for evaluation/benchmarks/unixfun.
+# Mirrors the original unixfun input selections (including commented candidates).
 set_leash_benchmark_inputs() {
     if [[ "$*" == *"--small"* ]]; then
         SCRIPT_INPUT_WIDTH=(

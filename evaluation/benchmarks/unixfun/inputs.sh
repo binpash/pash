@@ -9,7 +9,7 @@ inputs=(3)
 # inputs=(9.9)
 
 S3_BUCKET_PREFIX="s3://$AWS_BUCKET"
-S3_BENCHMARK_DIR="unix50"
+S3_BENCHMARK_DIR="unixfun"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 for input in ${inputs[@]}
@@ -18,7 +18,7 @@ do
     echo "Processing ${input}.txt"
 
     if [ ! -f "${input}.txt" ]; then
-        wget "http://atlas-group.cs.brown.edu/data/unix50/${input}.txt" -q
+        wget "http://atlas-group.cs.brown.edu/data/unixfun/${input}.txt" -q
     fi
 
     if [ ! -f "${input}_1M.txt" ]; then

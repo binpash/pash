@@ -10,7 +10,7 @@ bench <- data.frame(read.csv(args[1], header=FALSE,
 
 text <- element_text(family='Times', size=17)
 
-box_order <- c('Classics', 'Unix50', 'COVID-mts', 'NLP')
+box_order <- c('Classics', 'Unix50', 'COVID', 'NLP')
 boxes <- 
   ggplot(bench[bench$shell %in% c('pash_aot', 'pash_jit') & !(bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex')),], 
          aes(x=factor(suite, level=box_order), y=as.double(speedup), fill=factor(rev(shell)))) +
@@ -73,9 +73,9 @@ ggsave("figure6.pdf", p, width=8, height=4)
 # bench$shell %in% c('pash_jit', 'pash_jit -prof -par_pipe', 'pash_jit -prof')
 
 boxes <- 
-  ggplot(bench[bench$shell %in% c('pash_jit', 'pash_jit_no_comm') & bench$suite %in% c('Classics','Unix50','COVID-mts'),],
+  ggplot(bench[bench$shell %in% c('pash_jit', 'pash_jit_no_comm') & bench$suite %in% c('Classics','Unix50','COVID'),],
          aes(y=as.double(speedup), fill=factor(shell))) +
-#   ggplot(bench[bench$cshell != 'ignore' & bench$suite %in% c('Classics','Unix50','COVID-mts'),],
+#   ggplot(bench[bench$cshell != 'ignore' & bench$suite %in% c('Classics','Unix50','COVID'),],
 #          aes(y=as.double(speedup), fill=factor(cshell))) +
   geom_boxplot(aes(x=factor(suite, level=box_order)), position=position_dodge2(reverse=TRUE)) +
   #geom_point(aes(x=factor(suite, level=box_order), color=factor(cshell)), position = position_dodge2(width=0.75, reverse=TRUE)) +

@@ -355,7 +355,7 @@ This section provides detailed instructions on how to replicate the figures of t
 
 Benchmark correspondence between the paper and the artifact are seen below:
   - [Common & Classic One-liners](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/oneliners)
-  - [Bell Labs Unix50](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/unix50)
+  - [Bell Labs Unix50](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/unixfun)
   - [COVID-19 Transit Analytics](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/analytics-mts)
   - [Natural-Language Processing](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/nlp)
   - [NOAA Weather Analysis](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/max-temp)
