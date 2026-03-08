@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Input matrix for evaluation/benchmarks/covid-mts.
-# Mirrors the original covid-mts run-leash.sh selection.
+# Input matrix for evaluation/benchmarks/covid.
+# Mirrors the original covid run-leash.sh selection.
 # Size flags are currently ignored for this benchmark.
 set_leash_benchmark_inputs() {
     SCRIPT_INPUT_WIDTH=(

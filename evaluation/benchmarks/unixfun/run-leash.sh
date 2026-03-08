@@ -81,7 +81,7 @@ do
   INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
   WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
 
-  { time IN=unix50/inputs/$INPUT OUT=unix50/outputs/$SCRIPT:$INPUT:$WIDTH:hybrid "$PASH_TOP"/pa.sh -w "$WIDTH" scripts/"$SCRIPT" --serverless_exec; } 2>$OUTPUT_DIR/leash-$SCRIPT-$INPUT-$WIDTH.time.log
+  { time IN=unixfun/inputs/$INPUT OUT=unixfun/outputs/$SCRIPT:$INPUT:$WIDTH:hybrid "$PASH_TOP"/pa.sh -w "$WIDTH" scripts/"$SCRIPT" --serverless_exec; } 2>$OUTPUT_DIR/leash-$SCRIPT-$INPUT-$WIDTH.time.log
    
   sleep 20
   logs_dir="logs/$SCRIPT:$INPUT:$WIDTH"

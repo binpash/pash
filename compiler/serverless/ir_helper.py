@@ -551,7 +551,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
 
                         BUCKET=os.environ.get("AWS_BUCKET")
                         filesize = get_s3_size(BUCKET, str(filename).strip('"'))
-                        # but filename can be covid-mts/inputs/in.csv so we need a more robust way
+                        # but filename can be covid/inputs/in.csv so we need a more robust way
                         # Extract file size from filename (e.g., "oneliners/inputs/1M.txt" -> 1048576)
                         # size_multipliers = {"G": 1024**3, "M": 1024**2, "K": 1024}
                         filename_stripped = str(filename).strip('"')

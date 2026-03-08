@@ -69,7 +69,7 @@ EOF
 done
 
 if [[ -z "${BENCHMARK_NAME}" ]]; then
-    echo "Error: benchmark folder is required (e.g. --benchmark unix50)" >&2
+    echo "Error: benchmark folder is required (e.g. --benchmark unixfun)" >&2
     exit 2
 fi
 

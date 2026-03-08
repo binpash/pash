@@ -68,19 +68,19 @@ oneliners_pash(){
   cd ..
 }
 
-unix50_pash(){
+unixfun_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
   time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
-  if [ -e "unix50/${times_file}" ]; then
-    echo "skipping unix50/${times_file}"
+  if [ -e "unixfun/${times_file}" ]; then
+    echo "skipping unixfun/${times_file}"
     return 0
   fi
 
-  cd unix50/
+  cd unixfun/
 
   install_deps_source_setup $1
 

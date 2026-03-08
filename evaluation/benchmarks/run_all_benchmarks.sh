@@ -49,10 +49,10 @@ oneliners_pash
 
 compare_outputs "oneliners/outputs"
 
-unix50
-unix50_pash
+unixfun
+unixfun_pash
 
-compare_outputs "unix50/outputs"
+compare_outputs "unixfun/outputs"
 
 nlp
 nlp_pash

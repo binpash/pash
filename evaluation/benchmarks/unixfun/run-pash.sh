@@ -40,6 +40,6 @@ mkdir -p outputs
 for script_input in "${SCRIPTS_INPUTS[@]}"
 do
   IFS=':' read -r script INPUT <<< "$script_input"
-  echo "IN=unix50/inputs/${INPUT} OUT=unix50/outputs/${script}-${INPUT}-pash-w4-4cpu- SERVERLESS_PASH=1 $PASH_TOP/pa.sh -w4 scripts/$script" 
-  { time IN=unix50/inputs/${INPUT} OUT=unix50/outputs/${script}-${INPUT}-pash-w4-4cpu- SERVERLESS_PASH=1 $PASH_TOP/pa.sh -w4 scripts/$script; } 2>outputs/${script}-${INPUT}-pash-w4-4cpu-time.log
+  echo "IN=unixfun/inputs/${INPUT} OUT=unixfun/outputs/${script}-${INPUT}-pash-w4-4cpu- SERVERLESS_PASH=1 $PASH_TOP/pa.sh -w4 scripts/$script" 
+  { time IN=unixfun/inputs/${INPUT} OUT=unixfun/outputs/${script}-${INPUT}-pash-w4-4cpu- SERVERLESS_PASH=1 $PASH_TOP/pa.sh -w4 scripts/$script; } 2>outputs/${script}-${INPUT}-pash-w4-4cpu-time.log
 done

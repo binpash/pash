@@ -3,9 +3,9 @@
 ## You have to run the following before running this script.
 ## The output should be 439M long
 ## Warning: Takes a long time
-## cat $PASH_TOP/evaluation/unix50/4.txt | $PASH_TOP/runtime/multiply.sh -m 1000000 | pv > $PASH_TOP/evaluation/unix50/big_4.txt
+## cat $PASH_TOP/evaluation/unixfun/4.txt | $PASH_TOP/runtime/multiply.sh -m 1000000 | pv > $PASH_TOP/evaluation/unixfun/big_4.txt
 
-FILE="${PASH_TOP}/evaluation/unix50/big_4.txt"
+FILE="${PASH_TOP}/evaluation/unixfun/big_4.txt"
 
 # cat $FILE | tr -s ' ' '\n' | grep 'x' | grep '\.' | wc -l
 
