@@ -23,11 +23,24 @@ def lambda_handler(event, context):
     chunk_start_idx = event.get('chunk_start_idx')
     if chunk_start_idx is not None:
         os.environ['PASH_CHUNK_START_IDX'] = str(chunk_start_idx)
+    else:
+        # Ensure the env var is always set cuz lambda can reuse instances across different jobs.
+        os.environ['PASH_CHUNK_START_IDX'] = '0'
 
     is_stateless = event.get('is_stateless')
     if is_stateless is not None:
         os.environ['PASH_IS_STATELESS'] = str(is_stateless).lower()
-    print(f"[JOB:{job_id}] is_stateless={is_stateless} (PASH_IS_STATELESS={os.environ.get('PASH_IS_STATELESS', 'unset')})", flush=True)
+    else:
+        # Ensure the env var is always set cuz lambda can reuse instances across different jobs.
+        os.environ['PASH_IS_STATELESS'] = 'false'
+
+    print(f"[JOB:{job_id}] Args: {json.dumps(event, sort_keys=True)}", flush=True)
+    print(
+        f"[JOB:{job_id}] Env: LEASH_JOB_ID={os.environ.get('LEASH_JOB_ID', 'unset')} "
+        f"PASH_CHUNK_START_IDX={os.environ.get('PASH_CHUNK_START_IDX', 'unset')} "
+        f"PASH_IS_STATELESS={os.environ.get('PASH_IS_STATELESS', 'unset')}",
+        flush=True,
+    )
 
     for i, folder_id in enumerate(event['folder_ids']):
         id_ = event['ids'][i]

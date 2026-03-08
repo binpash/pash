@@ -1,12 +1,14 @@
 use anyhow::{anyhow, Result};
-use tracing::{info};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tracing::info;
 
+use crate::aggregator::{Aggregator, SortMergeAggregator};
 use crate::db_helper::{create_rdv_table_if_not_exists, make_db_client};
-use crate::holepunch::PashCtx;
-use crate::lambda_helper::invoke_recovery_lambda;
-use crate::metadata::{LambdaMetadata, StreamMode};
-use crate::receiver::{read_metadata, ChunkReader, RawReader, ReceiverProgress};
-use crate::sender::{write_fifo_payload, write_metadata_with_rdv};
+use crate::events::{Event, JobSpec};
+use crate::lambda_helper::invoke_lambda;
+use crate::receiver::{recv, ReceiverProgress};
+use crate::sender::send;
+use std::fs::OpenOptions;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EndpointMode {
@@ -24,10 +26,12 @@ pub struct FtExecutor {
 }
 
 impl FtExecutor {
+    // Return a short rdv key for concise logs.
     fn rdv_tag(&self) -> &str {
         self.rdv_key.get(..6).unwrap_or(&self.rdv_key)
     }
 
+    // Parse executor args from the pash runtime.
     pub fn new(arg: &str) -> Result<Self> {
         let parts: Vec<&str> = arg.split('*').collect();
         if parts.len() < 5 {
@@ -57,70 +61,93 @@ impl FtExecutor {
         })
     }
 
-    async fn connect_to_peer(&self) -> tokio::net::TcpStream {
-        let mut ctx = PashCtx::new(&self.me, &self.rdv_key).await;
-        ctx.connect(&self.peer).await
-    }
-
-    fn completed_chunks(progress: &ReceiverProgress) -> u64 {
+    fn completed_chunks(progress: &Option<ReceiverProgress>) -> u64 {
         match progress {
-            ReceiverProgress::Chunk {
-                num_of_completed_chunks,
+            Some(ReceiverProgress::Chunk {
+                total_completed_chunks,
                 ..
-            } => *num_of_completed_chunks,
-            // Raw mode does not use chunk-based resume.
-            ReceiverProgress::Raw { .. } => 0,
+            }) => *total_completed_chunks,
+            _ => 0,
         }
     }
 
-    async fn send_attempt<W>(&self, writer: &mut W) -> Result<LambdaMetadata>
-    where
-        W: tokio::io::AsyncWrite + Unpin,
-    {
-        let metadata = LambdaMetadata::from_env();
-        write_metadata_with_rdv(writer, &metadata, self.rdv_tag()).await?;
-        // we do not handle recovery at the sender side
-        write_fifo_payload(writer, &self.fifo_name, self.rdv_tag()).await?;
-        Ok(metadata)
-    }
-
-    async fn recv_attempt<R>(
+    async fn handle_job_event(
         &self,
-        reader: &mut R,
-        raw_reader: &mut Option<RawReader>,
-        chunk_reader: &mut Option<ChunkReader>,
-    ) -> Result<(ReceiverProgress, LambdaMetadata)>
-    where
-        R: tokio::io::AsyncRead + Unpin,
-    {
-        let metadata = read_metadata(reader, self.rdv_tag()).await?;
-        let recv_mode = if metadata.is_stateless {
-            StreamMode::Chunked
+        job: JobSpec,
+        lambda_client: &Option<aws_sdk_lambda::Client>,
+        tx: &UnboundedSender<Event>,
+        next_part_id: &mut u64,
+    ) {
+        // Resumability creates a new part id; recovery reuses the previous part id.
+        let part_id = if job.part_id != 0 {
+            job.part_id
+        } else if job.resume_chunk_start_idx.is_some() {
+            *next_part_id = next_part_id.saturating_add(1);
+            *next_part_id
         } else {
-            StreamMode::RawBytes
+            if *next_part_id == 0 {
+                *next_part_id = 1;
+            }
+            *next_part_id
         };
-        let progress = match recv_mode {
-            StreamMode::RawBytes => {
-                if raw_reader.is_none() {
-                    *raw_reader = Some(RawReader::new(&self.fifo_name, self.rdv_tag()).await?);
+        // Executor owns lambda invocation for both recovery and resumability.
+        let chunk_start_idx = match job.resume_chunk_start_idx {
+            Some(idx) => idx,
+            None => {
+                if job.metadata.is_stateless {
+                    job.metadata
+                        .chunk_start_idx
+                        .saturating_add(Self::completed_chunks(&job.recovery_progress) as u32)
+                } else {
+                    0
                 }
-                raw_reader.as_mut().unwrap().read_from(reader).await
             }
-            StreamMode::Chunked => {
-                if chunk_reader.is_none() {
-                    *chunk_reader = Some(ChunkReader::new(&self.fifo_name, self.rdv_tag()).await?);
-                }
-                chunk_reader.as_mut().unwrap().read_from(reader).await
+        };
+        if let Some(lambda_client) = lambda_client.as_ref() {
+            if let Err(err) = invoke_lambda(
+                lambda_client,
+                "lambda",
+                &job.metadata,
+                chunk_start_idx,
+                self.rdv_tag(),
+            )
+            .await
+            {
+                info!(
+                    error = %err,
+                    "[recovery.rs][{}] lambda invocation failed",
+                    self.rdv_tag()
+                );
             }
-        }?;
-        Ok((progress, metadata))
+        }
+        // Reader owns data + control channels; executor just schedules it.
+        let me = self.me.clone();
+        let peer = self.peer.clone();
+        let rdv_key = self.rdv_key.clone();
+        let fifo_name = self.fifo_name.clone();
+        let tx = tx.clone();
+        // Spawn the receiver task; it pushes completion/job events back into the queue.
+        tokio::spawn(async move {
+            if let Err(err) =
+                recv(me, peer, rdv_key, fifo_name, tx, part_id, job.recovery_progress)
+            .await
+            {
+                info!(error = %err, "[recovery.rs] recv task failed");
+            }
+        });
     }
 
+    fn open_fifo_keepalive(&self) -> Result<std::fs::File> {
+        // Open read+write so it doesn't block if the downstream hasn't opened yet.
+        Ok(OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&self.fifo_name)?)
+    }
+
+    // Run the executor for send/recv endpoints.
     pub async fn execute(&self) -> Result<Vec<ReceiverProgress>> {
         let mut progress_history = Vec::new();
-        let mut attempt: u64 = 0;
-        let mut raw_reader: Option<RawReader> = None;
-        let mut chunk_reader: Option<ChunkReader> = None;
         let client = make_db_client().await;
         create_rdv_table_if_not_exists(&client).await;
         let lambda_client = {
@@ -130,113 +157,84 @@ impl FtExecutor {
             Some(aws_sdk_lambda::Client::new(&cfg))
         };
 
-        // Recovery loop: connect -> handshake -> read/write per attempt.
-        loop {
-            attempt += 1;
-            info!(
-                attempt,
-                mode = ?self.mode,
-                me = %self.me,
-                peer = %self.peer,
-                rdv_key = %self.rdv_key,
-                "[recovery.rs][{}] Attempt start",
-                self.rdv_tag()
-            );
-            let attempt_result: Result<Option<(ReceiverProgress, Option<LambdaMetadata>)>> = async {
-                // 1) connect
-                let stream = self.connect_to_peer().await;
-                let (mut rd, mut wr) = stream.into_split();
+        if self.mode == EndpointMode::Recv {
 
-                // 2) send/recv
-                match self.mode {
-                    EndpointMode::Send => {
-                        self.send_attempt(&mut wr).await?;
-                        Ok(None)
-                    }
-                    EndpointMode::Recv => {
-                        let (progress, metadata) =
-                            self.recv_attempt(&mut rd, &mut raw_reader, &mut chunk_reader).await?;
-                        Ok(Some((progress, Some(metadata))))
-                    }
+            // Keep the FIFO open to avoid premature EOF between reader jobs
+            let _fifo_keepalive = self.open_fifo_keepalive()?;
+
+            // Event-driven executor: consume events from readers/control plane
+            let (tx, mut rx) = unbounded_channel::<Event>();
+            let mut parts: Vec<String> = Vec::new();
+            let mut any_temp = false;
+            let mut next_part_id: u64 = 1;
+            let mut active_jobs: u64 = 0;
+
+            // Initial receiver task for the first lambda attempt.
+            active_jobs = active_jobs.saturating_add(1);
+            let first_part_id = next_part_id;
+            let me = self.me.clone();
+            let peer = self.peer.clone();
+            let rdv_key = self.rdv_key.clone();
+            let fifo_name = self.fifo_name.clone();
+            let tx_spawn = tx.clone();
+            tokio::spawn(async move {
+                if let Err(err) = recv(
+                    me,
+                    peer,
+                    rdv_key,
+                    fifo_name,
+                    tx_spawn,
+                    first_part_id,
+                    None,
+                )
+                .await
+                {
+                    info!(error = %err, "[recovery.rs] recv task failed");
                 }
-            }
-            .await;
+            });
 
-            match attempt_result {
-                Ok(Some((progress, metadata))) => {
-                    let is_success = progress.success();
-                    let (class, progress_num) = match &progress {
-                        ReceiverProgress::Chunk {
-                            num_of_completed_chunks,
-                            ..
-                        } => ("chunk", *num_of_completed_chunks),
-                        ReceiverProgress::Raw {
-                            num_of_recv_bytes,
-                            ..
-                        } => ("raw", *num_of_recv_bytes),
-                    };
-                    info!(
-                        attempt,
-                        class,
-                        progress_num,
-                        success = is_success,
-                        "[recovery.rs][{}] Attempt end (recv)",
-                        self.rdv_tag()
-                    );
-                    progress_history.push(progress.clone());
-                    if is_success {
-                        info!(attempt, "[recovery.rs][{}] Final recv succeeded", self.rdv_tag());
-                        return Ok(progress_history);
-                    }
-                    if let (Some(lambda_client), Some(metadata)) =
-                        (lambda_client.as_ref(), metadata.as_ref())
-                    {
-                        let num_of_completed_chunks = Self::completed_chunks(&progress);
-                        if let Err(err) = invoke_recovery_lambda(
-                            lambda_client,
-                            "lambda",
-                            metadata,
-                            num_of_completed_chunks,
-                            self.rdv_tag(),
+            loop {
+                let Some(event) = rx.recv().await else {
+                    return Ok(progress_history);
+                };
+                match event {
+                    Event::Job(job) => {
+                        active_jobs = active_jobs.saturating_add(1);
+                        self.handle_job_event(
+                            job,
+                            &lambda_client,
+                            &tx,
+                            &mut next_part_id,
                         )
-                        .await
-                        {
-                            info!(
-                                attempt,
-                                error = %err,
-                                "[recovery.rs][{}] Recovery lambda invocation failed",
-                                self.rdv_tag()
-                            );
-                        } else {
-                            info!(attempt, "[recovery.rs][{}] Recovery lambda invoked", self.rdv_tag());
+                        .await;
+                    }
+                    Event::Completion(done) => {
+                        active_jobs = active_jobs.saturating_sub(1);
+                        progress_history.push(done.progress.clone());
+                        if done.progress.success() && done.used_temp {
+                            any_temp = true;
+                            parts.push(done.part_path);
                         }
                     }
-                    info!(attempt, "[recovery.rs][{}] Retrying recv", self.rdv_tag());
                 }
-                Ok(None) => {
-                    info!(attempt, "[recovery.rs][{}] Attempt end (send success)", self.rdv_tag());
-                    info!(attempt, "[recovery.rs][{}] Final send succeeded", self.rdv_tag());
-                    return Ok(progress_history);
-                }
-                Err(err) => {
-                    if self.mode == EndpointMode::Send {
-                        info!(
-                            attempt,
-                            error = %err,
-                            "[recovery.rs][{}] Sender attempt failed, not retrying",
-                            self.rdv_tag()
-                        );
-                        return Err(err);
+
+                if active_jobs == 0 {
+                    if any_temp && !parts.is_empty() {
+                        // Merge all successful parts into the downstream output.
+                        let aggr = SortMergeAggregator;
+                        aggr.aggregate(&parts, &self.fifo_name)?;
+                        for p in &parts {
+                            let _ = std::fs::remove_file(p);
+                        }
+                        info!("[recovery.rs][{}] Merged {} parts into final output", self.rdv_tag(), parts.len());
                     }
-                    info!(
-                        attempt,
-                        error = %err,
-                        "[recovery.rs][{}] Attempt failed, retrying",
-                        self.rdv_tag()
-                    );
-                    continue;
+                    info!("[recovery.rs][{}] All jobs completed", self.rdv_tag());
+                    return Ok(progress_history);
                 }
             }
         }
+        // Send path: single attempt only.
+        send(&self.me, &self.peer, &self.rdv_key, &self.fifo_name).await?;
+        Ok(progress_history)
     }
 }

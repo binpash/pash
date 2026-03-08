@@ -3,7 +3,7 @@
 cd $(dirname "$0")
 
 JOB_ID="test-ft-nfa-regex-faulty"
-bash test_stateless_faulty.sh 2>&1 >ec2.log
+bash test_stateful_faulty.sh 2>&1 >ec2.log
 
 sleep 12
 

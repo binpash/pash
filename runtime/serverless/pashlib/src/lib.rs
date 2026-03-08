@@ -1,4 +1,6 @@
+pub mod aggregator;
 pub mod db_helper;
+pub mod events;
 pub mod holepunch;
 pub mod lambda_helper;
 pub mod metadata;

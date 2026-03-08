@@ -1,6 +1,8 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 pub const HANDSHAKE_SIZE: usize = 128;
 pub const COMPLETION_MSG_SIZE: usize = 16;
@@ -114,4 +116,45 @@ pub fn decode_handshake(buf: &[u8; HANDSHAKE_SIZE]) -> Result<LambdaMetadata> {
 
 pub fn decode_completion_msg(buf: &[u8; COMPLETION_MSG_SIZE]) -> bool {
     buf == &COMPLETION_MSG
+}
+
+// Initialization of resumability request sent by sender to receiver over ctrl::<rdv_key>.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResumeRequest {
+    pub next_chunk_start_idx: u32,
+    pub num_of_completed_chunks: u64,
+}
+
+// Receiver acknowledgement for resumability request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResumeAck {
+    pub accepted: bool,
+}
+
+// Control message framing: [u32_be_len][json payload].
+pub async fn write_resumability_ctrl_msg<W, T>(writer: &mut W, msg: &T) -> Result<()>
+where
+    W: AsyncWrite + Unpin,
+    T: Serialize,
+{
+    let payload = serde_json::to_vec(msg)?;
+    let len = payload.len() as u32;
+    writer.write_all(&len.to_be_bytes()).await?;
+    writer.write_all(&payload).await?;
+    writer.flush().await?;
+    Ok(())
+}
+
+pub async fn read_resumability_ctrl_msg<R, T>(reader: &mut R) -> Result<T>
+where
+    R: AsyncRead + Unpin,
+    T: for<'de> Deserialize<'de>,
+{
+    let mut len_buf = [0u8; 4];
+    reader.read_exact(&mut len_buf).await?;
+    let len = u32::from_be_bytes(len_buf) as usize;
+    let mut payload = vec![0u8; len];
+    reader.read_exact(&mut payload).await?;
+    let msg = serde_json::from_slice::<T>(&payload)?;
+    Ok(msg)
 }

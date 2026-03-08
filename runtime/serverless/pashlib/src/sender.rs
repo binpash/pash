@@ -1,12 +1,30 @@
 use anyhow::Result;
+use tokio::fs::OpenOptions;
 use tokio::fs::File;
-use tokio::io::{self, AsyncWrite, AsyncWriteExt};
+use tokio::io::{self, AsyncBufReadExt, AsyncWrite, AsyncWriteExt, BufReader};
 use tracing::info;
 
-use crate::metadata::{encode_handshake, LambdaMetadata, COMPLETION_MSG};
+use crate::holepunch::PashCtx;
+use crate::metadata::{
+    encode_handshake, read_resumability_ctrl_msg, write_resumability_ctrl_msg, LambdaMetadata,
+    ResumeAck, ResumeRequest, COMPLETION_MSG,
+};
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct LocalResumeRequest {
+    next_chunk_start_idx: u32,
+    num_of_completed_chunks: u64,
+}
 
 fn short_rdv_key(rdv_key: &str) -> &str {
     rdv_key.get(..6).unwrap_or(rdv_key)
+}
+
+fn resumability_enabled() -> bool {
+    std::env::var("PASH_ENABLE_RESUMABILITY")
+        .ok()
+        .map(|v| matches!(v.as_str(), "1" | "true" | "True" | "TRUE"))
+        .unwrap_or(false)
 }
 
 pub async fn write_metadata<W>(writer: &mut W, metadata: &LambdaMetadata) -> Result<()>
@@ -42,6 +60,7 @@ pub async fn write_fifo_payload<W>(writer: &mut W, fifo_name: &str, rdv_key: &st
 where
     W: AsyncWrite + Unpin,
 {
+    // Stream stdin or fifo into the data channel and append a completion marker.
     let rdv_key = short_rdv_key(rdv_key);
     let copied = if fifo_name == "-" {
         info!("[sender.rs][{}] Writing payload from stdin", rdv_key);
@@ -70,4 +89,115 @@ where
     info!("[sender.rs][{}] Sent completion message", rdv_key);
 
     Ok(copied)
+}
+
+pub async fn monitor_resumability_and_forward(
+    me: &str,
+    peer: &str,
+    rdv_key: &str,
+    metadata: &LambdaMetadata,
+    mut shutdown: tokio::sync::watch::Receiver<bool>,
+) -> Result<()> {
+    // Forward local resumability requests to the receiver over the control plane.
+    let ctrl_key = format!("ctrl::{}", rdv_key);
+    let mut ctx = PashCtx::new(me, &ctrl_key).await;
+    let mut ctrl_stream = ctx.connect(peer).await;
+
+    let safe = if metadata.script_id.is_empty() {
+        "unknown"
+    } else {
+        metadata.script_id.as_str()
+    };
+    let req_path = format!("/tmp/pash_resume_{}.req", safe);
+    let ack_path = format!("/tmp/pash_resume_{}.ack", safe);
+    if !std::path::Path::new(&req_path).exists() {
+        return Ok(());
+    }
+
+    let req_file = OpenOptions::new().read(true).open(&req_path).await?;
+    let mut req_reader = BufReader::new(req_file);
+    let mut line = String::new();
+    let n = tokio::select! {
+        _ = shutdown.changed() => {
+            return Ok(());
+        }
+        res = req_reader.read_line(&mut line) => res?,
+    };
+    if n == 0 {
+        return Ok(());
+    }
+    let local_req: LocalResumeRequest = serde_json::from_str(line.trim())?;
+    info!(
+        next_chunk_start_idx = local_req.next_chunk_start_idx,
+        num_of_completed_chunks = local_req.num_of_completed_chunks,
+        "[sender.rs][{}] Local resumability request received",
+        short_rdv_key(rdv_key)
+    );
+
+    // Relay the resumability request to the receiver over the control channel.
+    let req = ResumeRequest {
+        next_chunk_start_idx: local_req.next_chunk_start_idx,
+        num_of_completed_chunks: local_req.num_of_completed_chunks,
+    };
+    write_resumability_ctrl_msg(&mut ctrl_stream, &req).await?;
+    let ack: ResumeAck = read_resumability_ctrl_msg(&mut ctrl_stream).await?;
+
+    if std::path::Path::new(&ack_path).exists() {
+        // Write ack back so the local s3-reader can close its downstream and finish.
+        let mut ack_file = OpenOptions::new().write(true).open(&ack_path).await?;
+        let ack_payload = serde_json::to_string(&ack)?;
+        ack_file.write_all(ack_payload.as_bytes()).await?;
+        ack_file.write_all(b"\n").await?;
+        ack_file.flush().await?;
+    }
+    Ok(())
+}
+
+pub async fn send(
+    me: &str,
+    peer: &str,
+    rdv_key: &str,
+    fifo_name: &str,
+) -> Result<LambdaMetadata> {
+
+    // Establish data connection, send metadata, and stream payload.
+    let metadata = LambdaMetadata::from_env();
+    let mut ctx = PashCtx::new(me, rdv_key).await;
+    let mut stream = ctx.connect(peer).await;
+    write_metadata_with_rdv(&mut stream, &metadata, rdv_key).await?;
+
+    // Always start a control-plane monitor so the s3-reader can trigger resumability at any time.
+    let enable_resumability = resumability_enabled();
+    let (mut shutdown_tx, monitor_handle) = if enable_resumability {
+        let me = me.to_string();
+        let peer = peer.to_string();
+        let rdv_key = rdv_key.to_string();
+        let md = metadata.clone();
+        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+        let handle = tokio::spawn(async move {
+            if let Err(err) =
+                monitor_resumability_and_forward(&me, &peer, &rdv_key, &md, shutdown_rx).await
+            {
+                info!(
+                    error = %err,
+                    "[sender.rs] resumability monitor failed"
+                );
+            }
+        });
+        (Some(shutdown_tx), Some(handle))
+    } else {
+        (None, None)
+    };
+
+    write_fifo_payload(&mut stream, fifo_name, rdv_key).await?;
+
+    if let Some(h) = monitor_handle {
+        // Signal the control thread to exit cleanly once data is sent.
+        if let Some(tx) = shutdown_tx.as_mut() {
+            let _ = tx.send(true);
+        }
+        let _ = h.await;
+    }
+
+    Ok(metadata)
 }
