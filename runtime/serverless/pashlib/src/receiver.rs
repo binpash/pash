@@ -8,19 +8,13 @@ use tracing::info;
 use crate::events::{CompletionSpec, Event, JobSpec};
 use crate::holepunch::PashCtx;
 use crate::metadata::{
-    decode_completion_msg, decode_handshake, read_resumability_ctrl_msg, write_resumability_ctrl_msg,
-    LambdaMetadata, ResumeAck, ResumeRequest, StreamMode, COMPLETION_MSG, COMPLETION_MSG_SIZE,
+    decode_completion_msg, decode_handshake, read_resumability_request, write_resumability_ack,
+    resumability_disabled, LambdaMetadata, ResumeAck, StreamMode, COMPLETION_MSG,
+    COMPLETION_MSG_SIZE,
     HANDSHAKE_SIZE,
 };
 
 const BLOCK_HEADER_SIZE: usize = 24;
-
-fn resumability_enabled() -> bool {
-    std::env::var("PASH_ENABLE_RESUMABILITY")
-        .ok()
-        .map(|v| matches!(v.as_str(), "1" | "true" | "True" | "TRUE"))
-        .unwrap_or(false)
-}
 
 // Short rdv key for compact logging.
 fn short_rdv_key(rdv_key: &str) -> &str {
@@ -102,7 +96,13 @@ pub async fn recv(
     };
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
     let (resume_switch_tx, resume_switch_rx) = watch::channel(false);
-    let control_handle = if resumability_enabled() {
+    let enable_resumability = !resumability_disabled();
+    info!(
+        resumability_enabled = enable_resumability,
+        "[receiver.rs][{}] Resumability enabled",
+        short_rdv_key(&rdv_key)
+    );
+    let control_handle = if enable_resumability {
         Some(spawn_resumability_listener(
             me.clone(),
             peer.clone(),
@@ -135,7 +135,7 @@ pub async fn recv(
                 &fifo_name,
                 &rdv_key,
                 Some(temp_path.clone()),
-                if resumability_enabled() {
+                if enable_resumability {
                     Some(resume_switch_rx)
                 } else {
                     None
@@ -788,21 +788,30 @@ fn spawn_resumability_listener(
     let control_key = format!("ctrl::{}", rdv_key);
 
     tokio::spawn(async move {
+        info!(
+            "[receiver.rs][{}] Resumability listener started",
+            rdv_tag
+        );
         if *shutdown.borrow() {
             return;
         }
         let mut ctx = PashCtx::new(&me, &control_key).await;
         let stream = ctx.connect(&peer).await;
+        info!(
+            control_key = control_key,
+            "[receiver.rs][{}] Resumability control channel connected",
+            rdv_tag
+        );
         let (mut rd, mut wr) = stream.into_split();
         tokio::select! {
             _ = shutdown.changed() => {
                 return;
             }
-            res = read_resumability_ctrl_msg::<_, ResumeRequest>(&mut rd) => {
+            res = read_resumability_request(&mut rd) => {
                 match res {
                     Ok(req) => {
                         let ack = ResumeAck { accepted: true };
-                        if let Err(err) = write_resumability_ctrl_msg(&mut wr, &ack).await {
+                        if let Err(err) = write_resumability_ack(&mut wr, &ack).await {
                             info!(
                                 error = %err,
                                 "[receiver.rs][{}] control ack write failed",
@@ -817,6 +826,12 @@ fn spawn_resumability_listener(
                             recovery_progress: None,
                             part_id: 0,
                         }));
+                        info!(
+                            req = ?req,
+                            "[receiver.rs][{}] Resumability request handled and job enqueued",
+                            rdv_tag
+                        );
+                        
                     }
                     Err(err) => {
                         info!(

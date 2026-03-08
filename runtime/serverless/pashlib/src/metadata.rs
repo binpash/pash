@@ -122,7 +122,6 @@ pub fn decode_completion_msg(buf: &[u8; COMPLETION_MSG_SIZE]) -> bool {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResumeRequest {
     pub next_chunk_start_idx: u32,
-    pub num_of_completed_chunks: u64,
 }
 
 // Receiver acknowledgement for resumability request.
@@ -131,30 +130,49 @@ pub struct ResumeAck {
     pub accepted: bool,
 }
 
-// Control message framing: [u32_be_len][json payload].
-pub async fn write_resumability_ctrl_msg<W, T>(writer: &mut W, msg: &T) -> Result<()>
+// Control message framing: fixed-size binary (u32 for request, u8 for ack).
+pub async fn write_resumability_request<W>(writer: &mut W, msg: &ResumeRequest) -> Result<()>
 where
     W: AsyncWrite + Unpin,
-    T: Serialize,
 {
-    let payload = serde_json::to_vec(msg)?;
-    let len = payload.len() as u32;
-    writer.write_all(&len.to_be_bytes()).await?;
-    writer.write_all(&payload).await?;
+    writer.write_all(&msg.next_chunk_start_idx.to_be_bytes()).await?;
     writer.flush().await?;
     Ok(())
 }
 
-pub async fn read_resumability_ctrl_msg<R, T>(reader: &mut R) -> Result<T>
+pub async fn read_resumability_request<R>(reader: &mut R) -> Result<ResumeRequest>
 where
     R: AsyncRead + Unpin,
-    T: for<'de> Deserialize<'de>,
 {
-    let mut len_buf = [0u8; 4];
-    reader.read_exact(&mut len_buf).await?;
-    let len = u32::from_be_bytes(len_buf) as usize;
-    let mut payload = vec![0u8; len];
-    reader.read_exact(&mut payload).await?;
-    let msg = serde_json::from_slice::<T>(&payload)?;
-    Ok(msg)
+    let mut buf = [0u8; 4];
+    reader.read_exact(&mut buf).await?;
+    Ok(ResumeRequest {
+        next_chunk_start_idx: u32::from_be_bytes(buf),
+    })
+}
+
+pub async fn write_resumability_ack<W>(writer: &mut W, msg: &ResumeAck) -> Result<()>
+where
+    W: AsyncWrite + Unpin,
+{
+    let flag = if msg.accepted { 1u8 } else { 0u8 };
+    writer.write_all(&[flag]).await?;
+    writer.flush().await?;
+    Ok(())
+}
+
+pub async fn read_resumability_ack<R>(reader: &mut R) -> Result<ResumeAck>
+where
+    R: AsyncRead + Unpin,
+{
+    let mut buf = [0u8; 1];
+    reader.read_exact(&mut buf).await?;
+    Ok(ResumeAck { accepted: buf[0] != 0 })
+}
+
+pub fn resumability_disabled() -> bool {
+    std::env::var("PASH_DISABLE_RESUMABILITY")
+        .ok()
+        .map(|v| matches!(v.as_str(), "1" | "true" | "True" | "TRUE"))
+        .unwrap_or(false)
 }

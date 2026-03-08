@@ -14,6 +14,7 @@ import os
 import sys
 import json
 import struct
+import struct
 import time
 import errno
 
@@ -346,10 +347,12 @@ def main():
         # Resumability timeout handling is only for stateful mode.
         is_stateless = os.environ.get("PASH_IS_STATELESS", "false").lower() in ("1", "true")
         resume_timeout_sec = float(os.environ.get("PASH_RESUME_TIMEOUT_SEC", "0") or 0)
-        resume_enabled = (not is_stateless) and (resume_timeout_sec > 0)
         script_id = os.environ.get("PASH_SCRIPT_ID", "")
+        req_path = f"/tmp/pash_resume_{script_id or 'unknown'}.req"
+        ack_path = f"/tmp/pash_resume_{script_id or 'unknown'}.ack"
+        req_fifo = None
         if debug:
-            dprint(debug, f"[{_now_ts()}][MAIN {shard}] resume_enabled={resume_enabled} resume_timeout_sec={resume_timeout_sec}s script_id={script_id}")
+            dprint(debug, f"[{_now_ts()}][MAIN {shard}] resume_timeout_sec={resume_timeout_sec}s script_id={script_id}")
 
         bucket = os.environ.get("AWS_BUCKET")
         if not bucket:
@@ -387,6 +390,20 @@ def main():
             dprint(debug, f"[{_now_ts()}][MAIN {shard}] shard: {shard}/{num_shards} UID: {job_uid}")
             dprint(debug, f"[MAIN {shard}] total_chunks_global={total_chunks_global}")
 
+        # Open fifos for communication with sender (resumability) if resumability is not disabled gloablly.
+        resumability_disabled = os.environ.get("PASH_DISABLE_RESUMABILITY", "false").lower() in ("1", "true")
+        if not resumability_disabled:
+            for p in (req_path, ack_path):
+                if not os.path.exists(p):
+                    try:
+                        os.mkfifo(p)
+                    except OSError as e:
+                        if e.errno != errno.EEXIST:
+                            print(f"[{_now_ts()}][ERROR] Failed to create fifo {p}: {e}", file=sys.stderr)
+                            raise
+            # Open the request FIFO early and keep it open so the sender can open read-only.
+            req_fifo = open(req_path, "wb", buffering=0)
+
         log_timing("FIFO_OPEN_START", f"Opening FIFO {output_fifo}", debug)
         with open(output_fifo, "wb", buffering=0) as fifo:
             log_timing("FIFO_OPEN_END", "FIFO connected", debug)
@@ -394,41 +411,32 @@ def main():
 
             total_written = 0
             for i, chunk in enumerate(chunks):
-                # On timeout: notify sender, stop new chunk pulls, wait for ack, then close FIFO.
-                if resume_enabled and (time.time() - timing_start) >= resume_timeout_sec:
+                # Condition to trigger resumability: only for stateful processing, timeout enabled, and elapsed time exceeds threshold.
+                if (not resumability_disabled) and (not is_stateless) \
+                    and (resume_timeout_sec>0) and ((time.time() - timing_start)>=resume_timeout_sec):
                     next_chunk_start_idx = i
-                    num_of_completed_chunks = max(0, i - chunk_start_idx)
-                    req_path = f"/tmp/pash_resume_{script_id or 'unknown'}.req"
-                    ack_path = f"/tmp/pash_resume_{script_id or 'unknown'}.ack"
+                    if debug:
+                        dprint(debug, f"[{_now_ts()}][MAIN {shard}] Resume timeout reached, stop processing, next_chunk_start_idx={next_chunk_start_idx}")
 
-                    for p in (req_path, ack_path):
-                        if not os.path.exists(p):
-                            try:
-                                os.mkfifo(p)
-                            except OSError as e:
-                                if e.errno != errno.EEXIST:
-                                    raise
-
-                    req_payload = {
-                        "next_chunk_start_idx": int(next_chunk_start_idx),
-                        "num_of_completed_chunks": int(num_of_completed_chunks),
-                    }
                     print(
                         f"[RESUME] timeout threshold reached elapsed={time.time()-timing_start:.3f}s "
-                        f"next_chunk_start_idx={next_chunk_start_idx} num_of_completed_chunks={num_of_completed_chunks}",
+                        f"next_chunk_start_idx={next_chunk_start_idx}",
                         file=sys.stderr,
                         flush=True,
                     )
 
-                    with open(req_path, "w", buffering=1) as req_fifo:
-                        req_fifo.write(json.dumps(req_payload) + "\n")
-                        req_fifo.flush()
+                    if req_fifo is None:
+                        req_fifo = open(req_path, "wb", buffering=0)
+                    req_fifo.write(struct.pack(">I", int(next_chunk_start_idx)))
+                    req_fifo.flush()
 
                     # Sender writes ack after receiver has accepted control message.
                     with open(ack_path, "r", buffering=1) as ack_fifo:
                         ack_line = ack_fifo.readline().strip()
                         if ack_line:
                             print(f"[RESUME] ack from sender: {ack_line}", file=sys.stderr, flush=True)
+                    
+                    print(f"[{_now_ts()}][MAIN {shard}] Stopping chunk processing after timeout and notifications", file=sys.stderr, flush=True)
 
                     break
 
@@ -450,6 +458,9 @@ def main():
                 )
 
             log_timing("STREAM_END", f"Streamed {total_written} bytes", debug)
+
+        if req_fifo is not None:
+            req_fifo.close()
 
         log_timing("COMPLETE", "Lambda complete", debug)
         print_timing_summary(debug)
