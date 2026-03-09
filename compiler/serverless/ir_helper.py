@@ -429,7 +429,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
                     for flag in out_node.cmd_invocation_with_io_vars.flag_option_list:
                         if flag.get_name() == "-r":
                             key_to_data_type[str(communication_key)] = "line" # stateless if no headers
-                subgraph_to_is_stateless[subgraph] = (key_to_data_type[str(communication_key)] == "line")
+                subgraph_to_is_stateless[subgraph] = (key_to_data_type[str(communication_key)] != "line")
                 if str(communication_key) not in key_to_sender_receiver:
                     key_to_sender_receiver[str(communication_key)] = [subgraph, None]
                 else:
@@ -915,7 +915,8 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         export_lang = "export LANG=C.UTF-8\n"
         export_locale_all = "export LC_ALL=C.UTF-8\n"
         add_version = "version=$2\n"
-        script = export_path+export_lib_path+export_locale_path+export_lang+export_locale_all+export_rust_trace+add_version+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
+        export_is_stateless = f"export PASH_IS_STATELESS={str(subgraph_to_is_stateless.get(subgraph, False)).lower()}\n"
+        script = export_path+export_lib_path+export_locale_path+export_lang+export_locale_all+export_rust_trace+add_version+export_is_stateless+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
         # generate scripts
         if recover and subgraph in fifo_to_be_replaced:
             for new_fifo, recover_fifo in fifo_to_be_replaced[subgraph]:

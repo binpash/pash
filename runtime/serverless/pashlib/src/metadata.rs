@@ -1,6 +1,8 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 pub const HANDSHAKE_SIZE: usize = 128;
 pub const COMPLETION_MSG_SIZE: usize = 16;
@@ -114,4 +116,63 @@ pub fn decode_handshake(buf: &[u8; HANDSHAKE_SIZE]) -> Result<LambdaMetadata> {
 
 pub fn decode_completion_msg(buf: &[u8; COMPLETION_MSG_SIZE]) -> bool {
     buf == &COMPLETION_MSG
+}
+
+// Initialization of resumability request sent by sender to receiver over ctrl::<rdv_key>.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResumeRequest {
+    pub next_chunk_start_idx: u32,
+}
+
+// Receiver acknowledgement for resumability request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResumeAck {
+    pub accepted: bool,
+}
+
+// Control message framing: fixed-size binary (u32 for request, u8 for ack).
+pub async fn write_resumability_request<W>(writer: &mut W, msg: &ResumeRequest) -> Result<()>
+where
+    W: AsyncWrite + Unpin,
+{
+    writer.write_all(&msg.next_chunk_start_idx.to_be_bytes()).await?;
+    writer.flush().await?;
+    Ok(())
+}
+
+pub async fn read_resumability_request<R>(reader: &mut R) -> Result<ResumeRequest>
+where
+    R: AsyncRead + Unpin,
+{
+    let mut buf = [0u8; 4];
+    reader.read_exact(&mut buf).await?;
+    Ok(ResumeRequest {
+        next_chunk_start_idx: u32::from_be_bytes(buf),
+    })
+}
+
+pub async fn write_resumability_ack<W>(writer: &mut W, msg: &ResumeAck) -> Result<()>
+where
+    W: AsyncWrite + Unpin,
+{
+    let flag = if msg.accepted { 1u8 } else { 0u8 };
+    writer.write_all(&[flag]).await?;
+    writer.flush().await?;
+    Ok(())
+}
+
+pub async fn read_resumability_ack<R>(reader: &mut R) -> Result<ResumeAck>
+where
+    R: AsyncRead + Unpin,
+{
+    let mut buf = [0u8; 1];
+    reader.read_exact(&mut buf).await?;
+    Ok(ResumeAck { accepted: buf[0] != 0 })
+}
+
+pub fn resumability_disabled() -> bool {
+    std::env::var("PASH_DISABLE_RESUMABILITY")
+        .ok()
+        .map(|v| matches!(v.as_str(), "1" | "true" | "True" | "TRUE"))
+        .unwrap_or(false)
 }

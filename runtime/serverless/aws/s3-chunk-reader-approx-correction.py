@@ -14,7 +14,9 @@ import os
 import sys
 import json
 import struct
+import struct
 import time
+import errno
 
 NEWLINE = b"\n"
 NEWLINE_INT = 10  # ord("\n")
@@ -342,6 +344,14 @@ def main():
         debug = kwargs.get("debug", "false").lower() == "true" and not perf
 
         window_after_vec, window_size, initial_overlap = parse_window_strategy(kwargs)
+        # Resumability timeout handling is only for stateful mode.
+        is_stateless = os.environ.get("PASH_IS_STATELESS", "false").lower() in ("1", "true")
+        resume_timeout_sec = float(os.environ.get("PASH_RESUME_TIMEOUT_SEC", "0") or 0)
+        script_id = os.environ.get("PASH_SCRIPT_ID", "")
+        req_path = f"/tmp/pash_resume_{script_id or 'unknown'}.req"
+        ack_path = f"/tmp/pash_resume_{script_id or 'unknown'}.ack"
+        req_fifo = None
+        print(f"[s3-chunk-reader-approx-correction.py] resume_timeout_sec={resume_timeout_sec}s script_id={script_id} is_stateless={is_stateless} window_after_vec={window_after_vec} window_size={window_size} initial_overlap={initial_overlap}", file=sys.stderr, flush=True)
 
         bucket = os.environ.get("AWS_BUCKET")
         if not bucket:
@@ -379,6 +389,20 @@ def main():
             dprint(debug, f"[{_now_ts()}][MAIN {shard}] shard: {shard}/{num_shards} UID: {job_uid}")
             dprint(debug, f"[MAIN {shard}] total_chunks_global={total_chunks_global}")
 
+        # Open fifos for communication with sender (resumability) if resumability is not disabled gloablly.
+        resumability_disabled = os.environ.get("PASH_DISABLE_RESUMABILITY", "false").lower() in ("1", "true")
+        if not resumability_disabled:
+            for p in (req_path, ack_path):
+                if not os.path.exists(p):
+                    try:
+                        os.mkfifo(p)
+                    except OSError as e:
+                        if e.errno != errno.EEXIST:
+                            print(f"[{_now_ts()}][ERROR] Failed to create fifo {p}: {e}", file=sys.stderr)
+                            raise
+            # Open the request FIFO early and keep it open so the sender can open read-only.
+            req_fifo = open(req_path, "wb", buffering=0)
+
         log_timing("FIFO_OPEN_START", f"Opening FIFO {output_fifo}", debug)
         with open(output_fifo, "wb", buffering=0) as fifo:
             log_timing("FIFO_OPEN_END", "FIFO connected", debug)
@@ -386,10 +410,40 @@ def main():
 
             total_written = 0
             for i, chunk in enumerate(chunks):
+                # Condition to trigger resumability: only for stateful processing, timeout enabled, and elapsed time exceeds threshold.
+                if (not resumability_disabled) and (not is_stateless) \
+                    and (resume_timeout_sec>0) and ((time.time() - timing_start)>=resume_timeout_sec):
+                    next_chunk_start_idx = i
+                    if debug:
+                        dprint(debug, f"[{_now_ts()}][MAIN {shard}] Resume timeout reached, stop processing, next_chunk_start_idx={next_chunk_start_idx}")
+
+                    print(
+                        f"[RESUME] timeout threshold reached elapsed={time.time()-timing_start:.3f}s "
+                        f"next_chunk_start_idx={next_chunk_start_idx}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+
+                    if req_fifo is None:
+                        req_fifo = open(req_path, "wb", buffering=0)
+                    req_fifo.write(struct.pack(">I", int(next_chunk_start_idx)))
+                    req_fifo.flush()
+
+                    # Sender writes ack after receiver has accepted control message.
+                    with open(ack_path, "r", buffering=1) as ack_fifo:
+                        ack_line = ack_fifo.readline().strip()
+                        if ack_line:
+                            print(f"[RESUME] ack from sender: {ack_line}", file=sys.stderr, flush=True)
+                    
+                    print(f"[{_now_ts()}][MAIN {shard}] Stopping chunk processing after timeout and notifications", file=sys.stderr, flush=True)
+
+                    break
+
                 if i < chunk_start_idx:
                     print(f"[CHUNK_SKIP] block_id={chunk['block_id']} (chunk_start_idx={chunk_start_idx})", file=sys.stderr, flush=True)
                     continue
-                print(f"[CHUNK_PROCESS] block_id={chunk['block_id']}", file=sys.stderr, flush=True)
+                if debug:
+                    print(f"[CHUNK_PROCESS] block_id={chunk['block_id']}", file=sys.stderr, flush=True)
                 total_written += stream_chunk_with_correction(
                     fifo,
                     s3,
@@ -404,6 +458,9 @@ def main():
                 )
 
             log_timing("STREAM_END", f"Streamed {total_written} bytes", debug)
+
+        if req_fifo is not None:
+            req_fifo.close()
 
         log_timing("COMPLETE", "Lambda complete", debug)
         print_timing_summary(debug)

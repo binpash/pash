@@ -86,6 +86,24 @@ if [[ ! -f "${BENCHMARK_INPUT_CONFIG}" ]]; then
     exit 2
 fi
 
+benchmark_name_to_s3_input_name() {
+    local name="$1"
+    case "$name" in
+        unixfun) echo "unix50" ;;
+        covid) echo "covid-mts" ;;
+        *) echo "$name" ;;
+    esac
+}
+
+benchmark_name_to_s3_output_name() {
+    local name="$1"
+    case "$name" in
+        unixfun) echo "unix50" ;;
+        covid) echo "covid-mts" ;;
+        *) echo "$name" ;;
+    esac
+}
+
 normalize_runner_mode_aliases() {
     local i
     local arg
@@ -300,7 +318,7 @@ RUN_APPROX_ADAPTIVE_SINGLE_SHOT=false
 PASH_DEBUG=false
 SKIP_LOGS=false
 PARALLEL_PIPELINES=false
-PARALLEL_PIPELINES_LIMITS=""
+PARALLEL_PIPELINES_LIMIT=""
 RUN_APPROX_DYNAMIC_NO_RESPLITTING=false
 
 if [[ "$*" == *"--noopt"* ]]; then
@@ -337,12 +355,12 @@ if [[ "$*" == *"--parallel_pipelines"* ]]; then
     PARALLEL_PIPELINES=true
 fi
 
-if [[ "$*" == *"--parallel_pipelines_limits"* ]]; then
-    if [[ "$*" =~ --parallel_pipelines_limits[[:space:]]+([0-9]+) ]]; then
-        PARALLEL_PIPELINES_LIMITS="${BASH_REMATCH[1]}"
-        echo "Parallel pipelines enabled with limits: $PARALLEL_PIPELINES_LIMITS"
+if [[ "$*" == *"--parallel_pipelines_limit"* ]]; then
+    if [[ "$*" =~ --parallel_pipelines_limit[[:space:]]+([0-9]+) ]]; then
+        PARALLEL_PIPELINES_LIMIT="${BASH_REMATCH[1]}"
+        echo "Parallel pipelines enabled with limit: $PARALLEL_PIPELINES_LIMIT"
     else
-        echo "Error: --parallel_pipelines_limits requires a numeric value" >&2
+        echo "Error: --parallel_pipelines_limit requires a numeric value" >&2
         exit 2
     fi
 fi
@@ -457,7 +475,7 @@ MODE_FLAG[s3_approx_adaptive_simple]="--approx-adaptive-simple"
 MODE_FLAG[s3_approx_adaptive_single_shot]="--approx-adaptive-single-shot"
 MODE_FLAG[s3_approx_dynamic_no_resplitting]="--approx-dynamic --no_resplitting --ec2_width $(nproc)"
 
-MODE_ENV[noopt]=""
+MODE_ENV[noopt]="LEASH_DISABLE_PASHLIB_FT=true"
 MODE_ENV[s3_smart_prealigned]="USE_SMART_BOUNDARIES=true"
 MODE_ENV[s3_approx_tail_coord]="USE_SMART_BOUNDARIES=false"
 MODE_ENV[s3_approx_dynamic]="USE_DYNAMIC_BOUNDARIES=true"
@@ -518,6 +536,11 @@ if [ "${#SCRIPT_INPUT_WIDTH[@]}" -eq 0 ]; then
 fi
 
 BENCHMARK_DIR="${BENCHMARK_NAME}"
+S3_INPUT_BENCHMARK_DIR="$(benchmark_name_to_s3_input_name "${BENCHMARK_NAME}")"
+S3_OUTPUT_BENCHMARK_DIR="$(benchmark_name_to_s3_output_name "${BENCHMARK_NAME}")"
+echo "Benchmark: ${BENCHMARK_NAME}"
+echo "Input benchmark S3 prefix: ${S3_INPUT_BENCHMARK_DIR}"
+echo "Output benchmark S3 prefix: ${S3_OUTPUT_BENCHMARK_DIR}"
 
 # Check AWS_BUCKET is set
 if [ -z "${AWS_BUCKET:-}" ]; then
@@ -577,8 +600,8 @@ run_pash_with_timing() {
     parallel_config=""
     if [ "$PARALLEL_PIPELINES" = "true" ]; then
         parallel_config="--parallel_pipelines"
-        if [ -n "$PARALLEL_PIPELINES_LIMITS" ]; then
-            parallel_config+=" --parallel_pipelines_limits $PARALLEL_PIPELINES_LIMITS"
+        if [ -n "$PARALLEL_PIPELINES_LIMIT" ]; then
+            parallel_config+=" --parallel_pipelines_limit $PARALLEL_PIPELINES_LIMIT"
         fi
     fi
     benchmark_dir=$BENCHMARK_DIR
@@ -587,10 +610,10 @@ run_pash_with_timing() {
     fi
     if [ "$enable_s3" = "true" ]; then
         LEASH_ENTRIES=${LEASH_ENTRIES:-1}
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$benchmark_dir/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$benchmark_dir/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
@@ -639,7 +662,7 @@ fetch_logs_and_cost() {
 # Download output and store LAST_LOCAL_FILE
 download_mode_output() {
     local mode_suffix="$1"
-    local out_prefix="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
+    local out_prefix="$S3_OUTPUT_BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
 
     if [ "$BENCHMARK_NAME" == "weather" ]; then
         local s3_key_1="${out_prefix}average.stdout.txt"
@@ -713,7 +736,7 @@ run_mode() {
         START_TIME_MS=$(($(date +%s%3N) - 10000))
         echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
 
-        local out_prefix="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
+        local out_prefix="$S3_OUTPUT_BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
         local mode_wall_time
 
         no_resplitting=""
@@ -973,7 +996,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
 
     _cs_file_size=$(aws s3api head-object \
         --bucket "$AWS_BUCKET" \
-        --key "$BENCHMARK_DIR/inputs/$INPUT" \
+        --key "$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" \
         --query ContentLength --output text 2>/dev/null) || true
 
     if [ "$CHUNKS_MODE" = "fixed" ]; then

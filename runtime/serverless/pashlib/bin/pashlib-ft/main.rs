@@ -8,7 +8,7 @@ fn log_level_from_env() -> Level {
         "debug" => Level::DEBUG,
         "warn" => Level::WARN,
         "error" => Level::ERROR,
-        _ => Level::INFO,
+        _ => Level::WARN,
     }
 }
 

@@ -23,7 +23,7 @@ RUNTIME="python3.12"
 HANDLER="lambda-function.lambda_handler"
 MEMORY_SIZE="1769"
 EPHEMERAL_DISK_SIZE="10240"
-TIMEOUT="120" # TESTING PURPOSE
+TIMEOUT=${1:-900}  # default to 15 minutes, which is the max for Lambda
 
 # Detect account ID if not provided
 if [ -z "$AWS_BUCKET" ]; then
