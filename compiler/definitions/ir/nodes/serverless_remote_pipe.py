@@ -26,6 +26,7 @@ TAIL_COORD_STRATEGIES = {
 
 PASHLIB_RUNTIME="runtime/pashlib-ft"
 if os.environ.get("LEASH_DISABLE_PASHLIB_FT", "false").lower() == "true":
+    print("[ir_helper.py] PASHLIB_FT is disabled")
     PASHLIB_RUNTIME="runtime/pashlib"
 
 def _env_flag(name):
@@ -111,7 +112,8 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
                 operand_list.append(Operand(Arg.string_to_arg(f"shard={lambda_counter}"))) # shard
                 operand_list.append(Operand(Arg.string_to_arg(f"num_shards={total_lambdas}"))) # num shards
                 operand_list.append(Operand(Arg.string_to_arg(f"job_uid={job_uid}"))) # job uid
-                operand_list.append(Operand(Arg.string_to_arg(f"debug=True")))
+                # TODO: use env or arg to enable global debuging by setting this and export RUST_LOG=info
+                operand_list.append(Operand(Arg.string_to_arg(f"debug=False")))
 
                 if strategy in TAIL_COORD_STRATEGIES:
                     operand_list.append(

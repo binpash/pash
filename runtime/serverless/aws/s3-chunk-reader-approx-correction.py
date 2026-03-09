@@ -351,8 +351,7 @@ def main():
         req_path = f"/tmp/pash_resume_{script_id or 'unknown'}.req"
         ack_path = f"/tmp/pash_resume_{script_id or 'unknown'}.ack"
         req_fifo = None
-        if debug:
-            dprint(debug, f"[{_now_ts()}][MAIN {shard}] resume_timeout_sec={resume_timeout_sec}s script_id={script_id}")
+        print(f"[s3-chunk-reader-approx-correction.py] resume_timeout_sec={resume_timeout_sec}s script_id={script_id} is_stateless={is_stateless} window_after_vec={window_after_vec} window_size={window_size} initial_overlap={initial_overlap}", file=sys.stderr, flush=True)
 
         bucket = os.environ.get("AWS_BUCKET")
         if not bucket:
@@ -443,7 +442,8 @@ def main():
                 if i < chunk_start_idx:
                     print(f"[CHUNK_SKIP] block_id={chunk['block_id']} (chunk_start_idx={chunk_start_idx})", file=sys.stderr, flush=True)
                     continue
-                print(f"[CHUNK_PROCESS] block_id={chunk['block_id']}", file=sys.stderr, flush=True)
+                if debug:
+                    print(f"[CHUNK_PROCESS] block_id={chunk['block_id']}", file=sys.stderr, flush=True)
                 total_written += stream_chunk_with_correction(
                     fifo,
                     s3,

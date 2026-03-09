@@ -473,7 +473,7 @@ MODE_FLAG[s3_approx_adaptive_simple]="--approx-adaptive-simple"
 MODE_FLAG[s3_approx_adaptive_single_shot]="--approx-adaptive-single-shot"
 MODE_FLAG[s3_approx_dynamic_no_resplitting]="--approx-dynamic --no_resplitting --ec2_width $(nproc)"
 
-MODE_ENV[noopt]=""
+MODE_ENV[noopt]="LEASH_DISABLE_PASHLIB_FT=true"
 MODE_ENV[s3_smart_prealigned]="USE_SMART_BOUNDARIES=true"
 MODE_ENV[s3_approx_tail_coord]="USE_SMART_BOUNDARIES=false"
 MODE_ENV[s3_approx_dynamic]="USE_DYNAMIC_BOUNDARIES=true"
@@ -608,10 +608,10 @@ run_pash_with_timing() {
     fi
     if [ "$enable_s3" = "true" ]; then
         LEASH_ENTRIES=${LEASH_ENTRIES:-1}
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$S3_OUTPUT_BENCHMARK_DIR=" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$S3_OUTPUT_BENCHMARK_DIR" DICT="oneliners/inputs/dict.txt" \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
@@ -734,7 +734,7 @@ run_mode() {
         START_TIME_MS=$(($(date +%s%3N) - 10000))
         echo "Start timestamp: $START_TIME_MS (with 10s safety buffer for clock skew)"
 
-        local out_prefix="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
+        local out_prefix="$S3_OUTPUT_BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
         local mode_wall_time
 
         no_resplitting=""

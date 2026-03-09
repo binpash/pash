@@ -26,13 +26,6 @@ def lambda_handler(event, context):
     else:
         # Ensure the env var is always set cuz lambda can reuse instances across different jobs.
         os.environ['PASH_CHUNK_START_IDX'] = '0'
-
-    is_stateless = event.get('is_stateless')
-    if is_stateless is not None:
-        os.environ['PASH_IS_STATELESS'] = str(is_stateless).lower()
-    else:
-        # Ensure the env var is always set cuz lambda can reuse instances across different jobs.
-        os.environ['PASH_IS_STATELESS'] = 'false'
     
     timeout = event.get('timeout')
     if timeout:
@@ -44,7 +37,6 @@ def lambda_handler(event, context):
     print(
         f"[JOB:{job_id}] Env: LEASH_JOB_ID={os.environ.get('LEASH_JOB_ID', 'unset')} "
         f"PASH_CHUNK_START_IDX={os.environ.get('PASH_CHUNK_START_IDX', 'unset')} "
-        f"PASH_IS_STATELESS={os.environ.get('PASH_IS_STATELESS', 'unset')} "
         f"PASH_RESUME_TIMEOUT_SEC={os.environ.get('PASH_RESUME_TIMEOUT_SEC', 'unset')}",
         flush=True,
     )
