@@ -90,6 +90,7 @@ benchmark_name_to_s3_input_name() {
     local name="$1"
     case "$name" in
         unixfun) echo "unix50" ;;
+        covid) echo "covid-mts" ;;
         *) echo "$name" ;;
     esac
 }
@@ -98,6 +99,7 @@ benchmark_name_to_s3_output_name() {
     local name="$1"
     case "$name" in
         unixfun) echo "unix50" ;;
+        covid) echo "covid-mts" ;;
         *) echo "$name" ;;
     esac
 }
@@ -316,7 +318,7 @@ RUN_APPROX_ADAPTIVE_SINGLE_SHOT=false
 PASH_DEBUG=false
 SKIP_LOGS=false
 PARALLEL_PIPELINES=false
-PARALLEL_PIPELINES_LIMITS=""
+PARALLEL_PIPELINES_LIMIT=""
 RUN_APPROX_DYNAMIC_NO_RESPLITTING=false
 
 if [[ "$*" == *"--noopt"* ]]; then
@@ -353,12 +355,12 @@ if [[ "$*" == *"--parallel_pipelines"* ]]; then
     PARALLEL_PIPELINES=true
 fi
 
-if [[ "$*" == *"--parallel_pipelines_limits"* ]]; then
-    if [[ "$*" =~ --parallel_pipelines_limits[[:space:]]+([0-9]+) ]]; then
-        PARALLEL_PIPELINES_LIMITS="${BASH_REMATCH[1]}"
-        echo "Parallel pipelines enabled with limits: $PARALLEL_PIPELINES_LIMITS"
+if [[ "$*" == *"--parallel_pipelines_limit"* ]]; then
+    if [[ "$*" =~ --parallel_pipelines_limit[[:space:]]+([0-9]+) ]]; then
+        PARALLEL_PIPELINES_LIMIT="${BASH_REMATCH[1]}"
+        echo "Parallel pipelines enabled with limit: $PARALLEL_PIPELINES_LIMIT"
     else
-        echo "Error: --parallel_pipelines_limits requires a numeric value" >&2
+        echo "Error: --parallel_pipelines_limit requires a numeric value" >&2
         exit 2
     fi
 fi
@@ -598,8 +600,8 @@ run_pash_with_timing() {
     parallel_config=""
     if [ "$PARALLEL_PIPELINES" = "true" ]; then
         parallel_config="--parallel_pipelines"
-        if [ -n "$PARALLEL_PIPELINES_LIMITS" ]; then
-            parallel_config+=" --parallel_pipelines_limits $PARALLEL_PIPELINES_LIMITS"
+        if [ -n "$PARALLEL_PIPELINES_LIMIT" ]; then
+            parallel_config+=" --parallel_pipelines_limit $PARALLEL_PIPELINES_LIMIT"
         fi
     fi
     benchmark_dir=$BENCHMARK_DIR
