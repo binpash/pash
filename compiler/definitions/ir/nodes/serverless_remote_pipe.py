@@ -24,6 +24,9 @@ TAIL_COORD_STRATEGIES = {
     S3_READER_STRATEGY_S3_APPROX_TAIL_COORD,
 }
 
+PASHLIB_RUNTIME="runtime/pashlib-ft"
+if os.environ.get("LEASH_DISABLE_PASHLIB_FT", "false").lower() == "true":
+    PASHLIB_RUNTIME="runtime/pashlib"
 
 def _env_flag(name):
     return os.environ.get(name, "false").lower() == "true"
@@ -85,7 +88,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
         access_map[output_edge.get_ident()] = make_stream_output()
     if is_remote_read:
         if is_tcp:
-            remote_pipe_bin = "runtime/pashlib"
+            remote_pipe_bin = PASHLIB_RUNTIME
             operand_list.append(Operand(Arg.string_to_arg("recv "+str(remote_key)+" 1 0")))
             implicit_use_of_streaming_output = local_fifo_id
         else: #TODO modify to python3.10 as python3.9 is deprecated in april 2026
@@ -160,7 +163,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
     else:
         implicit_use_of_streaming_output = output_edge.get_ident() # avoid node not found err
         if is_tcp:
-            remote_pipe_bin = "runtime/pashlib"
+            remote_pipe_bin = PASHLIB_RUNTIME
             operand_list.append(Operand(Arg.string_to_arg("send "+str(remote_key)+" 0 1")))
             implicit_use_of_streaming_input = local_fifo_id
         else:
@@ -188,7 +191,7 @@ def make_serverless_remote_pipe_one_proc(list_of_arg):
         operand_list.append(Operand(Arg.string_to_arg(arg)))
 
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
-        cmd_name="runtime/pashlib",
+        cmd_name=PASHLIB_RUNTIME,
         flag_option_list=[],
         operand_list=operand_list,
         access_map={},

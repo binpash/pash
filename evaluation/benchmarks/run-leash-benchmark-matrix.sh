@@ -86,6 +86,22 @@ if [[ ! -f "${BENCHMARK_INPUT_CONFIG}" ]]; then
     exit 2
 fi
 
+benchmark_name_to_s3_input_name() {
+    local name="$1"
+    case "$name" in
+        unixfun) echo "unix50" ;;
+        *) echo "$name" ;;
+    esac
+}
+
+benchmark_name_to_s3_output_name() {
+    local name="$1"
+    case "$name" in
+        unixfun) echo "unix50" ;;
+        *) echo "$name" ;;
+    esac
+}
+
 normalize_runner_mode_aliases() {
     local i
     local arg
@@ -518,6 +534,11 @@ if [ "${#SCRIPT_INPUT_WIDTH[@]}" -eq 0 ]; then
 fi
 
 BENCHMARK_DIR="${BENCHMARK_NAME}"
+S3_INPUT_BENCHMARK_DIR="$(benchmark_name_to_s3_input_name "${BENCHMARK_NAME}")"
+S3_OUTPUT_BENCHMARK_DIR="$(benchmark_name_to_s3_output_name "${BENCHMARK_NAME}")"
+echo "Benchmark: ${BENCHMARK_NAME}"
+echo "Input benchmark S3 prefix: ${S3_INPUT_BENCHMARK_DIR}"
+echo "Output benchmark S3 prefix: ${S3_OUTPUT_BENCHMARK_DIR}"
 
 # Check AWS_BUCKET is set
 if [ -z "${AWS_BUCKET:-}" ]; then
@@ -587,10 +608,10 @@ run_pash_with_timing() {
     fi
     if [ "$enable_s3" = "true" ]; then
         LEASH_ENTRIES=${LEASH_ENTRIES:-1}
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$benchmark_dir/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$S3_OUTPUT_BENCHMARK_DIR=" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$benchmark_dir/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$S3_OUTPUT_BENCHMARK_DIR" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
@@ -639,7 +660,7 @@ fetch_logs_and_cost() {
 # Download output and store LAST_LOCAL_FILE
 download_mode_output() {
     local mode_suffix="$1"
-    local out_prefix="$BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
+    local out_prefix="$S3_OUTPUT_BENCHMARK_DIR/outputs/$SCRIPT:$INPUT:$WIDTH:${mode_suffix}"
 
     if [ "$BENCHMARK_NAME" == "max-temp" ]; then
         local s3_key_1="${out_prefix}average.stdout.txt"
@@ -973,7 +994,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
 
     _cs_file_size=$(aws s3api head-object \
         --bucket "$AWS_BUCKET" \
-        --key "$BENCHMARK_DIR/inputs/$INPUT" \
+        --key "$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" \
         --query ContentLength --output text 2>/dev/null) || true
 
     if [ "$CHUNKS_MODE" = "fixed" ]; then
