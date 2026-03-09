@@ -1,8 +1,8 @@
 #!/bin/bash
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/web-index/input/5.txt}
-WEB_INDEX_DIR=${WEB_INDEX_DIR:-$PASH_TOP/evaluation/benchmarks/web-index/input}
-WIKI=${WIKI:-$PASH_TOP/evaluation/benchmarks/web-index/input/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/web-search/input/5.txt}
+WEB_INDEX_DIR=${WEB_INDEX_DIR:-$PASH_TOP/evaluation/benchmarks/web-search/input}
+WIKI=${WIKI:-$PASH_TOP/evaluation/benchmarks/web-search/input/}
 
 mkfifo {1,2,3}grams
 

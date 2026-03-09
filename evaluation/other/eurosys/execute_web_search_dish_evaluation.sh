@@ -23,7 +23,7 @@ done
 shift "$(( OPTIND - 1 ))"
 
 eval_dir="$PASH_TOP/evaluation/"
-directory="${eval_dir}/scripts/web-index/"
+directory="${eval_dir}/scripts/web-search/"
 results_dir="${eval_dir}/results/"
 input_dir="${HOME}/wikipedia/"
 
@@ -31,7 +31,7 @@ export IN="$input_dir/index_h_${input_number}.txt"
 export WIKI="${input_dir}"
 export WEB_INDEX_DIR="${directory}"
 
-web_index_script="${eval_dir}/scripts/web-index.sh"
+web_index_script="${eval_dir}/scripts/web-search.sh"
 
 temp_dir=web_index_tmp_results
 mkdir -p "$temp_dir"
@@ -39,9 +39,9 @@ mkdir -p "$temp_dir"
 seq_output="${temp_dir}/seq_output"
 pash_width_2_output="${temp_dir}/pash_2_output"
 pash_width_16_output="${temp_dir}/pash_16_output"
-seq_time="$results_dir/web-index-${input_number}-seq.time"
-pash_width_2_time="$results_dir/web-index-${input_number}-2-pash.time"
-pash_width_16_time="$results_dir/web-index-${input_number}-16-pash.time"
+seq_time="$results_dir/web-search-${input_number}-seq.time"
+pash_width_2_time="$results_dir/web-search-${input_number}-2-pash.time"
+pash_width_16_time="$results_dir/web-search-${input_number}-16-pash.time"
 
 echo "Executing the script with bash..."
 { time /bin/bash $web_index_script > $seq_output ; } 2> >(tee "${seq_time}" >&2)

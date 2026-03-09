@@ -39,11 +39,11 @@ setup_dataset() {
 }
 
 source_var() {
-  export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
-  export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
+  export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-search/input
+  export WIKI=$PASH_TOP/evaluation/benchmarks/web-search/input/
   if [[ "$1" == "--small" ]]; then
-    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt
+    export IN=$PASH_TOP/evaluation/benchmarks/web-search/input/500.txt
   else
-    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
+    export IN=$PASH_TOP/evaluation/benchmarks/web-search/input/1000.txt
   fi
 }

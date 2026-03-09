@@ -59,10 +59,10 @@ nlp_pash
 
 compare_outputs "nlp/outputs"
 
-web-index
-web-index_pash
+web-search
+web-search_pash
 
-compare_outputs "web-index/outputs"
+compare_outputs "web-search/outputs"
 
 analytics-mts
 analytics-mts_pash
