@@ -834,11 +834,17 @@ fn spawn_resumability_listener(
                         
                     }
                     Err(err) => {
-                        info!(
-                            error = %err,
-                            "[receiver.rs][{}] control channel read failed",
-                            rdv_tag
-                        );
+                        let suppress = err
+                            .downcast_ref::<std::io::Error>()
+                            .map(|e| e.kind() == std::io::ErrorKind::UnexpectedEof)
+                            .unwrap_or(false);
+                        if !suppress {
+                            info!(
+                                error = %err,
+                                "[receiver.rs][{}] control channel read failed",
+                                rdv_tag
+                            );
+                        }
                     }
                 }
             }

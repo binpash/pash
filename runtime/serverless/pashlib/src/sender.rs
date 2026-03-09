@@ -211,10 +211,16 @@ pub async fn send(
             if let Err(err) =
                 monitor_resumability_and_forward(&me, &peer, &rdv_key, &md, shutdown_rx).await
             {
-                info!(
-                    error = %err,
-                    "[sender.rs] resumability monitor failed"
-                );
+                let suppress = err
+                    .downcast_ref::<std::io::Error>()
+                    .map(|e| e.kind() == std::io::ErrorKind::UnexpectedEof)
+                    .unwrap_or(false);
+                if !suppress {
+                    info!(
+                        error = %err,
+                        "[sender.rs] resumability monitor failed"
+                    );
+                }
             }
         });
         (Some(shutdown_tx), Some(handle))
