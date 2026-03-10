@@ -215,7 +215,7 @@ def add_common_arguments(parser):
     parser.add_argument("--ec2_width",
                         type=int,
                         help="(experimental) set data-parallelism factor for EC2 execution (only valid with --no-resplitting)",
-                        default=16)
+                        default=os.cpu_count())
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
