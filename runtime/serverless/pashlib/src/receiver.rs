@@ -337,6 +337,10 @@ impl RawReader {
     where
         R: AsyncRead + Unpin,
     {
+        info!(
+            "[receiver.rs][{}] RawReader Starting reading data",
+            self.rdv_key
+        );
         // Stream bytes until the completion marker; track forwarded/skipped bytes for retries.
         let mut buf = [0u8; 8192];
         // Number of bytes forwarded to downstream in this attempt.
@@ -540,6 +544,10 @@ impl ChunkReader {
     where
         R: AsyncRead + Unpin,
     {
+        info!(
+            "[receiver.rs][{}] ChunkReader Starting reading data",
+            self._rdv_key
+        );
         let mut buf = [0u8; 8192];
         // Retry dedup state:
         // - We do not skip already completed chunks here. Recovery restarts from

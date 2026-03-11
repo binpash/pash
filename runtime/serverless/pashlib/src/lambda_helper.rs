@@ -13,7 +13,7 @@ fn short_rdv_key(rdv_key: &str) -> &str {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LambdaInvokePayload {
-    pub leash_job_id: String,
+    pub job_id: String,
     pub folder_ids: Vec<String>,
     pub ids: Vec<String>,
     pub chunk_start_idx: u32,
@@ -55,7 +55,7 @@ pub async fn invoke_lambda(
     rdv_key: &str,
 ) -> Result<()> {
     let payload = LambdaInvokePayload {
-        leash_job_id: metadata.leash_job_id.clone(),
+        job_id: metadata.leash_job_id.clone(),
         folder_ids: vec![metadata.folder_id.clone()],
         ids: vec![metadata.script_id.clone()],
         chunk_start_idx,
@@ -64,7 +64,7 @@ pub async fn invoke_lambda(
     let rdv_key = short_rdv_key(rdv_key);
     info!(
         function_name = %function_name,
-        leash_job_id = %payload.leash_job_id,
+        job_id = %payload.job_id,
         folder_ids = ?payload.folder_ids,
         ids = ?payload.ids,
         chunk_start_idx = payload.chunk_start_idx,

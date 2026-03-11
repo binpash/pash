@@ -2,12 +2,13 @@ use pash_sls_lib::recovery::FtExecutor;
 use tracing::Level;
 
 fn log_level_from_env() -> Level {
-    let v = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+    let v = std::env::var("RUST_LOG").unwrap_or_else(|_| "warn".to_string());
     match v.to_ascii_lowercase().as_str() {
         "trace" => Level::TRACE,
         "debug" => Level::DEBUG,
         "warn" => Level::WARN,
         "error" => Level::ERROR,
+        "info" => Level::INFO,
         _ => Level::WARN,
     }
 }
