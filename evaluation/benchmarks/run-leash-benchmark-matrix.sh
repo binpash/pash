@@ -91,6 +91,9 @@ benchmark_name_to_s3_input_name() {
     case "$name" in
         unixfun) echo "unix50" ;;
         covid) echo "covid-mts" ;;
+        weather) echo "max-temp" ;;
+        file-enc) echo "log-analysis" ;;
+        analytics) echo "log-analysis" ;;
         *) echo "$name" ;;
     esac
 }
@@ -100,6 +103,8 @@ benchmark_name_to_s3_output_name() {
     case "$name" in
         unixfun) echo "unix50" ;;
         covid) echo "covid-mts" ;;
+        weather) echo "max-temp" ;;
+        analytics) echo "log-analysis" ;;
         *) echo "$name" ;;
     esac
 }

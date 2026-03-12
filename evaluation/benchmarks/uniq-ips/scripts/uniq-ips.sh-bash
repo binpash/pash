@@ -1,0 +1,1 @@
+python3 $PASH_TOP/aws/s3-get-object.py "$IN" /dev/stdout | sort | uniq | python3 $PASH_TOP/aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

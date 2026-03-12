@@ -20,7 +20,7 @@ S3_BENCHMARK_DIR="uniq-ips"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS=(
-  logs-popcount-org.txt
+  logs-popcount-org-large.txt
 )
 
 for INPUT in "${INPUTS[@]}"; do

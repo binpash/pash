@@ -351,7 +351,7 @@ def main():
         req_path = f"/tmp/pash_resume_{script_id or 'unknown'}.req"
         ack_path = f"/tmp/pash_resume_{script_id or 'unknown'}.ack"
         req_fifo = None
-        print(f"[s3-chunk-reader-approx-correction.py] resume_timeout_sec={resume_timeout_sec}s script_id={script_id} is_stateless={is_stateless} window_after_vec={window_after_vec} window_size={window_size} initial_overlap={initial_overlap}", file=sys.stderr, flush=True)
+        print(f"[s3-chunk-reader-approx-correction.py][{_now_ts()}] resume_timeout_sec={resume_timeout_sec}s script_id={script_id} is_stateless={is_stateless} window_after_vec={window_after_vec} window_size={window_size} initial_overlap={initial_overlap}", file=sys.stderr, flush=True)
 
         bucket = os.environ.get("AWS_BUCKET")
         if not bucket:
@@ -464,6 +464,7 @@ def main():
 
         log_timing("COMPLETE", "Lambda complete", debug)
         print_timing_summary(debug)
+        print(f"[{_now_ts()}][MAIN {shard}] Finished processing. Total bytes written: {total_written}", file=sys.stderr, flush=True)
 
     except Exception as e:
         print(f"[{_now_ts()}][ERROR] Fatal exception in main: {e}", file=sys.stderr)

@@ -189,6 +189,10 @@ pub async fn send(
     fifo_name: &str,
 ) -> Result<LambdaMetadata> {
 
+    println!(
+        "[sender.rs][{}] Starting sender",
+        short_rdv_key(rdv_key)
+    );
     // Establish data connection, send metadata, and stream payload.
     let metadata = LambdaMetadata::from_env();
     let mut ctx = PashCtx::new(me, rdv_key).await;

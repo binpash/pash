@@ -20,16 +20,26 @@ if [ ! -f inputs/1M.txt ]; then
     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1M.txt
 fi
 
-if [ ! -f inputs/1G.txt ]; then
-    curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1G.txt' >inputs/1G.txt
+if [ ! -f inputs/50M.txt ]; then
+    touch inputs/50M.txt
 
-    if [ $? -ne 0 ]; then
-        echo 'cannot find 1G.txt -- please contact the developers of pash'
-        exit 1
-    fi
+    for i in {1..50}; do
+        cat inputs/1M.txt >>inputs/50M.txt
+    done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1G.txt
+    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/50M.txt
 fi
+
+# if [ ! -f inputs/1G.txt ]; then
+#     curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1G.txt' >inputs/1G.txt
+
+#     if [ $? -ne 0 ]; then
+#         echo 'cannot find 1G.txt -- please contact the developers of pash'
+#         exit 1
+#     fi
+
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1G.txt
+# fi
 
 # if [ ! -f inputs/3G.txt ]; then
 

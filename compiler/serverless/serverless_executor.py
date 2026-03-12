@@ -113,6 +113,14 @@ class ThreadSafeCounter:
                 break
         return self.value
 
+    def try_increment(self, num=1):
+        with self._lock:
+            if self.value > self.concurrency_limit - num:
+                return False
+            self.value += num
+            self.counter_history.append((time.time(), self.value))
+            return True
+
     def decrement(self, time_taken=0):
         with self._lock:
             self.value -= 1
@@ -141,6 +149,8 @@ class ServerlessManager:
         )
         self.concurrency_limit = 2000 # NOTE Changing this for leash invocation microbenchmark
         self.counter = ThreadSafeCounter(self.concurrency_limit)
+        self.ec2_concurrency_limit = max(os.cpu_count()//2,1)
+        self.ec2_counter = ThreadSafeCounter(self.ec2_concurrency_limit)
         self.ec2_enabled = True
         self.ec2_ip = "54.163.43.35" # "54.224.107.71" 
         self.ec2_port = 9999
@@ -159,7 +169,7 @@ class ServerlessManager:
         except Exception as e:
             log(f"EC2 failed {folder_ids} && {folder_ids}: {e}")
     
-    def run_local(self, script_id):
+    def run_local(self, script_id, use_ec2_slot=False):
         script_path = os.path.join(config.PASH_TMP_PREFIX, script_id)  
         process = subprocess.run(
             ["/bin/bash", script_path],
@@ -167,6 +177,8 @@ class ServerlessManager:
         )
         if process.returncode != 0:
             log(f"[Serverless Manager] Local execution failed for script {script_id}")
+        if use_ec2_slot:
+            self.ec2_counter.decrement()
         self.counter.decrement()
         return
 
@@ -211,9 +223,11 @@ class ServerlessManager:
 
             if request.startswith("Done"):
                 counter, total_time = self.counter.get_value()
-                while counter > 0:
+                ec2_counter, _ = self.ec2_counter.get_value()
+                while counter > 0 or ec2_counter > 0:
                     time.sleep(1)
                     counter, total_time = self.counter.get_value()
+                    ec2_counter, _ = self.ec2_counter.get_value()
                 self.counter.print_history()
                 log(f"[Serverless Manager] All jobs are done with total time: {total_time}")
                 response_msg = f"All jobs are done, shutting down the serverless manager"
@@ -304,6 +318,14 @@ class ServerlessManager:
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
                 else:
+                    if args.unlimited_lambda and self.ec2_enabled and self.ec2_counter.try_increment():
+                        invocation_thread = threading.Thread(
+                            target=self.run_local,
+                            args=(script_id, True),
+                        )
+                        invocation_thread.start()
+                        invocation_threads.append(invocation_thread)
+                        continue
                     # Apply crash flags only to the targeted lambda index (if set)
                     if lambda_crash_idx is not None and str(lambda_invoke_idx) != str(lambda_crash_idx):
                         effective_time_to_crash = None

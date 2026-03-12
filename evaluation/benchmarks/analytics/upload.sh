@@ -20,8 +20,8 @@ S3_BENCHMARK_DIR="analytics"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS_DIRS=(
-  log_data
-  pcap_data
+  log_data_heavy
+  pcap_data_heavy
   nginx-logs_small
   pcaps_small
   port_scan_small

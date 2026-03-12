@@ -5,7 +5,7 @@
 # Size flags are currently ignored for this benchmark.
 set_leash_benchmark_inputs() {
     SCRIPT_INPUT_WIDTH=(
-        "uniq-ips.sh:logs-popcount-org.txt:64"
+        "uniq-ips.sh:logs-popcount-org-large.txt:64"
         # Keep candidate inputs here if more cases are added later.
     )
 }
