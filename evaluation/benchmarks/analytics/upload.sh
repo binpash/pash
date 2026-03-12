@@ -22,6 +22,10 @@ S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 INPUTS_DIRS=(
   log_data
   pcap_data
+  nginx-logs_small
+  pcaps_small
+  port_scan_small
+  ray_tracing_small
 )
 
 # upload small inputs
