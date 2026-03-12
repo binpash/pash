@@ -127,6 +127,14 @@ normalize_runner_mode_aliases() {
 }
 
 cd "${BENCHMARK_PATH}" || exit 1
+
+# Make Go-installed binaries available (needed for port-scan/zannotate)
+export GOPATH="${GOPATH:-$HOME/go}"
+export PATH="$PATH:$GOPATH/bin"
+_go_local="${BENCHMARK_PATH}/go_install/go/bin"
+[ -d "$_go_local" ] && export PATH="$PATH:$_go_local"
+unset _go_local
+
 normalize_runner_mode_aliases
 set -- "${RUNNER_ARGS[@]}"
 
@@ -613,7 +621,7 @@ run_pash_with_timing() {
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_PATH/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
             $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
