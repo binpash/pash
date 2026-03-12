@@ -5,47 +5,52 @@ mkdir -p inputs
 cd inputs
 
 # download the input for the nginx logs and populate the dataset
-if [ ! -d log_data ]; then
+if [ ! -d log_data_heavy ]; then
     wget https://atlas-group.cs.brown.edu/data/nginx.zip
     unzip nginx.zip 
     rm nginx.zip
     # generating full analysis logs
-    mkdir -p log_data
-	LOG_DATA_FILES=84
+    mkdir -p log_data_heavy
+    LOG_DATA_FILES=1
     for (( i = 1; i <=$LOG_DATA_FILES; i++)) do
-        for j in nginx-logs/*;do
+        for j in nginx-logs/*; do
             n=$(basename $j)
-            cat $j > log_data/log${i}_${n}.log; 
+            # cal the times need to generate 500M data
+            iters=$((500 * 1024 * 1024 / $(stat -c%s "$j")))
+            for (( k = 1; k <= $iters; k++ )) do
+                cat $j >> log_data_heavy/log${i}0_500M_${n}_500M.log.log;
+            done
         done
     done
     echo "Nginx logs Generated"
 
-	# generating small analysis logs
-    mkdir -p log_data_small
-	LOG_DATA_FILES=6
-    for (( i = 1; i <=$LOG_DATA_FILES; i++)) do
-        for j in nginx-logs/*;do
-            n=$(basename $j)
-            cat $j > log_data_small/log${i}_${n}.log; 
-        done
-    done
-    echo "Nginx logs (small) Generated"
+	# # generating small analysis logs
+    # mkdir -p log_data_small
+	# LOG_DATA_FILES=6
+    # for (( i = 1; i <=$LOG_DATA_FILES; i++)) do
+    #     for j in nginx-logs/*;do
+    #         n=$(basename $j)
+    #         cat $j > log_data_small/log${i}_${n}.log; 
+    #     done
+    # done
+    # echo "Nginx logs (small) Generated"
 fi
 
 
-if [ ! -d pcap_data ]; then
+if [ ! -d pcap_data_heavy ]; then
   wget https://atlas-group.cs.brown.edu/data/pcaps.zip
   unzip pcaps.zip
   rm pcaps.zip
   # generates 20G
-  mkdir -p pcap_data/
-  PCAP_DATA_FILES=15
-  for (( i = 1; i <= $PCAP_DATA_FILES; i++ )) do
-      for j in pcaps/*;do
-          n=$(basename $j)
-          cat $j > pcap_data/pcap${i}_${n};
-      done
-  done
+  mkdir -p pcap_data_heavy/
+  PCAP_DATA_FILES=64
+    for j in pcaps/*;do
+        n=$(basename $j)
+        iters=$((20 * 1024 * 1024 * 1024 / $(stat -c%s "$j")))
+        for (( k = 1; k <= $iters; k++ )) do
+            cat $j >> pcap_data_heavy/500M_${n};
+        done
+    done
   echo "Pcaps Generated"
 fi
 
