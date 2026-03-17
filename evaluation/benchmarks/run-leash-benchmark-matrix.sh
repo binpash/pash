@@ -26,7 +26,7 @@ Usage:
   run-leash-benchmark-matrix.sh <benchmark-folder> [runner flags...]
 
 Runner flags include:
-  --noopt, --smart-prealigned, --approx-tail,
+  --noopt, --noopt-no-resplitting, --smart-prealigned, --approx-tail,
   --approx-dynamic, --approx-adaptive-gap, --approx-adaptive-simple,
   --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
@@ -145,6 +145,7 @@ set -- "${RUNNER_ARGS[@]}"
 
 MODE_FLAGS=(
     --noopt
+    --noopt-no-resplitting
     --smart-prealigned
     --approx-tail
     --approx-dynamic
@@ -322,6 +323,7 @@ validate_runner_flags
 
 # Parse mode flags
 RUN_NOOPT=false
+RUN_NOOPT_NO_RESPLITTING=false
 RUN_SMART_PREALIGNED=false
 RUN_APPROX_TAIL=false
 RUN_APPROX_DYNAMIC=false
@@ -334,8 +336,12 @@ PARALLEL_PIPELINES=false
 PARALLEL_PIPELINES_LIMIT=""
 RUN_APPROX_DYNAMIC_NO_RESPLITTING=false
 
-if [[ "$*" == *"--noopt"* ]]; then
+if [[ " $* " == *" --noopt "* ]]; then
     RUN_NOOPT=true
+fi
+
+if [[ " $* " == *" --noopt-no-resplitting "* ]]; then
+    RUN_NOOPT_NO_RESPLITTING=true
 fi
 
 if [[ "$*" == *"--smart-prealigned"* ]]; then
@@ -434,6 +440,7 @@ fi
 
 # If no mode flags specified, run all modes (default behavior)
 if [ "$RUN_NOOPT" = false ] && \
+   [ "$RUN_NOOPT_NO_RESPLITTING" = false ] && \
    [ "$RUN_SMART_PREALIGNED" = false ] && \
    [ "$RUN_APPROX_TAIL" = false ] && \
    [ "$RUN_APPROX_DYNAMIC" = false ] && \
@@ -442,6 +449,7 @@ if [ "$RUN_NOOPT" = false ] && \
    [ "$RUN_APPROX_ADAPTIVE_SINGLE_SHOT" = false ] && \
    [ "$RUN_APPROX_DYNAMIC_NO_RESPLITTING" = false ]; then
     RUN_NOOPT=true
+    RUN_NOOPT_NO_RESPLITTING=true
     RUN_SMART_PREALIGNED=true
     RUN_APPROX_TAIL=true
     RUN_APPROX_DYNAMIC=true
@@ -452,6 +460,7 @@ fi
 
 MODES=(
     noopt
+    noopt_no_resplitting
     s3_smart_prealigned
     s3_approx_tail_coord
     s3_approx_dynamic
@@ -471,6 +480,7 @@ declare -A MODE_BILLED_MS_LIST MODE_COST_LIST
 declare -A EC2_PRICE
 
 MODE_DESC[noopt]="WITHOUT S3 direct streaming optimization"
+MODE_DESC[noopt_no_resplitting]="WITHOUT S3 direct streaming optimization, WITHOUT resplitting"
 MODE_DESC[s3_smart_prealigned]="WITH S3 direct streaming - SMART prealigned chunks (EC2 boundary scan)"
 MODE_DESC[s3_approx_tail_coord]="WITH S3 direct streaming - APPROX chunks + tail coordination (legacy)"
 MODE_DESC[s3_approx_dynamic]="WITH S3 direct streaming - APPROX chunks + dynamic correction windows"
@@ -480,6 +490,7 @@ MODE_DESC[s3_approx_adaptive_single_shot]="WITH S3 direct streaming - APPROX chu
 MODE_DESC[s3_approx_dynamic_no_resplitting]="WITH S3 direct streaming - APPROX chunks + dynamic correction windows, WITHOUT resplitting and streaming to lambdas after direct s3"
 
 MODE_FLAG[noopt]="--noopt"
+MODE_FLAG[noopt_no_resplitting]="--noopt-no-resplitting --no_resplitting --ec2_width $(nproc)"
 MODE_FLAG[s3_smart_prealigned]="--smart-prealigned"
 MODE_FLAG[s3_approx_tail_coord]="--approx-tail"
 MODE_FLAG[s3_approx_dynamic]="--approx-dynamic"
@@ -489,6 +500,7 @@ MODE_FLAG[s3_approx_adaptive_single_shot]="--approx-adaptive-single-shot"
 MODE_FLAG[s3_approx_dynamic_no_resplitting]="--approx-dynamic --no_resplitting --ec2_width $(nproc)"
 
 MODE_ENV[noopt]="LEASH_DISABLE_PASHLIB_FT=true"
+MODE_ENV[noopt_no_resplitting]="LEASH_DISABLE_PASHLIB_FT=true NO_RESPLITTING=true"
 MODE_ENV[s3_smart_prealigned]="USE_SMART_BOUNDARIES=true"
 MODE_ENV[s3_approx_tail_coord]="USE_SMART_BOUNDARIES=false"
 MODE_ENV[s3_approx_dynamic]="USE_DYNAMIC_BOUNDARIES=true"
@@ -498,6 +510,7 @@ MODE_ENV[s3_approx_adaptive_single_shot]="USE_SINGLE_SHOT=true PASH_SINGLE_SHOT_
 MODE_ENV[s3_approx_dynamic_no_resplitting]="USE_DYNAMIC_BOUNDARIES=true NO_RESPLITTING=true"
 
 MODE_USES_CHUNKS_PER_LAMBDA[noopt]="false"
+MODE_USES_CHUNKS_PER_LAMBDA[noopt_no_resplitting]="false"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_smart_prealigned]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_tail_coord]="false"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic]="true"
@@ -507,6 +520,7 @@ MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_single_shot]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic_no_resplitting]="true"
 
 MODE_SUFFIX[noopt]="noopt"
+MODE_SUFFIX[noopt_no_resplitting]="nooptnoresplit"
 MODE_SUFFIX[s3_smart_prealigned]="s3smartprealigned"
 MODE_SUFFIX[s3_approx_tail_coord]="s3approxtailcoord"
 MODE_SUFFIX[s3_approx_dynamic]="s3approxdynamic"
@@ -516,6 +530,7 @@ MODE_SUFFIX[s3_approx_adaptive_single_shot]="s3approxadaptivesingleshot"
 MODE_SUFFIX[s3_approx_dynamic_no_resplitting]="s3approxdynamicnoresplit"
 
 MODE_ENABLE_S3[noopt]="false"
+MODE_ENABLE_S3[noopt_no_resplitting]="false"
 MODE_ENABLE_S3[s3_smart_prealigned]="true"
 MODE_ENABLE_S3[s3_approx_tail_coord]="true"
 MODE_ENABLE_S3[s3_approx_dynamic]="true"
@@ -525,6 +540,7 @@ MODE_ENABLE_S3[s3_approx_adaptive_single_shot]="true"
 MODE_ENABLE_S3[s3_approx_dynamic_no_resplitting]="true"
 
 MODE_ENABLED[noopt]="$RUN_NOOPT"
+MODE_ENABLED[noopt_no_resplitting]="$RUN_NOOPT_NO_RESPLITTING"
 MODE_ENABLED[s3_smart_prealigned]="$RUN_SMART_PREALIGNED"
 MODE_ENABLED[s3_approx_tail_coord]="$RUN_APPROX_TAIL"
 MODE_ENABLED[s3_approx_dynamic]="$RUN_APPROX_DYNAMIC"
@@ -626,8 +642,8 @@ run_pash_with_timing() {
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$BENCHMARK_PATH/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
-            $PASH_TOP/pa.sh --serverless_exec $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
+            $PASH_TOP/pa.sh --serverless_exec $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
 
@@ -759,6 +775,8 @@ run_mode() {
                 no_resplitting="--no_resplitting --ec2_width 1 --unlimited_lambda"
             fi
             echo "Running APPROX DYNAMIC NO RESPLITTING mode $no_resplitting"
+        elif [[ "$mode" == "noopt_no_resplitting" ]]; then
+            no_resplitting="--no_resplitting --ec2_width $(nproc)"
         fi
         run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix" "$no_resplitting"
         mode_wall_time="$LAST_WALL_TIME"

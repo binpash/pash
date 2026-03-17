@@ -373,8 +373,8 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
     #exit()
     #TODO careful with this exit
 
-    if args.no_resplitting:
-        lambda_subgraphs = []
+    lambda_subgraphs = []
+    if args.no_resplitting and args.enable_s3_direct:
         # preprocessing
         for subgraph in subgraphs:
             sink_nodes = subgraph.sink_nodes()
@@ -495,7 +495,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
                     if recover:
                         eager_edges.append((new_edge, matching_subgraph))
                     else:
-                        if not args.no_resplitting:
+                        if (not args.no_resplitting) and args.enable_s3_direct:
                             pash_compiler.add_eager(new_edge.get_ident(), matching_subgraph, file_id_gen)
 
             else: #similar to what is done here we want to add this node before the lambda pash node or in lieu of
@@ -846,7 +846,7 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
             stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(args_list)
             subgraph.add_node(stun_lib)
     
-    if args.no_resplitting and (not args.unlimited_lambda):
+    if args.no_resplitting and args.enable_s3_direct and (not args.unlimited_lambda):
         for subgraph in subgraphs:
             if subgraph not in lambda_subgraphs:
                 pash_compiler.add_eager_nodes(subgraph)
