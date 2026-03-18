@@ -28,7 +28,7 @@ Usage:
 Runner flags include:
   --noopt, --noopt-no-resplitting, --smart-prealigned, --approx-tail,
   --approx-dynamic, --approx-adaptive-gap, --approx-adaptive-simple,
-  --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N
+  --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N, --no-hybrid, --hybrid
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
   --time-to-crash N       Crash each lambda after N seconds (logs actual elapsed time)
   --chunk-start-idx N     Only process chunks with block_id >= N (default: 0)
@@ -171,6 +171,8 @@ ALL_ALLOWED_FLAGS=(
     --time-to-crash
     --chunk-start-idx
     --lambda-crash-idx
+    --no-hybrid
+    --hybrid
 )
 
 is_allowed_runner_flag() {
@@ -369,6 +371,32 @@ fi
 if [[ "$*" == *"--no-resplitting-approx-dynamic"* ]]; then
     RUN_APPROX_DYNAMIC_NO_RESPLITTING=true
 fi
+
+RUN_NO_HYBRID=false
+if [[ " $* " == *" --no-hybrid "* ]]; then
+    RUN_NO_HYBRID=true
+fi
+
+RUN_HYBRID=false
+if [[ " $* " == *" --hybrid "* ]]; then
+    RUN_HYBRID=true
+fi
+
+# Hybrid sweep: both flags → run hybrid then no-hybrid; one flag → single pass
+HYBRID_FLAGS_SWEEP=()
+HYBRID_LABELS_SWEEP=()
+if [ "$RUN_HYBRID" = "true" ] && [ "$RUN_NO_HYBRID" = "true" ]; then
+    HYBRID_FLAGS_SWEEP=("" "--no_hybrid")
+    HYBRID_LABELS_SWEEP=("" "_no_hybrid")
+elif [ "$RUN_NO_HYBRID" = "true" ]; then
+    HYBRID_FLAGS_SWEEP=("--no_hybrid")
+    HYBRID_LABELS_SWEEP=("_no_hybrid")
+else
+    HYBRID_FLAGS_SWEEP=("")
+    HYBRID_LABELS_SWEEP=("")
+fi
+CURRENT_HYBRID_FLAG=""
+CURRENT_HYBRID_LABEL=""
 
 if [[ "$*" == *"--parallel_pipelines"* ]]; then
     PARALLEL_PIPELINES=true
@@ -622,6 +650,7 @@ run_pash_with_timing() {
     local enable_s3="$2"
     local out_prefix="$3"
     local no_resplitting_flag="$4"
+    local no_hybrid_flag="$5"
     local start_ns
     local end_ns
 
@@ -640,10 +669,10 @@ run_pash_with_timing() {
     if [ "$enable_s3" = "true" ]; then
         LEASH_ENTRIES=${LEASH_ENTRIES:-1}
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
-            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
+            $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $no_hybrid_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
-            $PASH_TOP/pa.sh --serverless_exec $no_resplitting_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
+            $PASH_TOP/pa.sh --serverless_exec $no_resplitting_flag $no_hybrid_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     fi
     end_ns=$(date +%s%N)
 
@@ -727,7 +756,7 @@ run_mode() {
     local mode="$1"
     local mode_index="$2"
     local mode_total="$3"
-    local mode_suffix="${MODE_SUFFIX[$mode]}"
+    local mode_suffix="${MODE_SUFFIX[$mode]}${CURRENT_HYBRID_LABEL}"
     local mode_desc="${MODE_DESC[$mode]}"
     local mode_env="${MODE_ENV[$mode]}"
     if [ "${MODE_USES_CHUNKS_PER_LAMBDA[$mode]}" = "true" ]; then
@@ -778,7 +807,8 @@ run_mode() {
         elif [[ "$mode" == "noopt_no_resplitting" ]]; then
             no_resplitting="--no_resplitting --ec2_width $(nproc)"
         fi
-        run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix" "$no_resplitting"
+        no_hybrid="$CURRENT_HYBRID_FLAG"
+        run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix" "$no_resplitting" "$no_hybrid"
         mode_wall_time="$LAST_WALL_TIME"
         echo "[TIMING] ${mode} wall time: ${mode_wall_time}s"
 
@@ -1016,6 +1046,17 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             echo "######## chunk-size sweep: ${CHUNK_SIZE_MB} MB ########"
         fi
 
+        for _H_IDX in "${!HYBRID_FLAGS_SWEEP[@]}"; do
+            CURRENT_HYBRID_FLAG="${HYBRID_FLAGS_SWEEP[$_H_IDX]}"
+            CURRENT_HYBRID_LABEL="${HYBRID_LABELS_SWEEP[$_H_IDX]}"
+            if [ "${#HYBRID_FLAGS_SWEEP[@]}" -gt 1 ]; then
+                if [ -z "$CURRENT_HYBRID_LABEL" ]; then
+                    echo "######## hybrid sweep: hybrid (default) ########"
+                else
+                    echo "######## hybrid sweep: no-hybrid ########"
+                fi
+            fi
+
         for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     echo "========================================================================"
     echo "Running benchmark for $SCRIPT_INPUT"
@@ -1089,7 +1130,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             continue
         fi
 
-        mode_suffix="${MODE_SUFFIX[$mode]}"
+        mode_suffix="${MODE_SUFFIX[$mode]}${CURRENT_HYBRID_LABEL}"
         if [ "${MODE_ENABLED[$mode]}" != true ]; then
             continue
         fi
@@ -1110,7 +1151,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             if [ -z "$noopt_local_file" ] || [ ! -f "$noopt_local_file" ]; then
                 echo ""
                 echo "Downloading noopt output from S3..."
-                download_mode_output "${MODE_SUFFIX[noopt]}"
+                download_mode_output "${MODE_SUFFIX[noopt]}${CURRENT_HYBRID_LABEL}"
                 MODE_LOCAL_FILE[noopt]="$LAST_LOCAL_FILE"
                 noopt_local_file="$LAST_LOCAL_FILE"
                 echo ""
@@ -1215,6 +1256,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
     echo "========================================================================"
     echo ""
         done  # end for SCRIPT_INPUT
+        done  # end for _H_IDX (hybrid sweep)
     done  # end for _C (chunking sweep)
 done  # end for _W (width sweep)
 
@@ -1271,5 +1313,5 @@ head -n 5 "$RESULTS_CSV"
 # Clean up temporary comparison files
 echo ""
 echo "Cleaning up temporary files..."
-rm -f /tmp/compare_*.txt
+# rm -f /tmp/compare_*.txt
 echo "Done!"
