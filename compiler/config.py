@@ -212,6 +212,10 @@ def add_common_arguments(parser):
                         help="(experimental) do not limit the number of lambdas, only use when running unlimited parallelism",
                         action="store_true",
                         default=False)
+    parser.add_argument("--no_hybrid",
+                        help="Disable hybrid mode: run all scripts on Lambda instead of EC2+Lambda",
+                        action="store_true",
+                        default=False)
     parser.add_argument("--ec2_width",
                         type=int,
                         help="(experimental) set data-parallelism factor for EC2 execution (only valid with --no-resplitting)",
@@ -259,6 +263,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--parallel_pipelines")
     if (pash_arguments.daemon_communicates_through_unix_pipes):
         arguments.append("--daemon_communicates_through_unix_pipes")
+    if (pash_arguments.no_hybrid):
+        arguments.append("--no_hybrid")
     arguments.append("--r_split_batch_size")
     arguments.append(str(pash_arguments.r_split_batch_size))
     arguments.append("--debug")

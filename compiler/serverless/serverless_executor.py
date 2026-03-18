@@ -311,14 +311,14 @@ class ServerlessManager:
             for script_id, script in script_id_to_script.items():
                 if script_id == main_graph_script_id:
                     continue
-                if self.ec2_enabled and script_id in ec2_set:
+                if not args.no_hybrid and script_id in ec2_set:
                     # invocation_thread = threading.Thread(target=self.invoke_ec2, args=([s3_folder_id], [script_id]))
                     # print(">> Running script locally:", script_id)
                     invocation_thread = threading.Thread(target=self.run_local, args=(script_id,))
                     invocation_thread.start()
                     invocation_threads.append(invocation_thread)
                 else:
-                    if args.unlimited_lambda and self.ec2_enabled and self.ec2_counter.try_increment():
+                    if not args.no_hybrid and args.unlimited_lambda and self.ec2_counter.try_increment():
                         invocation_thread = threading.Thread(
                             target=self.run_local,
                             args=(script_id, True),
