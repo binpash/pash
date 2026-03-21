@@ -28,7 +28,8 @@ Usage:
 Runner flags include:
   --noopt, --noopt-no-resplitting, --smart-prealigned, --approx-tail,
   --approx-dynamic, --approx-adaptive-gap, --approx-adaptive-simple,
-  --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N, --no-hybrid, --hybrid
+  --approx-adaptive-single-shot, --small/--medium/--large, --skip-logs, --debug, --repeats N, --no-hybrid, --hybrid,
+  --verif / -v (skip running noopt; download existing noopt result from S3 for comparison; --noopt overrides)
   Short approx aliases: --approx-dyn, --approx-gap, --approx-simple, --approx-single, --approx-ss
   --time-to-crash N       Crash each lambda after N seconds (logs actual elapsed time)
   --chunk-start-idx N     Only process chunks with block_id >= N (default: 0)
@@ -173,6 +174,9 @@ ALL_ALLOWED_FLAGS=(
     --lambda-crash-idx
     --no-hybrid
     --hybrid
+    --verif
+    -v
+    --v
 )
 
 is_allowed_runner_flag() {
@@ -372,6 +376,11 @@ if [[ "$*" == *"--no-resplitting-approx-dynamic"* ]]; then
     RUN_APPROX_DYNAMIC_NO_RESPLITTING=true
 fi
 
+RUN_VERIF=false
+if [[ "$*" == *"--verif"* ]] || [[ " $* " == *" -v "* ]]; then
+    RUN_VERIF=true
+fi
+
 RUN_NO_HYBRID=false
 if [[ " $* " == *" --no-hybrid "* ]]; then
     RUN_NO_HYBRID=true
@@ -484,6 +493,13 @@ if [ "$RUN_NOOPT" = false ] && \
     RUN_APPROX_ADAPTIVE_GAP=true
     RUN_APPROX_ADAPTIVE_SIMPLE=true
     RUN_APPROX_ADAPTIVE_SINGLE_SHOT=true
+fi
+
+# --noopt overrides --verif: if both specified, noopt runs normally and verif is disabled
+if [ "$RUN_VERIF" = "true" ] && [ "$RUN_NOOPT" = "true" ]; then
+    RUN_VERIF=false
+elif [ "$RUN_VERIF" = "true" ]; then
+    RUN_NOOPT=false
 fi
 
 MODES=(
@@ -1147,7 +1163,30 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
         MODE_LOCAL_FILE[$mode]="$LAST_LOCAL_FILE"
         echo ""
 
-        if [ "${MODE_ENABLED[noopt]}" = true ]; then
+        # --verif: scan S3 for an existing noopt result matching same script+input (any width)
+        if [ "$RUN_VERIF" = "true" ] && { [ -z "$noopt_local_file" ] || [ ! -f "$noopt_local_file" ]; }; then
+            echo ""
+            echo "Looking for existing noopt output on S3 (--verif mode, any width)..."
+            noopt_s3_obj=$(aws s3 ls "s3://$AWS_BUCKET/$S3_OUTPUT_BENCHMARK_DIR/outputs/${SCRIPT}:${INPUT}:" 2>/dev/null \
+                | awk '{print $NF}' \
+                | grep -E "^${SCRIPT}:${INPUT}:[^:]+:nooptstdout\\.txt$" \
+                | head -1)
+            if [ -n "$noopt_s3_obj" ]; then
+                echo "Found noopt result: $noopt_s3_obj"
+                noopt_s3_key="$S3_OUTPUT_BENCHMARK_DIR/outputs/$noopt_s3_obj"
+                noopt_verif_local="/tmp/compare_noopt_verif_${SCRIPT//\//_}_${INPUT}.txt"
+                if download_s3_output "$noopt_s3_key" "$noopt_verif_local"; then
+                    noopt_local_file="$noopt_verif_local"
+                else
+                    echo "✗ Could not download noopt output for verif comparison"
+                fi
+            else
+                echo "✗ No noopt result found on S3 for $SCRIPT:$INPUT (any width)"
+            fi
+            echo ""
+        fi
+
+        if [ "${MODE_ENABLED[noopt]}" = true ] || [ -n "$noopt_local_file" ]; then
             if [ -z "$noopt_local_file" ] || [ ! -f "$noopt_local_file" ]; then
                 echo ""
                 echo "Downloading noopt output from S3..."
