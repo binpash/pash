@@ -154,6 +154,10 @@ MODE_FLAGS=(
     --approx-adaptive-simple
     --approx-adaptive-single-shot
     --no-resplitting-approx-dynamic
+    --noopt-no-hybrid
+    --noopt-no-resplitting-no-hybrid
+    --approx-dynamic-no-hybrid
+    --no-resplitting-approx-dynamic-no-hybrid
 )
 
 ALL_ALLOWED_FLAGS=(
@@ -358,7 +362,7 @@ if [[ "$*" == *"--approx-tail"* ]]; then
     RUN_APPROX_TAIL=true
 fi
 
-if [[ "$*" == *"--approx-dynamic"* ]]; then
+if [[ " $* " == *" --approx-dynamic "* ]]; then
     RUN_APPROX_DYNAMIC=true
 fi
 
@@ -372,7 +376,7 @@ if [[ "$*" == *"--approx-adaptive-single-shot"* ]]; then
     RUN_APPROX_ADAPTIVE_SINGLE_SHOT=true
 fi
 
-if [[ "$*" == *"--no-resplitting-approx-dynamic"* ]]; then
+if [[ " $* " == *" --no-resplitting-approx-dynamic "* ]]; then
     RUN_APPROX_DYNAMIC_NO_RESPLITTING=true
 fi
 
@@ -386,26 +390,29 @@ if [[ " $* " == *" --no-hybrid "* ]]; then
     RUN_NO_HYBRID=true
 fi
 
+# Combined --*-no-hybrid convenience flags (imply --no-hybrid + the base mode flag)
+if [[ " $* " == *" --noopt-no-hybrid "* ]]; then
+    RUN_NOOPT=true
+    RUN_NO_HYBRID=true
+fi
+if [[ " $* " == *" --noopt-no-resplitting-no-hybrid "* ]]; then
+    RUN_NOOPT_NO_RESPLITTING=true
+    RUN_NO_HYBRID=true
+fi
+if [[ " $* " == *" --approx-dynamic-no-hybrid "* ]]; then
+    RUN_APPROX_DYNAMIC=true
+    RUN_NO_HYBRID=true
+fi
+if [[ " $* " == *" --no-resplitting-approx-dynamic-no-hybrid "* ]]; then
+    RUN_APPROX_DYNAMIC_NO_RESPLITTING=true
+    RUN_NO_HYBRID=true
+fi
+
 RUN_HYBRID=false
 if [[ " $* " == *" --hybrid "* ]]; then
     RUN_HYBRID=true
 fi
 
-# Hybrid sweep: both flags → run hybrid then no-hybrid; one flag → single pass
-HYBRID_FLAGS_SWEEP=()
-HYBRID_LABELS_SWEEP=()
-if [ "$RUN_HYBRID" = "true" ] && [ "$RUN_NO_HYBRID" = "true" ]; then
-    HYBRID_FLAGS_SWEEP=("" "--no_hybrid")
-    HYBRID_LABELS_SWEEP=("" "_no_hybrid")
-elif [ "$RUN_NO_HYBRID" = "true" ]; then
-    HYBRID_FLAGS_SWEEP=("--no_hybrid")
-    HYBRID_LABELS_SWEEP=("_no_hybrid")
-else
-    HYBRID_FLAGS_SWEEP=("")
-    HYBRID_LABELS_SWEEP=("")
-fi
-CURRENT_HYBRID_FLAG=""
-CURRENT_HYBRID_LABEL=""
 
 if [[ "$*" == *"--parallel_pipelines"* ]]; then
     PARALLEL_PIPELINES=true
@@ -512,6 +519,10 @@ MODES=(
     s3_approx_adaptive_simple
     s3_approx_adaptive_single_shot
     s3_approx_dynamic_no_resplitting
+    noopt_no_hybrid
+    noopt_no_resplitting_no_hybrid
+    s3_approx_dynamic_no_hybrid
+    s3_approx_dynamic_no_resplitting_no_hybrid
 )
 
 # Reader strategy mapping:
@@ -532,6 +543,10 @@ MODE_DESC[s3_approx_adaptive_gap]="WITH S3 direct streaming - APPROX chunks + ad
 MODE_DESC[s3_approx_adaptive_simple]="WITH S3 direct streaming - APPROX chunks + adaptive simple (fixed sampled window)"
 MODE_DESC[s3_approx_adaptive_single_shot]="WITH S3 direct streaming - APPROX chunks + adaptive single-shot sampled window"
 MODE_DESC[s3_approx_dynamic_no_resplitting]="WITH S3 direct streaming - APPROX chunks + dynamic correction windows, WITHOUT resplitting and streaming to lambdas after direct s3"
+MODE_DESC[noopt_no_hybrid]="WITHOUT S3 direct streaming optimization, no hybrid"
+MODE_DESC[noopt_no_resplitting_no_hybrid]="WITHOUT S3 direct streaming optimization, WITHOUT resplitting, no hybrid"
+MODE_DESC[s3_approx_dynamic_no_hybrid]="WITH S3 direct streaming - APPROX chunks + dynamic correction windows, no hybrid"
+MODE_DESC[s3_approx_dynamic_no_resplitting_no_hybrid]="WITH S3 direct streaming - APPROX chunks + dynamic correction windows, WITHOUT resplitting and streaming to lambdas after direct s3, no hybrid"
 
 MODE_FLAG[noopt]="--noopt"
 MODE_FLAG[noopt_no_resplitting]="--noopt-no-resplitting --no_resplitting --ec2_width $(nproc)"
@@ -542,6 +557,10 @@ MODE_FLAG[s3_approx_adaptive_gap]="--approx-adaptive-gap"
 MODE_FLAG[s3_approx_adaptive_simple]="--approx-adaptive-simple"
 MODE_FLAG[s3_approx_adaptive_single_shot]="--approx-adaptive-single-shot"
 MODE_FLAG[s3_approx_dynamic_no_resplitting]="--approx-dynamic --no_resplitting --ec2_width $(nproc)"
+MODE_FLAG[noopt_no_hybrid]="--noopt"
+MODE_FLAG[noopt_no_resplitting_no_hybrid]="--noopt-no-resplitting --no_resplitting --ec2_width $(nproc)"
+MODE_FLAG[s3_approx_dynamic_no_hybrid]="--approx-dynamic"
+MODE_FLAG[s3_approx_dynamic_no_resplitting_no_hybrid]="--approx-dynamic --no_resplitting --ec2_width $(nproc)"
 
 MODE_ENV[noopt]="LEASH_DISABLE_PASHLIB_FT=true"
 MODE_ENV[noopt_no_resplitting]="LEASH_DISABLE_PASHLIB_FT=true NO_RESPLITTING=true"
@@ -552,6 +571,10 @@ MODE_ENV[s3_approx_adaptive_gap]="USE_ADAPTIVE_BOUNDARIES=true PASH_GAP_SAMPLE_K
 MODE_ENV[s3_approx_adaptive_simple]="USE_ADAPTIVE_SIMPLE=true PASH_ADAPTIVE_SIMPLE_NUM_SAMPLES=5 PASH_ADAPTIVE_SIMPLE_SAMPLE_KB=256 PASH_ADAPTIVE_SIMPLE_SAFETY_FACTOR=1.5"
 MODE_ENV[s3_approx_adaptive_single_shot]="USE_SINGLE_SHOT=true PASH_SINGLE_SHOT_SAMPLE_KB=256 PASH_SINGLE_SHOT_SAFETY_FACTOR=2.0"
 MODE_ENV[s3_approx_dynamic_no_resplitting]="USE_DYNAMIC_BOUNDARIES=true NO_RESPLITTING=true"
+MODE_ENV[noopt_no_hybrid]="LEASH_DISABLE_PASHLIB_FT=true"
+MODE_ENV[noopt_no_resplitting_no_hybrid]="LEASH_DISABLE_PASHLIB_FT=true NO_RESPLITTING=true"
+MODE_ENV[s3_approx_dynamic_no_hybrid]="USE_DYNAMIC_BOUNDARIES=true"
+MODE_ENV[s3_approx_dynamic_no_resplitting_no_hybrid]="USE_DYNAMIC_BOUNDARIES=true NO_RESPLITTING=true"
 
 MODE_USES_CHUNKS_PER_LAMBDA[noopt]="false"
 MODE_USES_CHUNKS_PER_LAMBDA[noopt_no_resplitting]="false"
@@ -562,6 +585,10 @@ MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_gap]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_simple]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_adaptive_single_shot]="true"
 MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic_no_resplitting]="true"
+MODE_USES_CHUNKS_PER_LAMBDA[noopt_no_hybrid]="false"
+MODE_USES_CHUNKS_PER_LAMBDA[noopt_no_resplitting_no_hybrid]="false"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic_no_hybrid]="true"
+MODE_USES_CHUNKS_PER_LAMBDA[s3_approx_dynamic_no_resplitting_no_hybrid]="true"
 
 MODE_SUFFIX[noopt]="noopt"
 MODE_SUFFIX[noopt_no_resplitting]="nooptnoresplit"
@@ -572,6 +599,10 @@ MODE_SUFFIX[s3_approx_adaptive_gap]="s3approxadaptivegap"
 MODE_SUFFIX[s3_approx_adaptive_simple]="s3approxadaptivesimple"
 MODE_SUFFIX[s3_approx_adaptive_single_shot]="s3approxadaptivesingleshot"
 MODE_SUFFIX[s3_approx_dynamic_no_resplitting]="s3approxdynamicnoresplit"
+MODE_SUFFIX[noopt_no_hybrid]="noopt_no_hybrid"
+MODE_SUFFIX[noopt_no_resplitting_no_hybrid]="nooptnoresplit_no_hybrid"
+MODE_SUFFIX[s3_approx_dynamic_no_hybrid]="s3approxdynamic_no_hybrid"
+MODE_SUFFIX[s3_approx_dynamic_no_resplitting_no_hybrid]="s3approxdynamicnoresplit_no_hybrid"
 
 MODE_ENABLE_S3[noopt]="false"
 MODE_ENABLE_S3[noopt_no_resplitting]="false"
@@ -582,6 +613,10 @@ MODE_ENABLE_S3[s3_approx_adaptive_gap]="true"
 MODE_ENABLE_S3[s3_approx_adaptive_simple]="true"
 MODE_ENABLE_S3[s3_approx_adaptive_single_shot]="true"
 MODE_ENABLE_S3[s3_approx_dynamic_no_resplitting]="true"
+MODE_ENABLE_S3[noopt_no_hybrid]="false"
+MODE_ENABLE_S3[noopt_no_resplitting_no_hybrid]="false"
+MODE_ENABLE_S3[s3_approx_dynamic_no_hybrid]="true"
+MODE_ENABLE_S3[s3_approx_dynamic_no_resplitting_no_hybrid]="true"
 
 MODE_ENABLED[noopt]="$RUN_NOOPT"
 MODE_ENABLED[noopt_no_resplitting]="$RUN_NOOPT_NO_RESPLITTING"
@@ -592,6 +627,26 @@ MODE_ENABLED[s3_approx_adaptive_gap]="$RUN_APPROX_ADAPTIVE_GAP"
 MODE_ENABLED[s3_approx_adaptive_simple]="$RUN_APPROX_ADAPTIVE_SIMPLE"
 MODE_ENABLED[s3_approx_adaptive_single_shot]="$RUN_APPROX_ADAPTIVE_SINGLE_SHOT"
 MODE_ENABLED[s3_approx_dynamic_no_resplitting]="$RUN_APPROX_DYNAMIC_NO_RESPLITTING"
+
+# Adjust for hybrid/no-hybrid selection (only for the 4 no_hybrid-capable modes)
+_NH_CAPABLE=(noopt noopt_no_resplitting s3_approx_dynamic s3_approx_dynamic_no_resplitting)
+if [ "$RUN_NO_HYBRID" = "true" ] && [ "$RUN_HYBRID" != "true" ]; then
+    # --no-hybrid only: enable no_hybrid variants, disable base variants
+    for _nh_mode in "${_NH_CAPABLE[@]}"; do
+        MODE_ENABLED[${_nh_mode}_no_hybrid]="${MODE_ENABLED[$_nh_mode]}"
+        MODE_ENABLED[$_nh_mode]="false"
+    done
+elif [ "$RUN_NO_HYBRID" = "true" ] && [ "$RUN_HYBRID" = "true" ]; then
+    # both --hybrid and --no-hybrid: keep base, also enable no_hybrid variants
+    for _nh_mode in "${_NH_CAPABLE[@]}"; do
+        MODE_ENABLED[${_nh_mode}_no_hybrid]="${MODE_ENABLED[$_nh_mode]}"
+    done
+else
+    # neither --no-hybrid nor both: disable all _no_hybrid variants
+    for _nh_mode in "${_NH_CAPABLE[@]}"; do
+        MODE_ENABLED[${_nh_mode}_no_hybrid]="false"
+    done
+fi
 
 MODE_IS_BASELINE[noopt]="true"
 
@@ -772,7 +827,7 @@ run_mode() {
     local mode="$1"
     local mode_index="$2"
     local mode_total="$3"
-    local mode_suffix="${MODE_SUFFIX[$mode]}${CURRENT_HYBRID_LABEL}"
+    local mode_suffix="${MODE_SUFFIX[$mode]}"
     local mode_desc="${MODE_DESC[$mode]}"
     local mode_env="${MODE_ENV[$mode]}"
     if [ "${MODE_USES_CHUNKS_PER_LAMBDA[$mode]}" = "true" ]; then
@@ -814,16 +869,19 @@ run_mode() {
         local mode_wall_time
 
         no_resplitting=""
-        if [[ "$mode" == "s3_approx_dynamic_no_resplitting" ]]; then
+        if [[ "$mode" == "s3_approx_dynamic_no_resplitting" || "$mode" == "s3_approx_dynamic_no_resplitting_no_hybrid" ]]; then
             no_resplitting="--no_resplitting --ec2_width $(nproc)"
             if [[ " nlp file-enc media-conv analytics " == *" $BENCHMARK_NAME "* ]]; then
                 no_resplitting="--no_resplitting --ec2_width 1 --unlimited_lambda"
             fi
             echo "Running APPROX DYNAMIC NO RESPLITTING mode $no_resplitting"
-        elif [[ "$mode" == "noopt_no_resplitting" ]]; then
+        elif [[ "$mode" == "noopt_no_resplitting" || "$mode" == "noopt_no_resplitting_no_hybrid" ]]; then
             no_resplitting="--no_resplitting --ec2_width $(nproc)"
         fi
-        no_hybrid="$CURRENT_HYBRID_FLAG"
+        no_hybrid=""
+        if [[ "$mode" == *"_no_hybrid" ]]; then
+            no_hybrid="--no_hybrid"
+        fi
         run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix" "$no_resplitting" "$no_hybrid"
         mode_wall_time="$LAST_WALL_TIME"
         echo "[TIMING] ${mode} wall time: ${mode_wall_time}s"
@@ -1062,17 +1120,6 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             echo "######## chunk-size sweep: ${CHUNK_SIZE_MB} MB ########"
         fi
 
-        for _H_IDX in "${!HYBRID_FLAGS_SWEEP[@]}"; do
-            CURRENT_HYBRID_FLAG="${HYBRID_FLAGS_SWEEP[$_H_IDX]}"
-            CURRENT_HYBRID_LABEL="${HYBRID_LABELS_SWEEP[$_H_IDX]}"
-            if [ "${#HYBRID_FLAGS_SWEEP[@]}" -gt 1 ]; then
-                if [ -z "$CURRENT_HYBRID_LABEL" ]; then
-                    echo "######## hybrid sweep: hybrid (default) ########"
-                else
-                    echo "######## hybrid sweep: no-hybrid ########"
-                fi
-            fi
-
         for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     echo "========================================================================"
     echo "Running benchmark for $SCRIPT_INPUT"
@@ -1146,7 +1193,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             continue
         fi
 
-        mode_suffix="${MODE_SUFFIX[$mode]}${CURRENT_HYBRID_LABEL}"
+        mode_suffix="${MODE_SUFFIX[$mode]}"
         if [ "${MODE_ENABLED[$mode]}" != true ]; then
             continue
         fi
@@ -1186,11 +1233,11 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             echo ""
         fi
 
-        if [ "${MODE_ENABLED[noopt]}" = true ] || [ -n "$noopt_local_file" ]; then
+        if [ "${MODE_ENABLED[noopt]}" = true ] || [ "${MODE_ENABLED[noopt_no_hybrid]}" = true ] || [ -n "$noopt_local_file" ]; then
             if [ -z "$noopt_local_file" ] || [ ! -f "$noopt_local_file" ]; then
                 echo ""
                 echo "Downloading noopt output from S3..."
-                download_mode_output "${MODE_SUFFIX[noopt]}${CURRENT_HYBRID_LABEL}"
+                download_mode_output "${MODE_SUFFIX[noopt]}"
                 MODE_LOCAL_FILE[noopt]="$LAST_LOCAL_FILE"
                 noopt_local_file="$LAST_LOCAL_FILE"
                 echo ""
@@ -1295,7 +1342,6 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
     echo "========================================================================"
     echo ""
         done  # end for SCRIPT_INPUT
-        done  # end for _H_IDX (hybrid sweep)
     done  # end for _C (chunking sweep)
 done  # end for _W (width sweep)
 
