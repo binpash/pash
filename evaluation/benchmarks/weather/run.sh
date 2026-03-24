@@ -56,12 +56,12 @@ CONFIGS=(
 if [[ "$*" == *"--small"* ]]
 then
   SCRIPTS_INPUTS=(
-    weather-process.sh:temperatures_small.txt
+    temp-analytics.sh:temperatures_small.txt
   )
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
-    weather-process.sh:temperatures.2015.txt
+    temp-analytics.sh:temperatures.2015.txt
   )
   INPUT_TYPE=""
 fi

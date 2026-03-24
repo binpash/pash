@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")" || exit 1
 
-SCRIPT=weather-process.sh
+SCRIPT=temp-analytics.sh
 INPUT=temperatures.2015.txt
 # INPUT=temperatures_1G.txt
 WIDTH=16

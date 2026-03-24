@@ -5,6 +5,6 @@
 # Size flags are currently ignored for this benchmark.
 set_leash_benchmark_inputs() {
     SCRIPT_INPUT_WIDTH=(
-        "weather-process.sh:temperatures.2015.txt:64"
+        "temp-analytics.sh:temperatures.2015.txt:64"
     )
 }

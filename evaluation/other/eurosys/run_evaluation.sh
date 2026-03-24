@@ -178,7 +178,7 @@ echo "Section 6.3: Use Case: NOAA Weather Analysis"
 ##
 ## This runs:
 ## - `evaluation/scripts/weather-preprocess.sh`
-## - `evaluation/scripts/weather-process.sh`
+## - `evaluation/scripts/temp-analytics.sh`
 ##
 ## with bash, and pash --width 16. It saves results in:
 ## - `evaluation/results/weather-preprocess-2000-2000-seq.time`
