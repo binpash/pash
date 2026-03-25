@@ -1,4 +1,4 @@
-#!/usr/bin/node
+#!/usr/bin/env node
 
 var readline = require('readline');
 var natural = require('natural');
