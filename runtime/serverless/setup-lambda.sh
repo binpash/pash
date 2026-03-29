@@ -155,6 +155,7 @@ rm -f "${ZIP_NAME}"
 # Exclude resumability/** and common junk.
 zip -r "${ZIP_NAME}" \
   "lambda-function.py" \
+  "test.sh" \
   "runtime" \
   "aws" \
   -x "resumability/*" "resumability/**" \

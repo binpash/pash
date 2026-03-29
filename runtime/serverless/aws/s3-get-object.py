@@ -5,9 +5,8 @@ import os
 
 BUCKET=os.environ.get("AWS_BUCKET")
 object_key, outfile = sys.argv[1:]
-DEBUG=False
+DEBUG=True
 
-# DEBUG
 if DEBUG:
     print(f"[s3-get-object.py] Start getting {object_key}")
     start_time = time.time()

@@ -7,6 +7,10 @@ import boto3
 BUCKET=os.environ.get("AWS_BUCKET")
 
 def lambda_handler(event, context):
+    # Uncomment for testing: execute the test.sh within the same dir
+    # subprocess.run(["/bin/bash", "test.sh"], check=True)
+    # return
+
     job_id = event.get('job_id', 'UNKNOWN')
     os.environ['LEASH_JOB_ID'] = job_id
 
