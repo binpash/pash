@@ -94,6 +94,7 @@ benchmark_name_to_s3_input_name() {
         covid) echo "covid-mts" ;;
         weather) echo "max-temp" ;;
         file-enc) echo "log-analysis" ;;
+        analytics) echo "log-analysis" ;;
         *) echo "$name" ;;
     esac
 }
@@ -720,6 +721,7 @@ run_pash_with_timing() {
     local out_prefix="$3"
     local no_resplitting_flag="$4"
     local no_hybrid_flag="$5"
+    local entries_value="$6"
     local start_ns
     local end_ns
 
@@ -736,8 +738,8 @@ run_pash_with_timing() {
         benchmark_dir="analytics"
     fi
     if [ "$enable_s3" = "true" ]; then
-        LEASH_ENTRIES=${LEASH_ENTRIES:-1}
-        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$LEASH_ENTRIES \
+        entries_value=${entries_value:-${LEASH_ENTRIES:-1}}
+        env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" ENTRIES=$entries_value \
             $PASH_TOP/pa.sh --serverless_exec --enable_s3_direct $no_resplitting_flag $no_hybrid_flag $parallel_config -w"$WIDTH" scripts/"$SCRIPT"
     else
         env PASH_DEBUG=$PASH_DEBUG $mode_env IN="$S3_INPUT_BENCHMARK_DIR/inputs/$INPUT" OUT="$out_prefix" DICT="oneliners/inputs/dict.txt" \
@@ -880,7 +882,7 @@ run_mode() {
         if [[ "$mode" == *"_no_hybrid" ]]; then
             no_hybrid="--no_hybrid"
         fi
-        run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix" "$no_resplitting" "$no_hybrid"
+        run_pash_with_timing "$mode_env" "$enable_s3" "$out_prefix" "$no_resplitting" "$no_hybrid" "$SCRIPT_LEASH_ENTRIES"
         mode_wall_time="$LAST_WALL_TIME"
         echo "[TIMING] ${mode} wall time: ${mode_wall_time}s"
 
@@ -1121,9 +1123,7 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
         for SCRIPT_INPUT in "${SCRIPT_INPUT_WIDTH[@]}"; do
     echo "========================================================================"
     echo "Running benchmark for $SCRIPT_INPUT"
-    SCRIPT=$(echo "$SCRIPT_INPUT" | cut -d: -f1)
-    INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
-    WIDTH=$(echo "$SCRIPT_INPUT" | cut -d: -f3)
+    IFS=':' read -r SCRIPT INPUT WIDTH SCRIPT_LEASH_ENTRIES <<< "$SCRIPT_INPUT"
     WIDTH=${WIDTH:-64}
     [ -n "$_W" ] && WIDTH="$_W"
 

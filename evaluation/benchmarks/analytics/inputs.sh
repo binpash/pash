@@ -4,6 +4,13 @@ cd "$(realpath $(dirname "$0"))"
 mkdir -p inputs
 cd inputs
 
+generate_jpg_manifest() {
+    local manifest_path="../jpg_list.txt"
+    if [ -d "jpg_full/jpg" ]; then
+        find "jpg_full/jpg" -maxdepth 1 -type f -printf '%f\n' | sort > "$manifest_path"
+    fi
+}
+
 # download the input for the nginx logs and populate the dataset
 if [ ! -d log_data_heavy ]; then
     wget https://atlas-group.cs.brown.edu/data/nginx.zip
@@ -53,6 +60,15 @@ if [ ! -d pcap_data_heavy ]; then
     done
   echo "Pcaps Generated"
 fi
+
+if [ ! -d jpg_full/jpg ]; then
+  wget https://atlas-group.cs.brown.edu/data/full/jpg.zip -O jpg_full.zip
+  unzip jpg_full.zip -d jpg_full
+  rm jpg_full.zip
+  echo "JPG Generated"
+fi
+
+generate_jpg_manifest
 
 #   # generates small inputs
 #   mkdir -p pcap_data_small/

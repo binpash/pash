@@ -16,12 +16,13 @@ BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/analytics"
 # INPUTS_DIR="$BENCHMARK_DIR/inputs"
 
 S3_BUCKET_PREFIX="s3://$AWS_BUCKET"
-S3_BENCHMARK_DIR="analytics"
+S3_BENCHMARK_DIR="log-analysis"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS_DIRS=(
   log_data_heavy
   pcap_data_heavy
+  jpg_full/jpg
   nginx-logs_small
   pcaps_small
   port_scan_small
@@ -30,7 +31,10 @@ INPUTS_DIRS=(
 
 # upload small inputs
 for INPUT_DIR in "${INPUTS_DIRS[@]}"; do
-  for INPUT in $(ls $BENCHMARK_DIR/inputs/$INPUT_DIR); do
+  if [[ ! -d "$BENCHMARK_DIR/inputs/$INPUT_DIR" ]]; then
+    continue
+  fi
+  for INPUT in $(ls "$BENCHMARK_DIR/inputs/$INPUT_DIR"); do
     INPUT_PATH="$BENCHMARK_DIR/inputs/$INPUT_DIR/$INPUT"
     S3_URI=$S3_BUCKET_PREFIX/$S3_INPUTS_DIR/$INPUT_DIR/$INPUT
     echo "Uploading $INPUT_PATH to $S3_URI"
