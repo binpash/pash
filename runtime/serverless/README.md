@@ -14,3 +14,5 @@ export AWS_BUCKET="Your bucket id here"
 # Then, deploy to AWS:
 sls deploy
 ```
+
+For the container-image workflow, see [`image-builder/README.md`](/home/ubuntu/pash/runtime/serverless/image-builder/README.md).
