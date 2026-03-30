@@ -800,9 +800,9 @@ download_mode_output() {
         local local_file_2="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}_min.txt"
         local s3_key_3="${out_prefix}max.stdout.txt"
         local local_file_3="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}_max.txt"
-        download_s3_output "$s3_key_1" "$local_file_1"
-        download_s3_output "$s3_key_2" "$local_file_2"
-        download_s3_output "$s3_key_3" "$local_file_3"
+        download_s3_output "$s3_key_1" "$local_file_1" || return 1
+        download_s3_output "$s3_key_2" "$local_file_2" || return 1
+        download_s3_output "$s3_key_3" "$local_file_3" || return 1
         local local_file="/tmp/compare_${mode_suffix}_${SCRIPT//\//_}_${INPUT}_${WIDTH}.txt"
         cat "$local_file_1" "$local_file_2" "$local_file_3" > "$local_file"
         rm "$local_file_1" "$local_file_2" "$local_file_3"
@@ -927,8 +927,8 @@ run_mode() {
                 if ! should_skip_output_comparison; then
                     echo ""
                     echo "Downloading ${mode_suffix} output from S3..."
-                    download_mode_output "$mode_suffix"
-                    MODE_LOCAL_FILE[$mode]="$LAST_LOCAL_FILE"
+                    download_mode_output "$mode_suffix" || true
+                    MODE_LOCAL_FILE[$mode]="${LAST_LOCAL_FILE:-}"
                     echo ""
                 fi
                 NOOPT_WALL_TIME="$mode_wall_time"
@@ -1204,8 +1204,8 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
 
         echo ""
         echo "Downloading ${mode_suffix} output from S3..."
-        download_mode_output "$mode_suffix"
-        MODE_LOCAL_FILE[$mode]="$LAST_LOCAL_FILE"
+        download_mode_output "$mode_suffix" || true
+        MODE_LOCAL_FILE[$mode]="${LAST_LOCAL_FILE:-}"
         echo ""
 
         # --verif: scan S3 for an existing noopt result matching same script+input (any width)
@@ -1235,9 +1235,9 @@ for _W in "${_WIDTH_SWEEP[@]}"; do
             if [ -z "$noopt_local_file" ] || [ ! -f "$noopt_local_file" ]; then
                 echo ""
                 echo "Downloading noopt output from S3..."
-                download_mode_output "${MODE_SUFFIX[noopt]}"
-                MODE_LOCAL_FILE[noopt]="$LAST_LOCAL_FILE"
-                noopt_local_file="$LAST_LOCAL_FILE"
+                download_mode_output "${MODE_SUFFIX[noopt]}" || true
+                MODE_LOCAL_FILE[noopt]="${LAST_LOCAL_FILE:-}"
+                noopt_local_file="${LAST_LOCAL_FILE:-}"
                 echo ""
             fi
 
