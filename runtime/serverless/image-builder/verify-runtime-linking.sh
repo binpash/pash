@@ -42,6 +42,8 @@ LOCAL_RUNTIME_BINARIES=(
   r_unwrap
   set-diff
   dgsh-tee
+  pashlib
+  pashlib-ft
 )
 
 declare -A SEEN=()
@@ -63,18 +65,18 @@ while IFS= read -r entry; do
 done < <(read_list_file "$IMAGE_BUILDER_DIR/binaries.txt")
 
 for binary_name in "${BINARIES_TO_CHECK[@]}"; do
-  binary_path="$(command -v "$binary_name" || true)"
-  if [[ -z "$binary_path" ]]; then
-    echo "Missing runtime binary: $binary_name" >&2
+  runtime_binary_path="runtime/$binary_name"
+  if [[ ! -x "$runtime_binary_path" ]]; then
+    echo "Missing runtime binary: $runtime_binary_path" >&2
     exit 1
   fi
 
-  echo "[verify-runtime-linking] checking $binary_name -> $binary_path"
-  ldd_output="$(ldd "$binary_path" 2>&1 || true)"
+  echo "[verify-runtime-linking] checking $runtime_binary_path"
+  ldd_output="$(ldd "$runtime_binary_path" 2>&1 || true)"
 
   if grep -q "not found" <<<"$ldd_output"; then
     echo "$ldd_output" >&2
-    echo "Unresolved shared library dependency for $binary_name" >&2
+    echo "Unresolved shared library dependency for $runtime_binary_path" >&2
     exit 1
   fi
 done

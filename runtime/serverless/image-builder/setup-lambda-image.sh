@@ -5,7 +5,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 SERVERLESS_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 
 REGION="${REGION:-${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}}"
-FUNCTION_NAME="${FUNCTION_NAME:-lambda-image}"
+FUNCTION_NAME="${FUNCTION_NAME:-lambda}"
 ROLE_NAME="${ROLE_NAME:-leash-lambda-exec}"
 REPOSITORY_NAME="${REPOSITORY_NAME:-pash-serverless}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
