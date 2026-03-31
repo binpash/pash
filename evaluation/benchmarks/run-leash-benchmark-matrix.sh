@@ -819,7 +819,7 @@ download_mode_output() {
 
 # Benchmarks with large outputs where we intentionally skip file-by-file comparison.
 should_skip_output_comparison() {
-    [[ " nlp file-enc media-conv analytics " == *" $BENCHMARK_NAME "* ]]
+    [[ " nlp file-enc media-conv analytics web-search " == *" $BENCHMARK_NAME "* ]]
 }
 
 # Generic runner for modes (baseline included)

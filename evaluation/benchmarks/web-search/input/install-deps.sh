@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd "$(dirname "$0")"
+
 # 7zip
 pkgs='p7zip-full curl wget nodejs' 
 if ! dpkg -s $pkgs >/dev/null 2>&1 ; then

@@ -1,12 +1,7 @@
 #!/bin/bash
 
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-BENCHMARK_DIR=${BENCHMARK_DIR:-$PASH_TOP/evaluation/benchmarks/web-search}
-IN=${IN:-$BENCHMARK_DIR/inputs/index.txt}
-WEB_INDEX_DIR=${WEB_INDEX_DIR:-$BENCHMARK_DIR/input}
-WIKI=${WIKI:-$BENCHMARK_DIR/inputs/articles/}
-
-mkfifo {1,2,3}grams
+WEB_IN="web-search/inputs"
+WEB_OUT="web-search/outputs"
 
 bigrams_aux()
 {
@@ -109,7 +104,8 @@ extract_text()
 {
     while read -r line
     do
-        cat $line |
+        article_key=${line#./}
+        python3 $PASH_TOP/aws/s3-get-object.py "web-search/inputs/articles_min/${article_key}" /dev/stdout |
             iconv -c -t ascii//TRANSLIT |
             pandoc +RTS -K64m -RTS --from html --to plain --quiet
     done
@@ -117,19 +113,21 @@ extract_text()
 
 export -f extract_text
 
-cat $IN |
-  sed "s#^#$WIKI#" |
+# rm {1,2,3}grams
+# mkfifo {1,2,3}grams
+
+cat $WEB_IN/index_min.txt |
   extract_text |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
-  grep -vwFf $WEB_INDEX_DIR/stopwords.txt |
-  $WEB_INDEX_DIR/stem-words.js |
+  grep -vwF -f $PASH_TOP/evaluation/benchmarks/web-search/input/stopwords.txt |
+  $PASH_TOP/evaluation/benchmarks/web-search/input/stem-words.js |
   tee 3grams 2grams 1grams > /dev/null &
 
 cat 1grams |
     sort |
     uniq -c |
-    sort -rn > 1-grams.txt &
+    sort -rn > ${WEB_OUT}/1-grams.leash.min.txt &
 
 cat 2grams |
     tr -cs A-Za-z '\n' |
@@ -137,7 +135,7 @@ cat 2grams |
     bigrams_aux |
     sort |
     uniq -c |
-    sort -rn > 2-grams.txt &
+    sort -rn > ${WEB_OUT}/2-grams.leash.min.txt &
 
 cat 3grams |
     tr -cs A-Za-z '\n' |
@@ -145,6 +143,6 @@ cat 3grams |
     trigrams_aux |
     sort |
     uniq -c |
-    sort -rn # > 3-grams.txt
+    sort -rn > ${WEB_OUT}/3-grams.leash.min.txt
 
-rm {1,2,3}grams
+# rm {1,2,3}grams
