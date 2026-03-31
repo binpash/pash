@@ -305,12 +305,14 @@ def apply_parallelizing_transformation_leash(graph, parallelizer_map, fan_out, b
     Semantics:
       - Identify the *first* contiguous linear series of parallelizable nodes (in the ORIGINAL graph),
         starting from the first parallelizable node in sorted order.
-      - If (and only if) that first series starts right after a `cat`, use the original `fan_out`
-        for every node in that first series. Otherwise, use 16.
+      - If (and only if) that first series starts right after a `cat` and its first command is
+        `r_split`, use the original `fan_out` for every node in that first series. Otherwise, use 16.
       - Every later series uses 16.
       - Does NOT rely on node-id adjacency (node_id+1) and does NOT consult the mutated graph topology
         after parallelization (since parallelized nodes may disappear).
     """
+
+    print("[pash_compiler.sh] Applying parallelization transformations with LEASH strategy, fan_out:", fan_out, "ec2_width:", ec2_width)
 
     fileIdGen = graph.get_file_id_gen()
 
@@ -343,12 +345,16 @@ def apply_parallelizing_transformation_leash(graph, parallelizer_map, fan_out, b
         prevs_map[nid] = graph.get_previous_nodes(nid)
         nexts_map[nid] = graph.get_next_nodes(nid)
 
-    def is_first_command_after_cat(nid):
+    def is_first_r_split_after_cat(nid):
         ps = prevs_map.get(nid, [])
         if len(ps) != 1:
             return False
         prev_node = graph.get_node(ps[0])
-        return prev_node.cmd_invocation_with_io_vars.cmd_name == "cat"
+        curr_node = graph.get_node(nid)
+        return (
+            prev_node.cmd_invocation_with_io_vars.cmd_name == "cat"
+            and isinstance(curr_node, r_split.RSplit)
+        )
 
     def continues_linear_series(prev_id, cur_id):
         """
@@ -386,8 +392,10 @@ def apply_parallelizing_transformation_leash(graph, parallelizer_map, fan_out, b
             series_idx += 1
 
             if series_idx == 0:
-                eligible = is_first_command_after_cat(node_id)
+                eligible = is_first_r_split_after_cat(node_id)
                 current_fan_out = ORIGINAL_FAN_OUT if eligible else FORCED_FAN_OUT
+                if eligible:
+                    print(f"[pash_compiler.sh] First series starts with r_split right after cat, using ORIGINAL_FAN_OUT={ORIGINAL_FAN_OUT}")
             else:
                 current_fan_out = FORCED_FAN_OUT
 

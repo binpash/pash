@@ -278,6 +278,75 @@ def optimize_s3_lambda_direct_streaming(subgraphs:List[IR], input_fifo_map: Dict
     return subgraphs, None, 0, False, {}
 
 
+def return_local_ir_with_eager_nodes(ir: IR, args: argparse.Namespace):
+    """Fallback path when serverless S3-direct finds no lambda work.
+
+    In this case we run the full IR locally, so there is no need to build the
+    remote transport graph or compute shard/boundary metadata.
+    """
+    file_id_gen = ir.get_file_id_gen()
+
+    for node_id in list(ir.nodes.keys()):
+        for in_edge in list(ir.get_node_input_fids(node_id)):
+            if not in_edge.has_file_resource():
+                continue
+
+            original_resource = in_edge.get_resource()
+            if str(original_resource.uri).find("grams") != -1:
+                continue
+
+            ephemeral_edge = file_id_gen.next_ephemeral_file_id()
+            ir.replace_edge(in_edge.get_ident(), ephemeral_edge)
+
+            remote_read = serverless_remote_pipe.make_serverless_remote_pipe(
+                local_fifo_id=ephemeral_edge.get_ident(),
+                is_remote_read=True,
+                remote_key=original_resource.uri,
+                output_edge=None,
+                is_tcp=False,
+            )
+            ir.add_node(remote_read)
+
+    for node_id in list(ir.nodes.keys()):
+        for out_edge in list(ir.get_node_output_fids(node_id)):
+            original_resource = out_edge.get_resource()
+            if original_resource is None:
+                continue
+            if not (out_edge.has_file_resource() or out_edge.has_file_descriptor_resource()):
+                continue
+            if any(str(original_resource.uri) == gram for gram in ["1grams", "2grams", "3grams"]):
+                continue
+
+            communication_key = "stdout"
+            if type(original_resource) is FileResource:
+                communication_key = str(original_resource)
+            if args.sls_output != "":
+                communication_key = os.path.join(args.sls_output, str(communication_key))
+
+            ephemeral_edge = file_id_gen.next_ephemeral_file_id()
+            ir.replace_edge(out_edge.get_ident(), ephemeral_edge)
+            stdout = add_stdout_fid(ir, file_id_gen)
+
+            remote_write = serverless_remote_pipe.make_serverless_remote_pipe(
+                local_fifo_id=ephemeral_edge.get_ident(),
+                is_remote_read=False,
+                remote_key=communication_key,
+                output_edge=stdout,
+                is_tcp=False,
+            )
+            ir.add_node(remote_write)
+
+    pash_compiler.add_eager_nodes(ir)
+
+    main_graph = IR({}, {})
+    main_graph_script_id = uuid4()
+    local_ir_script_id = uuid4()
+    subgraph_script_id_pairs = {
+        ir: local_ir_script_id,
+        main_graph: main_graph_script_id,
+    }
+    return main_graph_script_id, subgraph_script_id_pairs, local_ir_script_id, {}, {}
+
 # ============================================================================
 # S3 Boundary and Chunking Functions
 # ============================================================================
@@ -361,6 +430,10 @@ def add_nodes_to_subgraphs(ir: IR,subgraphs:List[IR], file_id_gen: FileIdGen, in
     # actually not trivial as we have a list of IRs here :( not a single IR 
 
     print("AFTER OPTIMIZATION, TOTAL LAMBDAS STREAMING DIRECTLY FROM S3:", total_lambdas)
+
+    if args.enable_s3_direct and total_lambdas == 0:
+        print("[IR Helper] No lambdas selected for S3 direct streaming; falling back to local pash execution.")
+        return return_local_ir_with_eager_nodes(ir, args)
 
     if graph:
         print("\n" + "="*80)
