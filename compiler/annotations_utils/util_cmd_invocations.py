@@ -1,5 +1,6 @@
 from pash_annotations.datatypes.BasicDatatypes import Flag, ArgStringType, Operand
 from pash_annotations.datatypes.BasicDatatypesWithIO import OptionWithIO
+from pash_annotations.datatypes.BasicDatatypesWithIOVar import OptionWithIOVar
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
 from pash_annotations.annotation_generation.datatypes.InputOutputInfo import InputOutputInfo
 from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
@@ -51,7 +52,7 @@ def to_node_cmd_inv_with_io_vars(cmd_inv, edges, redirs, assignments):
 def to_ast_flagoption(flagoption, edges):
     if isinstance(flagoption, Flag):
         return [string_to_argument(flagoption.get_name())]
-    elif isinstance(flagoption, OptionWithIO): # retype to IOVar
+    elif isinstance(flagoption, (OptionWithIO, OptionWithIOVar)): # retype to IOVar
         opt_name_ast = string_to_argument(flagoption.get_name())
         opt_arg_ast = translate_io_var_if_applicable(flagoption.get_arg(), edges)
         return [opt_name_ast, opt_arg_ast]
@@ -118,7 +119,7 @@ def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wra
 def to_arg_flagoption(flagoption, edges):
     if isinstance(flagoption, Flag):
         return [Arg.string_to_arg(flagoption.get_name())]
-    elif isinstance(flagoption, OptionWithIO):
+    elif isinstance(flagoption, (OptionWithIO, OptionWithIOVar)):
         opt_name_arg = Arg.string_to_arg(flagoption.get_name())
         opt_arg_arg = translate_io_var_to_arg_if_applicable(flagoption.get_arg(), edges)
         return [opt_name_arg, opt_arg_arg]

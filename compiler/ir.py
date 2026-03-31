@@ -3,6 +3,7 @@ import pash_annotations.datatypes
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
 from pash_annotations.datatypes.BasicDatatypes import ArgStringType
 from pash_annotations.datatypes.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo, OptionWithIO
+from pash_annotations.datatypes.BasicDatatypesWithIOVar import OptionWithIOVar
 from pash_annotations.annotation_generation.datatypes.InputOutputInfo import InputOutputInfo
 from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
 from pash_annotations.annotation_generation.datatypes.CommandProperties import CommandProperties
@@ -154,7 +155,7 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
         flagoption = command_invocation_with_io.flag_option_list[i]
         if isinstance(flagoption, OptionWithIO) and not isinstance(flagoption.option_arg, ArgStringType):
             fid_id = add_var_for_descriptor(flagoption.option_arg)
-            new_option = OptionWithIOVar(flagoption.name, fid_id)
+            new_option = OptionWithIOVar(flagoption.get_name(), fid_id)
             new_flagoption_list.append(new_option)
         else: # Flag
             new_flagoption_list.append(flagoption)
@@ -1192,5 +1193,4 @@ class IR:
     def create_reduce_node(init_func, input_ids, output_ids):
         return init_func(flatten_list(input_ids), output_ids)
     # TODO: this is where we need to use our aggregator spec/node
-
 
