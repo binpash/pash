@@ -345,15 +345,13 @@ def apply_parallelizing_transformation_leash(graph, parallelizer_map, fan_out, b
         prevs_map[nid] = graph.get_previous_nodes(nid)
         nexts_map[nid] = graph.get_next_nodes(nid)
 
-    def is_first_r_split_after_cat(nid):
+    def is_first_cmd_after_cat(nid):
         ps = prevs_map.get(nid, [])
         if len(ps) != 1:
             return False
         prev_node = graph.get_node(ps[0])
-        curr_node = graph.get_node(nid)
         return (
             prev_node.cmd_invocation_with_io_vars.cmd_name == "cat"
-            and isinstance(curr_node, r_split.RSplit)
         )
 
     def continues_linear_series(prev_id, cur_id):
@@ -392,10 +390,10 @@ def apply_parallelizing_transformation_leash(graph, parallelizer_map, fan_out, b
             series_idx += 1
 
             if series_idx == 0:
-                eligible = is_first_r_split_after_cat(node_id)
+                eligible = is_first_cmd_after_cat(node_id)
                 current_fan_out = ORIGINAL_FAN_OUT if eligible else FORCED_FAN_OUT
                 if eligible:
-                    print(f"[pash_compiler.sh] First series starts with r_split right after cat, using ORIGINAL_FAN_OUT={ORIGINAL_FAN_OUT}")
+                    print(f"[pash_compiler.sh] First series starts right after cat, using ORIGINAL_FAN_OUT={ORIGINAL_FAN_OUT}")
             else:
                 current_fan_out = FORCED_FAN_OUT
 
