@@ -12,7 +12,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$CONTEXT_DIR/runtime" "$CONTEXT_DIR/serverless" "$CONTEXT_DIR/image-builder" "$CONTEXT_DIR/vendored-runtime"
+mkdir -p \
+  "$CONTEXT_DIR/runtime" \
+  "$CONTEXT_DIR/serverless" \
+  "$CONTEXT_DIR/serverless-runtime" \
+  "$CONTEXT_DIR/serverless-pashlib/bin" \
+  "$CONTEXT_DIR/serverless-pashlib/src" \
+  "$CONTEXT_DIR/image-builder" \
+  "$CONTEXT_DIR/vendored-runtime"
 
 while IFS= read -r source_path; do
   cp -Lf "$source_path" "$CONTEXT_DIR/runtime/"
@@ -22,6 +29,13 @@ done < <(find "$PASH_TOP/runtime" -maxdepth 1 -type f \
 cp -a "$SERVERLESS_DIR/aws" "$CONTEXT_DIR/serverless/aws"
 cp -Lf "$SERVERLESS_DIR/lambda-function.py" "$CONTEXT_DIR/serverless/lambda-function.py"
 cp -Lf "$SERVERLESS_DIR/test.sh" "$CONTEXT_DIR/serverless/test.sh"
+cp -a "$SERVERLESS_DIR/runtime/." "$CONTEXT_DIR/serverless-runtime/"
+cp -Lf "$SERVERLESS_DIR/pashlib/Cargo.toml" "$CONTEXT_DIR/serverless-pashlib/Cargo.toml"
+cp -Lf "$SERVERLESS_DIR/pashlib/Cargo.lock" "$CONTEXT_DIR/serverless-pashlib/Cargo.lock"
+cp -Lf "$SERVERLESS_DIR/pashlib/compile.sh" "$CONTEXT_DIR/serverless-pashlib/compile.sh"
+cp -a "$SERVERLESS_DIR/pashlib/src/." "$CONTEXT_DIR/serverless-pashlib/src/"
+cp -a "$SERVERLESS_DIR/pashlib/bin/pashlib-oneproc" "$CONTEXT_DIR/serverless-pashlib/bin/pashlib-oneproc"
+cp -a "$SERVERLESS_DIR/pashlib/bin/pashlib-ft" "$CONTEXT_DIR/serverless-pashlib/bin/pashlib-ft"
 cp -Lf "$SERVERLESS_DIR/runtime/ffmpeg" "$CONTEXT_DIR/vendored-runtime/ffmpeg"
 cp -a "$SCRIPT_DIR/." "$CONTEXT_DIR/image-builder/"
 

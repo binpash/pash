@@ -5,14 +5,18 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS runtime-builder
 
 RUN dnf install -y \
       gcc \
+      gcc-c++ \
       git \
       make \
+      cargo \
       findutils \
     && dnf clean all
 
 WORKDIR /src
 
 COPY runtime /src/runtime
+COPY serverless-runtime /src/serverless-runtime
+COPY serverless-pashlib /src/serverless-pashlib
 COPY image-builder /src/image-builder
 
 RUN /bin/bash /src/image-builder/stage-runtime-assets.sh
