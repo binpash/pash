@@ -54,6 +54,7 @@ def make_dgsh_tee_node(input_id, output_id):
     )
     """
 
+    # Skip __init__ to avoid its deepcopy; inputs are freshly constructed here.
     cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
     cmd_inv_with_io_vars.cmd_name = dgsh_tee_bin
     cmd_inv_with_io_vars.flag_option_list=flag_option_list

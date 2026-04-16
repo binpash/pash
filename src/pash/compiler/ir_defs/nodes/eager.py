@@ -44,6 +44,7 @@ def make_eager_node(input_id, output_id, intermediate_file_id, eager_exec_path):
     """
 
 
+    # Skip __init__ to avoid its deepcopy; inputs are freshly constructed here.
     cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
     cmd_inv_with_io_vars.cmd_name = eager_name
     cmd_inv_with_io_vars.flag_option_list=[]

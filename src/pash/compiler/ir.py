@@ -247,6 +247,7 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
     )
     """
 
+    # Skip __init__ to avoid its deepcopy; inputs are freshly constructed here.
     cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
     cmd_inv_with_io_vars.cmd_name = command_invocation_with_io.cmd_name
     cmd_inv_with_io_vars.flag_option_list=new_flagoption_list

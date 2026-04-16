@@ -58,6 +58,7 @@ def make_r_split(input_id, out_ids, r_split_batch_size):
     )
     """
 
+    # Skip __init__ to avoid its deepcopy; inputs are freshly constructed here.
     cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
     cmd_inv_with_io_vars.cmd_name = r_split_bin
     cmd_inv_with_io_vars.flag_option_list=[]

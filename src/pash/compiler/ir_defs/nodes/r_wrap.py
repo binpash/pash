@@ -85,6 +85,7 @@ def wrap_node(node: DFGNode, edges):
             )
     """
 
+    # Skip __init__ to avoid its deepcopy; inputs are freshly constructed here.
     cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
     cmd_inv_with_io_vars.cmd_name = r_wrap_bin
     cmd_inv_with_io_vars.flag_option_list=[]

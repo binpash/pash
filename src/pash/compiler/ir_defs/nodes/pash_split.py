@@ -49,6 +49,7 @@ def make_split_file(input_id, out_ids):
     """
 
 
+    # Skip __init__ to avoid its deepcopy; inputs are freshly constructed here.
     cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
     cmd_inv_with_io_vars.cmd_name = auto_split_bin
     cmd_inv_with_io_vars.flag_option_list=[]
