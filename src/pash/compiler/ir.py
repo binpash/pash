@@ -22,8 +22,6 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import (
     CommandInvocationWithIOVars,
 )
 
-from shasta.ast_node import ast_node_to_untyped_deep
-from shasta.json_to_ast import to_ast_node
 
 from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
 from annotations_utils.util_cmd_invocations import (
@@ -544,8 +542,8 @@ class IR:
             asts.append(assignment)
 
         ## TODO: Ideally we would like to make them as typed nodes already
-        class_asts = [to_ast_node(ast_node_to_untyped_deep(ast)) for ast in asts]
-        return class_asts
+        ## Solved: returns are shashta typed
+        return asts
 
     def collect_pid_assignment(self):
         ## Creates:

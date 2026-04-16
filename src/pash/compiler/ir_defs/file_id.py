@@ -2,7 +2,11 @@ import config
 import os
 import uuid
 
-from util import string_to_argument, make_kv
+from util import string_to_argument
+from shasta.ast_node import QArgChar
+
+
+
 from ir_defs.resource import (
     Resource,
     FileDescriptorResource,
@@ -89,7 +93,8 @@ class FileId:
             suffix = self.get_fifo_suffix()
             string = os.path.join(config.PASH_TMP_PREFIX, suffix)
             ## Quote the argument
-            argument = [make_kv("Q", string_to_argument(string))]
+            argument = [QArgChar(arg=string_to_argument(string))]
+
         elif isinstance(self.resource, FileDescriptorResource):
             if self.resource.is_stdin() and stdin_dash:
                 argument = string_to_argument("-")
