@@ -236,7 +236,7 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
         )
     else:
         new_implicit_use_of_streaming_output = None
-
+    """
     command_invocation_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=command_invocation_with_io.cmd_name,
         flag_option_list=new_flagoption_list,
@@ -245,7 +245,19 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
         implicit_use_of_streaming_output=new_implicit_use_of_streaming_output,
         access_map=access_map,
     )
-    return command_invocation_with_io_vars, dfg_edges
+    """
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
+    cmd_inv_with_io_vars.cmd_name = command_invocation_with_io.cmd_name
+    cmd_inv_with_io_vars.flag_option_list=new_flagoption_list
+    cmd_inv_with_io_vars.operand_list = new_operand_list
+    cmd_inv_with_io_vars.implicit_use_of_streaming_input = new_implicit_use_of_streaming_input
+    cmd_inv_with_io_vars.implicit_use_of_streaming_output = new_implicit_use_of_streaming_output
+    cmd_inv_with_io_vars.access_map = access_map
+
+
+    #return command_invocation_with_io_vars, dfg_edges
+    return cmd_inv_with_io_vars, dfg_edges
 
 
 def compile_command_to_DFG(fileIdGen, command, options, redirections=None):

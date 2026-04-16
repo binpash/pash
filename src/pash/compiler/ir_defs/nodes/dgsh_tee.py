@@ -43,6 +43,7 @@ def make_dgsh_tee_node(input_id, output_id):
         ),
     ]
 
+    """
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=dgsh_tee_bin,
         flag_option_list=flag_option_list,
@@ -51,4 +52,14 @@ def make_dgsh_tee_node(input_id, output_id):
         implicit_use_of_streaming_output=None,
         access_map=access_map,
     )
+    """
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
+    cmd_inv_with_io_vars.cmd_name = dgsh_tee_bin
+    cmd_inv_with_io_vars.flag_option_list=flag_option_list
+    cmd_inv_with_io_vars.operand_list = []
+    cmd_inv_with_io_vars.implicit_use_of_streaming_input = None
+    cmd_inv_with_io_vars.implicit_use_of_streaming_output = None
+    cmd_inv_with_io_vars.access_map = access_map
+
     return DGSHTee(cmd_inv_with_io_vars)

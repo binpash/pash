@@ -32,6 +32,7 @@ def make_eager_node(input_id, output_id, intermediate_file_id, eager_exec_path):
         input_id: make_stream_input(),
         intermediate_file_id_id: make_other_output(),
     }
+    """
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=eager_name,
         flag_option_list=[],
@@ -40,4 +41,15 @@ def make_eager_node(input_id, output_id, intermediate_file_id, eager_exec_path):
         implicit_use_of_streaming_output=None,
         access_map=access_map,
     )
+    """
+
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
+    cmd_inv_with_io_vars.cmd_name = eager_name
+    cmd_inv_with_io_vars.flag_option_list=[]
+    cmd_inv_with_io_vars.operand_list = operand_list
+    cmd_inv_with_io_vars.implicit_use_of_streaming_input = None
+    cmd_inv_with_io_vars.implicit_use_of_streaming_output = None
+    cmd_inv_with_io_vars.access_map = access_map
+
     return Eager(cmd_inv_with_io_vars)

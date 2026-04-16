@@ -36,6 +36,7 @@ def make_unwrap_node(inputs, output):
     r_unwrap_bin = os.path.join(
         config.PASH_TOP, config.config["runtime"]["r_unwrap_binary"]
     )
+    """
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=r_unwrap_bin,
         flag_option_list=[],
@@ -44,4 +45,15 @@ def make_unwrap_node(inputs, output):
         implicit_use_of_streaming_output=output,
         access_map=access_map,
     )
+    """
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
+    cmd_inv_with_io_vars.cmd_name = r_unwrap_bin
+    cmd_inv_with_io_vars.flag_option_list=[]
+    cmd_inv_with_io_vars.operand_list = []
+    cmd_inv_with_io_vars.implicit_use_of_streaming_input = input_id
+    cmd_inv_with_io_vars.implicit_use_of_streaming_output = output
+    cmd_inv_with_io_vars.access_map = access_map
+
+
     return RUnwrap(cmd_inv_with_io_vars)

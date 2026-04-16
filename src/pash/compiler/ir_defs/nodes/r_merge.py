@@ -36,6 +36,7 @@ def make_r_merge_node(inputs, output):
     # TODO: assume that the inputs and output is provided as operands
     access_map = {input_id: make_stream_input() for input_id in inputs}
     access_map[output] = make_stream_output()
+    """
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=r_merge_bin,
         flag_option_list=[],
@@ -44,4 +45,14 @@ def make_r_merge_node(inputs, output):
         implicit_use_of_streaming_output=output,
         access_map=access_map,
     )
+    """
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
+    cmd_inv_with_io_vars.cmd_name = r_merge_bin
+    cmd_inv_with_io_vars.flag_option_list=[]
+    cmd_inv_with_io_vars.operand_list = inputs
+    cmd_inv_with_io_vars.implicit_use_of_streaming_input = None
+    cmd_inv_with_io_vars.implicit_use_of_streaming_output = output
+    cmd_inv_with_io_vars.access_map = access_map
+
     return RMerge(cmd_inv_with_io_vars)

@@ -47,6 +47,7 @@ def make_r_split(input_id, out_ids, r_split_batch_size):
     operand_list.extend(out_ids)
     access_map = {output_id: make_stream_output() for output_id in out_ids}
     access_map[input_id] = make_stream_input()
+    """
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=r_split_bin,
         flag_option_list=[],
@@ -55,6 +56,17 @@ def make_r_split(input_id, out_ids, r_split_batch_size):
         implicit_use_of_streaming_output=None,
         access_map=access_map,
     )
+    """
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
+    cmd_inv_with_io_vars.cmd_name = r_split_bin
+    cmd_inv_with_io_vars.flag_option_list=[]
+    cmd_inv_with_io_vars.operand_list = operand_list
+    cmd_inv_with_io_vars.implicit_use_of_streaming_input = None
+    cmd_inv_with_io_vars.implicit_use_of_streaming_output = None
+    cmd_inv_with_io_vars.access_map = access_map
+
+
     return RSplit(cmd_inv_with_io_vars)
 
 
