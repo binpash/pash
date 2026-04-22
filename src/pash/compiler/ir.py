@@ -541,8 +541,6 @@ class IR:
             assignment = self.collect_pid_assignment()
             asts.append(assignment)
 
-        ## TODO: Ideally we would like to make them as typed nodes already
-        ## Solved: returns are shashta typed
         return asts
 
     def collect_pid_assignment(self):
