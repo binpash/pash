@@ -12,7 +12,7 @@ from util import (
     make_subshell,
     redir_append_stderr_to_string_file,
 )
-from shasta.json_to_ast import to_ast_node
+
 from parse import from_ast_objects_to_shell
 import config
 
@@ -111,8 +111,7 @@ def make_ir_prologue(ephemeral_fids) -> "list[AstNode]":
     call_mkfifos = make_command([string_to_argument(MKFIFO_PASH_FIFOS_NAME)])
     asts.append(call_mkfifos)
 
-    class_asts = [to_ast_node(ast) for ast in asts]
-    return class_asts
+    return asts
 
 
 def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file) -> "list[AstNode]":
@@ -148,8 +147,7 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file) -> "list[AstNode]
     exit_ec_ast = make_exit_ec_ast()
     asts.append(exit_ec_ast)
 
-    class_asts = [to_ast_node(ast) for ast in asts]
-    return class_asts
+    return asts
 
 
 def make_exit_ec_ast():
