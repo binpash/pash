@@ -75,25 +75,15 @@ def wrap_node(node: DFGNode, edges):
 
     bash_command_arg = [Arg.string_to_arg("bash -c")]
     operand_list = bash_command_arg + [cmd]
-    """
+
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
-            cmd_name=r_wrap_bin,
-            flag_option_list=[],
-            operand_list=operand_list,
-            implicit_use_of_streaming_input=input_id,
-            implicit_use_of_streaming_output=output_id, access_map=access_map,
-            )
-    """
-
-    # Skip __init__ to avoid its deepcopy; inputs are freshly constructed here.
-    cmd_inv_with_io_vars = CommandInvocationWithIOVars.__new__(CommandInvocationWithIOVars)
-    cmd_inv_with_io_vars.cmd_name = r_wrap_bin
-    cmd_inv_with_io_vars.flag_option_list=[]
-    cmd_inv_with_io_vars.operand_list = operand_list
-    cmd_inv_with_io_vars.implicit_use_of_streaming_input = input_id
-    cmd_inv_with_io_vars.implicit_use_of_streaming_output = output_id
-    cmd_inv_with_io_vars.access_map = access_map
-
+        cmd_name=r_wrap_bin,
+        flag_option_list=[],
+        operand_list=operand_list,
+        implicit_use_of_streaming_input=input_id,
+        implicit_use_of_streaming_output=output_id,
+        access_map=access_map,
+    )
 
     ## TODO: It is not clear if it is safe to just pass redirections and assignments down the line as is
     redirs = node.com_redirs
