@@ -1,0 +1,13 @@
+# Package-manager binaries only.
+# One binary name per line.
+# Blank lines and comments are ignored.
+
+openssl
+gzip
+convert=ImageMagick
+file
+xargs=findutils
+tcpdump
+col=util-linux
+rev=util-linux
+which

@@ -27,6 +27,7 @@ require_env() {
 
 require_env AWS_ACCOUNT_ID
 require_env AWS_BUCKET
+AWS_BUCKET="leash"
 
 ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE_NAME}"
 ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPOSITORY_NAME}:${IMAGE_TAG}"
@@ -180,7 +181,7 @@ if aws lambda get-function --function-name "${FUNCTION_NAME}" --region "${REGION
     --memory-size "${MEMORY_SIZE}" \
     --ephemeral-storage "Size=${EPHEMERAL_DISK_SIZE}" \
     --role "${ROLE_ARN}" \
-    --environment "Variables={AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID},AWS_BUCKET=${AWS_BUCKET}}" \
+    --environment "Variables={AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID},AWS_BUCKET=${AWS_BUCKET},LEASH_ON_LAMBDA=1}" \
     >/dev/null
 else
   echo "  - Function not found, creating..."
@@ -193,7 +194,7 @@ else
     --timeout "${TIMEOUT}" \
     --memory-size "${MEMORY_SIZE}" \
     --ephemeral-storage "Size=${EPHEMERAL_DISK_SIZE}" \
-    --environment "Variables={AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID},AWS_BUCKET=${AWS_BUCKET}}" \
+    --environment "Variables={AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID},AWS_BUCKET=${AWS_BUCKET},LEASH_ON_LAMBDA=1}" \
     >/dev/null
 fi
 
