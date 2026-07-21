@@ -20,7 +20,7 @@ from pash_annotations.parser.parser import (
 from pash_annotations.parser.util_parser import get_json_data
 
 
-from util import format_arg_chars, string_to_argument
+from util import format_arg_chars, remove_quotes_expanded_arg_chars, string_to_argument
 
 
 def merge_to_single_string_with_space(list_str):
@@ -65,7 +65,7 @@ def fix_parsing_newline(arg):
 def parse_arg_list_to_command_invocation(
     command, flags_options_operands
 ) -> CommandInvocationInitial:
-    cmd_name = format_arg_chars(command)
+    cmd_name = remove_quotes_expanded_arg_chars(command)
     json_data = get_json_data(cmd_name)
 
     set_of_all_flags: Set[str] = get_set_of_all_flags(json_data)

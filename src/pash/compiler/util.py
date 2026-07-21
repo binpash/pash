@@ -11,8 +11,7 @@ import os
 import tempfile
 
 import config
-from shasta.ast_node import CArgChar
-
+from shasta.ast_node import CArgChar, EArgChar, QArgChar
 
 # === List utilities ===
 
@@ -28,6 +27,7 @@ def print_time_delta(prefix, start_time, end_time):
     """Log time delta between start and end time."""
     time_difference = (end_time - start_time) / timedelta(milliseconds=1)
     log("{} time:".format(prefix), time_difference, " ms")
+
 
 def log(*args, end="\n", level=2):
     """Wrapper for logging."""
@@ -118,6 +118,24 @@ class UnparsedScript:
 def format_arg_chars(arg_chars):
     chars = [arg_char.format() for arg_char in arg_chars]
     return "".join(chars)
+
+
+def remove_quotes_expanded_arg_chars(arg_chars):
+    """Format an expanded command name without its syntactic quotes.
+
+    Quoting affects how the shell expands a word, but it is not part of the
+    executable name. At this point command names must already be expanded, so
+    only literal, escaped, and quoted characters are valid.
+    """
+
+    def format_arg_char(arg_char):
+        if isinstance(arg_char, (CArgChar, EArgChar)):
+            return arg_char.format()
+        if isinstance(arg_char, QArgChar):
+            return "".join(format_arg_char(char) for char in arg_char.arg)
+        raise ValueError(f"Command name is not fully expanded: {arg_char!r}")
+
+    return "".join(format_arg_char(arg_char) for arg_char in arg_chars)
 
 
 def string_to_carg_char_list(string: str) -> "list[CArgChar]":
