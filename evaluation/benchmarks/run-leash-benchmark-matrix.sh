@@ -819,7 +819,7 @@ download_mode_output() {
 
 # Benchmarks with large outputs where we intentionally skip file-by-file comparison.
 should_skip_output_comparison() {
-    [[ " nlp file-enc media-conv analytics web-search " == *" $BENCHMARK_NAME "* ]]
+    [[ " nlp file-enc media-conv analytics web-search agent " == *" $BENCHMARK_NAME "* ]]
 }
 
 # Generic runner for modes (baseline included)
@@ -871,7 +871,7 @@ run_mode() {
         no_resplitting=""
         if [[ "$mode" == "s3_approx_dynamic_no_resplitting" || "$mode" == "s3_approx_dynamic_no_resplitting_no_hybrid" ]]; then
             no_resplitting="--no_resplitting --ec2_width $(nproc)"
-            if [[ " nlp file-enc media-conv analytics " == *" $BENCHMARK_NAME "* ]]; then
+            if [[ " nlp file-enc media-conv analytics agent " == *" $BENCHMARK_NAME "* ]]; then
                 no_resplitting="--no_resplitting --ec2_width 1 --unlimited_lambda"
             fi
             echo "Running APPROX DYNAMIC NO RESPLITTING mode $no_resplitting"
