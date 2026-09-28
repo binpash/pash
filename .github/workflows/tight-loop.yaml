@@ -32,7 +32,7 @@ jobs:
       runs-on: ubuntu-latest
       if: github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v4 
+        - uses: actions/checkout@v5 
           with:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Building Pash
@@ -57,7 +57,7 @@ jobs:
             results=$(bash run.sh)
             mkdir ~/artifact
             echo "$results" | tee ~/artifact/results.log
-        - uses: actions/upload-artifact@v4
+        - uses: actions/upload-artifact@v6
           with:
             name: tight-loop-artifact
             path: ~/artifact

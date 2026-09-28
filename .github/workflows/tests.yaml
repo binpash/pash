@@ -39,7 +39,7 @@ jobs:
       runs-on: ${{ matrix.os }}
       if: github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
           with:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running Correctness Tests
@@ -66,7 +66,7 @@ jobs:
             cat results.log >> $GITHUB_ENV
             echo 'EOF' >> $GITHUB_ENV
         - name: Comment on PR
-          uses: actions/github-script@v7
+          uses: actions/github-script@v8
           with:
             script: |
               let body = `${{ env.VERSION }}`
@@ -90,7 +90,7 @@ jobs:
       runs-on: ubuntu-latest
       if: github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
           with:
             ref: ${{ github.event.pull_request.head.sha }}
 
