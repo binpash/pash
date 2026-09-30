@@ -1,6 +1,6 @@
 name: Tests
 on: 
-  pull_request_target:
+  pull_request:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     # the paths that trigger the ci
     paths: 
@@ -40,8 +40,6 @@ jobs:
       if: github.event.pull_request.draft == false
       steps:
         - uses: actions/checkout@v5
-          with:
-            ref: ${{ github.event.pull_request.head.sha }}
         - name: Running Correctness Tests
           run: |
             sudo touch /.githubenv
@@ -66,6 +64,8 @@ jobs:
             cat results.log >> $GITHUB_ENV
             echo 'EOF' >> $GITHUB_ENV
         - name: Comment on PR
+          # Fork PRs get a read-only token under pull_request, so commenting may fail
+          continue-on-error: true
           uses: actions/github-script@v8
           with:
             script: |
@@ -91,8 +91,6 @@ jobs:
       if: github.event.pull_request.draft == false
       steps:
         - uses: actions/checkout@v5
-          with:
-            ref: ${{ github.event.pull_request.head.sha }}
 
         - uses: ludeeus/action-shellcheck@master
           env:
