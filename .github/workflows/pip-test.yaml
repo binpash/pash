@@ -1,13 +1,14 @@
 name: Test pip Install
 
 on:
-  pull_request_target:
+  pull_request:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     paths:
       - src/pash/**
       - pyproject.toml
       - setup.py
       - MANIFEST.in
+      - .github/workflows/**
   push:
     branches: [main, future]
     paths:
@@ -15,6 +16,7 @@ on:
       - pyproject.toml
       - setup.py
       - MANIFEST.in
+      - .github/workflows/**
   # Allow manual trigger
   workflow_dispatch:
   # Allow being called by other workflows
@@ -31,8 +33,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v6

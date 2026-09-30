@@ -1,7 +1,7 @@
 name: Bash Tests
 
 on:
-  pull_request_target:
+  pull_request:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
     paths:
       - src/pash/compiler/**
@@ -11,6 +11,7 @@ on:
       - evaluation/**
       - annotations/**
       - scripts/**
+      - .github/workflows/**
   push:
     branches:
       - main
@@ -23,6 +24,7 @@ on:
       - evaluation/**
       - annotations/**
       - scripts/**
+      - .github/workflows/**
   # Allow manual trigger
   workflow_dispatch:
 
@@ -32,8 +34,6 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install dependencies and PaSh
         run: |

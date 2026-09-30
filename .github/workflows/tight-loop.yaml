@@ -13,8 +13,9 @@ on:
       - evaluation/**
       - annotations/**
       - scripts/**
+      - .github/workflows/**
 
-  pull_request_target:
+  pull_request:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
       # the paths that trigger the ci
     paths: 
@@ -25,6 +26,7 @@ on:
           - evaluation/**
           - annotations/**
           - scripts/**
+          - .github/workflows/**
 
 # Jobs section
 jobs:
@@ -32,9 +34,7 @@ jobs:
       runs-on: ubuntu-latest
       if: github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v5 
-          with:
-            ref: ${{ github.event.pull_request.head.sha }}
+        - uses: actions/checkout@v5
         - name: Building Pash
           run: |
             set -e
