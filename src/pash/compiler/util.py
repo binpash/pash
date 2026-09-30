@@ -11,7 +11,7 @@ import os
 import tempfile
 
 import config
-from shasta.ast_node import CArgChar
+from shasta.ast_node import CArgChar, EArgChar, QArgChar
 
 
 # === List utilities ===
@@ -28,6 +28,7 @@ def print_time_delta(prefix, start_time, end_time):
     """Log time delta between start and end time."""
     time_difference = (end_time - start_time) / timedelta(milliseconds=1)
     log("{} time:".format(prefix), time_difference, " ms")
+
 
 def log(*args, end="\n", level=2):
     """Wrapper for logging."""
@@ -117,6 +118,27 @@ class UnparsedScript:
 
 def format_arg_chars(arg_chars):
     chars = [arg_char.format() for arg_char in arg_chars]
+    return "".join(chars)
+
+
+def remove_quotes_expanded_arg_chars(arg_chars) -> Optional[str]:
+    """
+    Return the value of a fully expanded word with quoting removed, or None if
+    it is not fully expanded. Annotations are keyed by executable name (cat),
+    while format_arg_chars re-emits shell syntax ("cat"). Assumes only Q, C and
+    E chars; Q is unwrapped recursively so "c"at resolves correctly.
+    """
+    chars = []
+    for arg_char in arg_chars:
+        if isinstance(arg_char, QArgChar):
+            inner = remove_quotes_expanded_arg_chars(arg_char.arg)
+            if inner is None:
+                return None
+            chars.append(inner)
+        elif isinstance(arg_char, (CArgChar, EArgChar)):
+            chars.append(arg_char.format())
+        else:
+            return None
     return "".join(chars)
 
 
