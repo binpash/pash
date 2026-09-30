@@ -9,6 +9,7 @@ on:
         - evaluation/**
         - annotations/**
         - scripts/**
+        - .github/workflows/**
   push:
     branches:
       - main
@@ -19,6 +20,7 @@ on:
         - evaluation/**
         - annotations/**
         - scripts/**
+        - .github/workflows/**
   # Allow manual trigger from any branch
   workflow_dispatch:
 
