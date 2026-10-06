@@ -29,13 +29,13 @@ Run:
 Before using PaSh, set the `PASH_TOP` environment variable to the directory where PaSh is stored:
 
 ```sh
-export PASH_TOP=/path/to/pash
+export PASH_TOP=/path/to/pash/src/pash
 ```
 
 To make this persistent across terminal sessions, add it to your shell configuration file:
 
 ```sh
-echo 'export PASH_TOP=/path/to/pash' >> ~/.bashrc
+echo 'export PASH_TOP=/path/to/pash/src/pash' >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -51,6 +51,8 @@ You can also provide the path to the PaSh repo directly if `PASH_TOP` is not set
 
 This will:
 - Clone the `annotations` repository as a **sibling** to `pash` (i.e., in the same parent directory), or in a specified path if provided.
+
+## **🔹 Step 3: Set PASH_TOP
 
 ## **🔹 Step 4: Run PaSh**
 Once everything is set up, test PaSh with:
