@@ -11,7 +11,18 @@ import os
 import tempfile
 
 import config
-from shasta.ast_node import CArgChar
+from shasta.ast_node import (
+        CArgChar,
+        VArgChar,
+        QArgChar,
+        CommandNode,
+        BackgroundNode,
+        SubshellNode,
+        SemiNode,
+        DefunNode,
+        AssignNode,
+        FileRedirNode,
+        )
 
 
 # === List utilities ===
@@ -135,44 +146,42 @@ def string_to_argument(string):
 
 
 def char_to_arg_char(char):
-    return ["C", ord(char)]
+    return CArgChar(ord(char))
 
 
 def standard_var_ast(string):
-    return make_kv("V", ["Normal", False, string, []])
+    return VArgChar("Normal", False, string, [])
 
 
 def make_quoted_variable(string):
-    return make_kv("Q", [standard_var_ast(string)])
+    return QArgChar(arg=[standard_var_ast(string)])
 
 
 def quote_arg(arg):
-    return make_kv("Q", arg)
+    return QArgChar(arg=arg)
 
 
 def redir_append_stderr_to_string_file(string):
-    return make_kv("File", ["Append", 2, string_to_argument(string)])
-
+    return FileRedirNode("Append", ("fixed", 2), string_to_argument(string))
 
 def redir_stdout_to_file(arg):
-    return make_kv("File", ["To", 1, arg])
+    return FileRedirNode("To", ("fixed", 1), arg)
 
 
 def redir_file_to_stdin(arg):
-    return make_kv("File", ["From", 0, arg])
-
+    return FileRedirNode("From", ("fixed", 0), arg)
 
 def make_background(body, redirections=None):
     redirections = [] if redirections is None else redirections
     lineno = 0
-    node = make_kv("Background", [lineno, body, redirections])
+    node = BackgroundNode(lineno, body, redirections)
     return node
 
 
 def make_subshell(body, redirections=None):
     redirections = [] if redirections is None else redirections
     lineno = 0
-    node = make_kv("Subshell", [lineno, body, redirections])
+    node = SubshellNode(lineno, body, redirections)
     return node
 
 
@@ -180,16 +189,15 @@ def make_command(arguments, redirections=None, assignments=None):
     redirections = [] if redirections is None else redirections
     assignments = [] if assignments is None else assignments
     lineno = 0
-    node = make_kv("Command", [lineno, assignments, arguments, redirections])
+    node = CommandNode(lineno, assignments, arguments, redirections)
     return node
 
 
 def make_assignment(var, value):
     lineno = 0
-    assignment = (var, value)
-    assignments = [assignment]
-    node = make_kv("Command", [lineno, assignments, [], []])
-    return node
+    assignment = AssignNode(var, value)
+    return CommandNode(lineno, [assignment],[],[])
+
 
 
 def make_semi_sequence(asts):
@@ -203,11 +211,11 @@ def make_semi_sequence(asts):
         # Remove the last ast
         iter_asts = asts[:-1]
         for ast in iter_asts[::-1]:
-            acc = make_kv("Semi", [ast, acc])
+            acc = SemiNode(ast, acc)
         return acc
 
 
 def make_defun(name, body):
     lineno = 0
-    node = make_kv("Defun", [lineno, name, body])
+    node = DefunNode(lineno, string_to_argument(name), body )
     return node
