@@ -32,6 +32,7 @@ from annotations_utils.util_cmd_invocations import (
 )
 from annotations_utils.util_file_descriptors import resource_from_file_descriptor
 
+from ir_defs.arg import Arg
 from ir_defs.file_id import *
 from ir_defs.nodes.cat import *
 
